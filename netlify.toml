@@ -1,12 +1,10 @@
 [build]
-  command = "npm install --legacy-peer-deps && EXPO_NO_METRO_LAZY=1 NODE_ENV=production npx expo export:web --no-minify"
+  command = "npm ci --legacy-peer-deps && npm run build:web"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
-  EXPO_NO_METRO_LAZY = "1"
-  NODE_ENV = "production"
 
 [[redirects]]
   from = "/*"
