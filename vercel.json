@@ -5,9 +5,9 @@
       "destination": "/index.html"
     }
   ],
-  "buildCommand": "npx expo export --platform web",
+  "buildCommand": "npm install --legacy-peer-deps && npx expo export --platform web",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
   "headers": [
     {
