@@ -5,10 +5,14 @@
       "destination": "/index.html"
     }
   ],
-  "buildCommand": "npm install --legacy-peer-deps && npx expo export --platform web",
+  "buildCommand": "npm install --legacy-peer-deps && EXPO_NO_METRO_LAZY=1 NODE_ENV=production npx expo export:web --no-minify",
   "outputDirectory": "dist",
   "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
+  "env": {
+    "EXPO_NO_METRO_LAZY": "1",
+    "NODE_ENV": "production"
+  },
   "headers": [
     {
       "source": "/(.*)",
