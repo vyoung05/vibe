@@ -21,6 +21,7 @@ import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAppStore } from "../state/appStore";
 import { useAuthStore } from "../state/authStore";
+import { GuestPrompt } from "../components/GuestPrompt";
 import type { MainTabsParamList } from "../navigation/MainTabs";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import type { BookingType, Booking } from "../types";
@@ -291,9 +292,12 @@ export const BookingsScreen: React.FC = () => {
           {activeTab === "my-bookings" && (
             <View className="p-6">
               {!user ? (
-                <View className="items-center py-12">
-                  <Ionicons name="person-outline" size={64} color="#4B5563" />
-                  <Text className="text-gray-400 text-lg mt-4">Sign in to view your bookings</Text>
+                <View className="py-12">
+                  <GuestPrompt
+                    title="Your Bookings"
+                    description="Sign in to book sessions with your favorite streamers and manage your appointments."
+                    icon="calendar-outline"
+                  />
                 </View>
               ) : myBookings.length > 0 ? (
                 myBookings.map((booking) => {
@@ -415,11 +419,10 @@ export const BookingsScreen: React.FC = () => {
                           <Pressable
                             key={type.value}
                             onPress={() => setSelectedType(type.value)}
-                            className={`px-4 py-2 rounded-xl border flex-row items-center ${
-                              selectedType === type.value
-                                ? "bg-purple-600 border-purple-600"
-                                : "bg-[#0A0A0F] border-gray-700"
-                            }`}
+                            className={`px-4 py-2 rounded-xl border flex-row items-center ${selectedType === type.value
+                              ? "bg-purple-600 border-purple-600"
+                              : "bg-[#0A0A0F] border-gray-700"
+                              }`}
                           >
                             <Ionicons
                               name={type.icon as any}

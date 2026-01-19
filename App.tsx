@@ -141,36 +141,45 @@ export default function App() {
       <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {!isAuthenticated ? (
+            {/* Main application entry point for everyone */}
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+
+            {/* Auth flow screens */}
+            {!isAuthenticated && (
               <>
                 <Stack.Screen name="SignIn" component={SignInScreen} />
                 <Stack.Screen name="SignUp" component={SignUpScreen} />
               </>
-            ) : needsOnboarding ? (
+            )}
+
+            {/* Shared and protected screens */}
+            <Stack.Screen name="StreamerProfile" component={StreamerProfileScreen} />
+            <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+            <Stack.Screen name="MerchantDetail" component={MerchantDetailScreen} />
+            <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
+
+            {isAuthenticated ? (
               <>
-                <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
-                <Stack.Screen name="MainTabs" component={MainTabs} />
-                <Stack.Screen name="StreamerProfile" component={StreamerProfileScreen} />
-              </>
-            ) : (
-              <>
-                {/* Admin screens - registered before MainTabs for proper navigation from nested tabs */}
+                {needsOnboarding && (
+                  <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
+                )}
+
+                {/* Admin screens */}
                 <Stack.Screen name="AdminManagement" component={AdminManagementScreen} />
                 <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
                 <Stack.Screen name="AdminMerchStore" component={AdminMerchStoreScreen} />
                 <Stack.Screen name="AdminMerchants" component={AdminMerchantsScreen} />
                 <Stack.Screen name="AdminItems" component={AdminItemsScreen} />
                 <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} />
-                <Stack.Screen name="MainTabs" component={MainTabs} />
+                <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+
+                {/* Authenticated user screens */}
                 <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
                 <Stack.Screen name="InviteFriends" component={InviteFriendsScreen} />
-                <Stack.Screen name="PostDetail" component={PostDetailScreen} />
                 <Stack.Screen name="CreatePost" component={CreatePostScreen} />
-                <Stack.Screen name="StreamerProfile" component={StreamerProfileScreen} />
                 <Stack.Screen name="EditStreamerProfile" component={EditStreamerProfileScreen} />
                 <Stack.Screen name="StreamerBookingSettings" component={StreamerBookingSettingsScreen} />
                 <Stack.Screen name="StreamerEvents" component={StreamerEventsScreen} />
-                <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
                 <Stack.Screen name="Notifications" component={NotificationsScreen} />
                 <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
                 <Stack.Screen name="Billing" component={BillingScreen} />
@@ -178,8 +187,6 @@ export default function App() {
                 <Stack.Screen name="Chat" component={ChatScreen} />
                 <Stack.Screen name="StreamerAnalytics" component={StreamerAnalyticsScreen} />
                 <Stack.Screen name="Streaming" component={StreamingScreen} />
-                <Stack.Screen name="MerchantDetail" component={MerchantDetailScreen} />
-                <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
                 <Stack.Screen name="Cart" component={CartScreen} />
                 <Stack.Screen name="Checkout" component={CheckoutScreen} />
                 <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
@@ -190,7 +197,7 @@ export default function App() {
                 <Stack.Screen name="MerchOrderTracking" component={MerchOrderTrackingScreen} />
                 <Stack.Screen name="StreamerMerch" component={StreamerMerchScreen} />
               </>
-            )}
+            ) : null}
           </Stack.Navigator>
           <StatusBar style="light" />
         </NavigationContainer>

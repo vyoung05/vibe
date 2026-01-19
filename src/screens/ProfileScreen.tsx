@@ -12,6 +12,7 @@ import { useAppStore } from "../state/appStore";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { ProfileGallery } from "../components/ProfileGallery";
+import { GuestPrompt } from "../components/GuestPrompt";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { CompositeNavigationProp } from "@react-navigation/native";
@@ -70,13 +71,13 @@ export const ProfileScreen: React.FC = () => {
   // Get user's posts - filter posts where the user is the author
   const userPosts = user
     ? posts
-        .filter((post) => post.user.id === user.id)
-        .map((post) => ({
-          ...post,
-          isLiked: (post.likedBy || []).includes(user.id),
-          isSaved: (post.savedBy || []).includes(user.id),
-        }))
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .filter((post) => post.user.id === user.id)
+      .map((post) => ({
+        ...post,
+        isLiked: (post.likedBy || []).includes(user.id),
+        isSaved: (post.savedBy || []).includes(user.id),
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : [];
 
   // Sync local state with user updates
@@ -96,7 +97,16 @@ export const ProfileScreen: React.FC = () => {
   }, [user]);
 
   if (!user) {
-    return null;
+    return (
+      <View className="flex-1 bg-[#050509]">
+        <View style={{ paddingTop: insets.top }} />
+        <GuestPrompt
+          title="Your Profile awaits"
+          description="Sign in to share your moments, follow streamers, and build your community."
+          icon="person-outline"
+        />
+      </View>
+    );
   }
 
   const isAdmin = user.role === "admin";
@@ -587,9 +597,8 @@ export const ProfileScreen: React.FC = () => {
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1">
                     <View
-                      className={`w-12 h-12 rounded-full items-center justify-center ${
-                        user.isVerified ? "bg-purple-500/20" : "bg-gray-700/50"
-                      }`}
+                      className={`w-12 h-12 rounded-full items-center justify-center ${user.isVerified ? "bg-purple-500/20" : "bg-gray-700/50"
+                        }`}
                     >
                       <Ionicons
                         name="checkmark-circle"
@@ -605,8 +614,8 @@ export const ProfileScreen: React.FC = () => {
                         {user.isVerified
                           ? "Your account has the purple checkmark"
                           : user.verificationStatus === "pending"
-                          ? "Request pending review..."
-                          : "Request the purple verification badge"}
+                            ? "Request pending review..."
+                            : "Request the purple verification badge"}
                       </Text>
                     </View>
                   </View>
@@ -645,9 +654,8 @@ export const ProfileScreen: React.FC = () => {
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1">
                     <View
-                      className={`w-12 h-12 rounded-full items-center justify-center ${
-                        user.isInfluencer ? "bg-amber-500/20" : "bg-gray-700/50"
-                      }`}
+                      className={`w-12 h-12 rounded-full items-center justify-center ${user.isInfluencer ? "bg-amber-500/20" : "bg-gray-700/50"
+                        }`}
                     >
                       <Ionicons
                         name="star"
@@ -826,449 +834,447 @@ export const ProfileScreen: React.FC = () => {
         </Pressable>
       </Modal>
 
-        {/* Avatar Upload Modal */}
-        <Modal visible={showAvatarModal} animationType="slide" transparent>
-          <View className="flex-1 bg-black/50 justify-end">
-            <View className="bg-[#151520] rounded-t-3xl p-6">
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">Update Profile Picture</Text>
-                <Pressable onPress={() => setShowAvatarModal(false)}>
-                  <Ionicons name="close" size={28} color="white" />
+      {/* Avatar Upload Modal */}
+      <Modal visible={showAvatarModal} animationType="slide" transparent>
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-[#151520] rounded-t-3xl p-6">
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-white text-xl font-bold">Update Profile Picture</Text>
+              <Pressable onPress={() => setShowAvatarModal(false)}>
+                <Ionicons name="close" size={28} color="white" />
+              </Pressable>
+            </View>
+
+            {/* Upload Options */}
+            <View className="mb-6">
+              <View className="flex-row gap-3 mb-4">
+                <Pressable
+                  onPress={takePhoto}
+                  className="flex-1 bg-purple-600 rounded-xl py-4 items-center"
+                >
+                  <Ionicons name="camera" size={24} color="white" />
+                  <Text className="text-white font-semibold mt-2">Take Photo</Text>
+                </Pressable>
+                <Pressable
+                  onPress={pickImage}
+                  className="flex-1 bg-pink-600 rounded-xl py-4 items-center"
+                >
+                  <Ionicons name="images" size={24} color="white" />
+                  <Text className="text-white font-semibold mt-2">Choose from Gallery</Text>
                 </Pressable>
               </View>
 
-              {/* Upload Options */}
+              <Text className="text-gray-400 text-center text-sm mb-2">OR</Text>
+
+              <Text className="text-gray-400 text-sm mb-2">Paste an image URL:</Text>
+              <TextInput
+                placeholder="https://example.com/your-image.jpg"
+                placeholderTextColor="#6B7280"
+                value={avatarUrl}
+                onChangeText={setAvatarUrl}
+                className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                autoCapitalize="none"
+              />
+            </View>
+
+            {avatarUrl.trim() && (
+              <View className="mb-4 items-center">
+                <Text className="text-gray-400 text-sm mb-2">Preview:</Text>
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: "#8B5CF6" }}
+                  contentFit="cover"
+                />
+              </View>
+            )}
+
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={() => {
+                  setAvatarUrl("");
+                  updateUser({ avatar: "" });
+                  setShowAvatarModal(false);
+                }}
+                className="flex-1 bg-red-600/20 py-4 rounded-xl border border-red-600/50"
+              >
+                <Text className="text-red-400 text-center font-bold">Remove Picture</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleUpdateAvatar}
+                className="flex-1 bg-purple-600 py-4 rounded-xl"
+              >
+                <Text className="text-white text-center font-bold">Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Achievements Modal */}
+      <Modal visible={showAchievements} animationType="slide" transparent>
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-[#151520] rounded-t-3xl p-6" style={{ maxHeight: "80%" }}>
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-white text-xl font-bold">Achievements</Text>
+              <Pressable onPress={() => setShowAchievements(false)}>
+                <Ionicons name="close" size={28} color="white" />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {achievements.map((achievement) => {
+                const isUnlocked = userAchievements.includes(achievement.id);
+                const progress =
+                  achievement.type === "referrals"
+                    ? userReferrals.length
+                    : achievement.type === "followers"
+                      ? user.followedStreamers.length
+                      : 0;
+
+                return (
+                  <View
+                    key={achievement.id}
+                    className={`mb-4 rounded-xl p-4 border ${isUnlocked
+                      ? "bg-[#0A0A0F] border-gray-700"
+                      : "bg-gray-800/30 border-gray-800"
+                      }`}
+                  >
+                    <View className="flex-row items-center">
+                      <View
+                        className="w-16 h-16 rounded-full items-center justify-center mr-4"
+                        style={{
+                          backgroundColor: isUnlocked
+                            ? achievement.color + "40"
+                            : "#374151",
+                        }}
+                      >
+                        <Ionicons
+                          name={achievement.icon as any}
+                          size={32}
+                          color={isUnlocked ? achievement.color : "#6B7280"}
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <Text
+                          className={`font-bold text-lg ${isUnlocked ? "text-white" : "text-gray-500"
+                            }`}
+                        >
+                          {achievement.name}
+                        </Text>
+                        <Text className="text-gray-400 text-sm mb-1">
+                          {achievement.description}
+                        </Text>
+                        {!isUnlocked && (
+                          <Text className="text-gray-500 text-xs">
+                            Progress: {progress}/{achievement.requirement}
+                          </Text>
+                        )}
+                      </View>
+                      {isUnlocked && (
+                        <View className="bg-green-500/20 rounded-full p-2">
+                          <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Profile Modal */}
+      <Modal visible={showEditProfile} animationType="slide" transparent>
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-[#151520] rounded-t-3xl p-6" style={{ maxHeight: "90%" }}>
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-white text-xl font-bold">Edit Profile</Text>
+              <Pressable onPress={() => setShowEditProfile(false)}>
+                <Ionicons name="close" size={28} color="white" />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Username */}
               <View className="mb-6">
-                <View className="flex-row gap-3 mb-4">
-                  <Pressable
-                    onPress={takePhoto}
-                    className="flex-1 bg-purple-600 rounded-xl py-4 items-center"
-                  >
-                    <Ionicons name="camera" size={24} color="white" />
-                    <Text className="text-white font-semibold mt-2">Take Photo</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={pickImage}
-                    className="flex-1 bg-pink-600 rounded-xl py-4 items-center"
-                  >
-                    <Ionicons name="images" size={24} color="white" />
-                    <Text className="text-white font-semibold mt-2">Choose from Gallery</Text>
-                  </Pressable>
-                </View>
-
-                <Text className="text-gray-400 text-center text-sm mb-2">OR</Text>
-
-                <Text className="text-gray-400 text-sm mb-2">Paste an image URL:</Text>
+                <Text className="text-gray-400 text-sm mb-2">Username</Text>
                 <TextInput
-                  placeholder="https://example.com/your-image.jpg"
+                  placeholder="Enter username"
                   placeholderTextColor="#6B7280"
-                  value={avatarUrl}
-                  onChangeText={setAvatarUrl}
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                  value={editUsername}
+                  onChangeText={setEditUsername}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
                   autoCapitalize="none"
                 />
               </View>
 
-              {avatarUrl.trim() && (
-                <View className="mb-4 items-center">
-                  <Text className="text-gray-400 text-sm mb-2">Preview:</Text>
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: "#8B5CF6" }}
-                    contentFit="cover"
-                  />
+              {/* Bio */}
+              <View className="mb-6">
+                <Text className="text-gray-400 text-sm mb-2">Bio</Text>
+                <TextInput
+                  placeholder="Tell us about yourself..."
+                  placeholderTextColor="#6B7280"
+                  value={editBio}
+                  onChangeText={setEditBio}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  maxLength={200}
+                  style={{ minHeight: 100 }}
+                />
+                <Text className="text-gray-500 text-xs mt-1 text-right">
+                  {editBio.length}/200 characters
+                </Text>
+              </View>
+
+              {/* Social Media Links */}
+              <Text className="text-white text-lg font-bold mb-4">Social Media</Text>
+
+              {/* Twitch */}
+              <View className="mb-4">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="logo-twitch" size={20} color="#9146FF" />
+                  <Text className="text-gray-400 text-sm ml-2">Twitch</Text>
+                </View>
+                <TextInput
+                  placeholder="Enter Twitch username or URL"
+                  placeholderTextColor="#6B7280"
+                  value={editSocialLinks.twitch}
+                  onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, twitch: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* YouTube */}
+              <View className="mb-4">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="logo-youtube" size={20} color="#FF0000" />
+                  <Text className="text-gray-400 text-sm ml-2">YouTube</Text>
+                </View>
+                <TextInput
+                  placeholder="Enter YouTube channel or URL"
+                  placeholderTextColor="#6B7280"
+                  value={editSocialLinks.youtube}
+                  onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, youtube: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Instagram */}
+              <View className="mb-4">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="logo-instagram" size={20} color="#E4405F" />
+                  <Text className="text-gray-400 text-sm ml-2">Instagram</Text>
+                </View>
+                <TextInput
+                  placeholder="Enter Instagram username or URL"
+                  placeholderTextColor="#6B7280"
+                  value={editSocialLinks.instagram}
+                  onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, instagram: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Twitter */}
+              <View className="mb-4">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+                  <Text className="text-gray-400 text-sm ml-2">Twitter</Text>
+                </View>
+                <TextInput
+                  placeholder="Enter Twitter username or URL"
+                  placeholderTextColor="#6B7280"
+                  value={editSocialLinks.twitter}
+                  onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, twitter: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* TikTok */}
+              <View className="mb-6">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="logo-tiktok" size={20} color="#00F2EA" />
+                  <Text className="text-gray-400 text-sm ml-2">TikTok</Text>
+                </View>
+                <TextInput
+                  placeholder="Enter TikTok username or URL"
+                  placeholderTextColor="#6B7280"
+                  value={editSocialLinks.tiktok}
+                  onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, tiktok: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Save Button */}
+              <Pressable
+                onPress={handleSaveProfile}
+                className="bg-purple-600 py-4 rounded-xl mb-4"
+              >
+                <Text className="text-white text-center font-bold text-base">Save Changes</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Following Modal */}
+      <Modal visible={showFollowingModal} animationType="slide" transparent>
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-[#151520] rounded-t-3xl p-6" style={{ maxHeight: "80%" }}>
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-white text-xl font-bold">Following</Text>
+              <Pressable onPress={() => setShowFollowingModal(false)}>
+                <Ionicons name="close" size={28} color="white" />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Followed Streamers */}
+              {user.followedStreamers && user.followedStreamers.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                    Streamers
+                  </Text>
+                  {streamers
+                    .filter((s) => user.followedStreamers?.includes(s.id))
+                    .map((streamer) => (
+                      <View
+                        key={streamer.id}
+                        className="flex-row items-center bg-[#0A0A0F] p-4 rounded-2xl mb-3"
+                      >
+                        <Pressable
+                          onPress={() => {
+                            setShowFollowingModal(false);
+                            const tabNav = navigation.getParent();
+                            const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                            if (rootNav) {
+                              rootNav.navigate("StreamerProfile", { streamerId: streamer.id });
+                            }
+                          }}
+                          className="flex-row items-center flex-1"
+                        >
+                          <Image
+                            source={{ uri: streamer.avatar }}
+                            style={{
+                              width: 56,
+                              height: 56,
+                              borderRadius: 28,
+                              borderWidth: 2,
+                              borderColor: streamer.isLive ? "#EC4899" : "#374151"
+                            }}
+                            contentFit="cover"
+                          />
+                          <View className="flex-1 ml-4">
+                            <View className="flex-row items-center">
+                              <Text className="text-white font-bold text-base">{streamer.name}</Text>
+                              {streamer.isLive && (
+                                <View className="ml-2 bg-pink-500 px-2 py-0.5 rounded-full">
+                                  <Text className="text-white text-xs font-bold">LIVE</Text>
+                                </View>
+                              )}
+                            </View>
+                            <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
+                            <Text className="text-gray-500 text-xs mt-1">
+                              {streamer.followerCount.toLocaleString()} followers
+                            </Text>
+                          </View>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => handleUnfollowStreamer(streamer.id)}
+                          className="bg-[#1C1C24] px-4 py-2 rounded-lg"
+                        >
+                          <Text className="text-gray-400 font-semibold text-sm">Following</Text>
+                        </Pressable>
+                      </View>
+                    ))}
                 </View>
               )}
 
-              <View className="flex-row gap-3">
-                <Pressable
-                  onPress={() => {
-                    setAvatarUrl("");
-                    updateUser({ avatar: "" });
-                    setShowAvatarModal(false);
-                  }}
-                  className="flex-1 bg-red-600/20 py-4 rounded-xl border border-red-600/50"
-                >
-                  <Text className="text-red-400 text-center font-bold">Remove Picture</Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleUpdateAvatar}
-                  className="flex-1 bg-purple-600 py-4 rounded-xl"
-                >
-                  <Text className="text-white text-center font-bold">Save</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Achievements Modal */}
-        <Modal visible={showAchievements} animationType="slide" transparent>
-          <View className="flex-1 bg-black/50 justify-end">
-            <View className="bg-[#151520] rounded-t-3xl p-6" style={{ maxHeight: "80%" }}>
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">Achievements</Text>
-                <Pressable onPress={() => setShowAchievements(false)}>
-                  <Ionicons name="close" size={28} color="white" />
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {achievements.map((achievement) => {
-                  const isUnlocked = userAchievements.includes(achievement.id);
-                  const progress =
-                    achievement.type === "referrals"
-                      ? userReferrals.length
-                      : achievement.type === "followers"
-                      ? user.followedStreamers.length
-                      : 0;
-
-                  return (
-                    <View
-                      key={achievement.id}
-                      className={`mb-4 rounded-xl p-4 border ${
-                        isUnlocked
-                          ? "bg-[#0A0A0F] border-gray-700"
-                          : "bg-gray-800/30 border-gray-800"
-                      }`}
-                    >
-                      <View className="flex-row items-center">
-                        <View
-                          className="w-16 h-16 rounded-full items-center justify-center mr-4"
-                          style={{
-                            backgroundColor: isUnlocked
-                              ? achievement.color + "40"
-                              : "#374151",
-                          }}
-                        >
-                          <Ionicons
-                            name={achievement.icon as any}
-                            size={32}
-                            color={isUnlocked ? achievement.color : "#6B7280"}
+              {/* Followed Users */}
+              {user.followingUsers && user.followingUsers.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                    People
+                  </Text>
+                  {userAccounts
+                    .filter((account) => user.followingUsers?.includes(account.user.id))
+                    .map((account) => (
+                      <View
+                        key={account.user.id}
+                        className="flex-row items-center bg-[#0A0A0F] p-4 rounded-2xl mb-3"
+                      >
+                        {account.user.avatar ? (
+                          <Image
+                            source={{ uri: account.user.avatar }}
+                            style={{
+                              width: 56,
+                              height: 56,
+                              borderRadius: 28,
+                              borderWidth: 2,
+                              borderColor: account.user.isVerified ? "#A855F7" : "#374151"
+                            }}
+                            contentFit="cover"
                           />
-                        </View>
-                        <View className="flex-1">
-                          <Text
-                            className={`font-bold text-lg ${
-                              isUnlocked ? "text-white" : "text-gray-500"
-                            }`}
+                        ) : (
+                          <View
+                            className="w-14 h-14 rounded-full items-center justify-center"
+                            style={{
+                              backgroundColor: "#1C1C24",
+                              borderWidth: 2,
+                              borderColor: account.user.isVerified ? "#A855F7" : "#374151"
+                            }}
                           >
-                            {achievement.name}
-                          </Text>
-                          <Text className="text-gray-400 text-sm mb-1">
-                            {achievement.description}
-                          </Text>
-                          {!isUnlocked && (
-                            <Text className="text-gray-500 text-xs">
-                              Progress: {progress}/{achievement.requirement}
+                            <Text className="text-white text-xl font-bold">
+                              {account.user.username.charAt(0).toUpperCase()}
                             </Text>
-                          )}
-                        </View>
-                        {isUnlocked && (
-                          <View className="bg-green-500/20 rounded-full p-2">
-                            <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                           </View>
                         )}
-                      </View>
-                    </View>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Edit Profile Modal */}
-        <Modal visible={showEditProfile} animationType="slide" transparent>
-          <View className="flex-1 bg-black/50 justify-end">
-            <View className="bg-[#151520] rounded-t-3xl p-6" style={{ maxHeight: "90%" }}>
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">Edit Profile</Text>
-                <Pressable onPress={() => setShowEditProfile(false)}>
-                  <Ionicons name="close" size={28} color="white" />
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Username */}
-                <View className="mb-6">
-                  <Text className="text-gray-400 text-sm mb-2">Username</Text>
-                  <TextInput
-                    placeholder="Enter username"
-                    placeholderTextColor="#6B7280"
-                    value={editUsername}
-                    onChangeText={setEditUsername}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {/* Bio */}
-                <View className="mb-6">
-                  <Text className="text-gray-400 text-sm mb-2">Bio</Text>
-                  <TextInput
-                    placeholder="Tell us about yourself..."
-                    placeholderTextColor="#6B7280"
-                    value={editBio}
-                    onChangeText={setEditBio}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    maxLength={200}
-                    style={{ minHeight: 100 }}
-                  />
-                  <Text className="text-gray-500 text-xs mt-1 text-right">
-                    {editBio.length}/200 characters
-                  </Text>
-                </View>
-
-                {/* Social Media Links */}
-                <Text className="text-white text-lg font-bold mb-4">Social Media</Text>
-
-                {/* Twitch */}
-                <View className="mb-4">
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons name="logo-twitch" size={20} color="#9146FF" />
-                    <Text className="text-gray-400 text-sm ml-2">Twitch</Text>
-                  </View>
-                  <TextInput
-                    placeholder="Enter Twitch username or URL"
-                    placeholderTextColor="#6B7280"
-                    value={editSocialLinks.twitch}
-                    onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, twitch: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {/* YouTube */}
-                <View className="mb-4">
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons name="logo-youtube" size={20} color="#FF0000" />
-                    <Text className="text-gray-400 text-sm ml-2">YouTube</Text>
-                  </View>
-                  <TextInput
-                    placeholder="Enter YouTube channel or URL"
-                    placeholderTextColor="#6B7280"
-                    value={editSocialLinks.youtube}
-                    onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, youtube: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {/* Instagram */}
-                <View className="mb-4">
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons name="logo-instagram" size={20} color="#E4405F" />
-                    <Text className="text-gray-400 text-sm ml-2">Instagram</Text>
-                  </View>
-                  <TextInput
-                    placeholder="Enter Instagram username or URL"
-                    placeholderTextColor="#6B7280"
-                    value={editSocialLinks.instagram}
-                    onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, instagram: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {/* Twitter */}
-                <View className="mb-4">
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
-                    <Text className="text-gray-400 text-sm ml-2">Twitter</Text>
-                  </View>
-                  <TextInput
-                    placeholder="Enter Twitter username or URL"
-                    placeholderTextColor="#6B7280"
-                    value={editSocialLinks.twitter}
-                    onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, twitter: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {/* TikTok */}
-                <View className="mb-6">
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons name="logo-tiktok" size={20} color="#00F2EA" />
-                    <Text className="text-gray-400 text-sm ml-2">TikTok</Text>
-                  </View>
-                  <TextInput
-                    placeholder="Enter TikTok username or URL"
-                    placeholderTextColor="#6B7280"
-                    value={editSocialLinks.tiktok}
-                    onChangeText={(text) => setEditSocialLinks({ ...editSocialLinks, tiktok: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {/* Save Button */}
-                <Pressable
-                  onPress={handleSaveProfile}
-                  className="bg-purple-600 py-4 rounded-xl mb-4"
-                >
-                  <Text className="text-white text-center font-bold text-base">Save Changes</Text>
-                </Pressable>
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Following Modal */}
-        <Modal visible={showFollowingModal} animationType="slide" transparent>
-          <View className="flex-1 bg-black/50 justify-end">
-            <View className="bg-[#151520] rounded-t-3xl p-6" style={{ maxHeight: "80%" }}>
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">Following</Text>
-                <Pressable onPress={() => setShowFollowingModal(false)}>
-                  <Ionicons name="close" size={28} color="white" />
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Followed Streamers */}
-                {user.followedStreamers && user.followedStreamers.length > 0 && (
-                  <View className="mb-4">
-                    <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
-                      Streamers
-                    </Text>
-                    {streamers
-                      .filter((s) => user.followedStreamers?.includes(s.id))
-                      .map((streamer) => (
-                        <View
-                          key={streamer.id}
-                          className="flex-row items-center bg-[#0A0A0F] p-4 rounded-2xl mb-3"
-                        >
-                          <Pressable
-                            onPress={() => {
-                              setShowFollowingModal(false);
-                              const tabNav = navigation.getParent();
-                              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                              if (rootNav) {
-                                rootNav.navigate("StreamerProfile", { streamerId: streamer.id });
-                              }
-                            }}
-                            className="flex-row items-center flex-1"
-                          >
-                            <Image
-                              source={{ uri: streamer.avatar }}
-                              style={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 28,
-                                borderWidth: 2,
-                                borderColor: streamer.isLive ? "#EC4899" : "#374151"
-                              }}
-                              contentFit="cover"
-                            />
-                            <View className="flex-1 ml-4">
-                              <View className="flex-row items-center">
-                                <Text className="text-white font-bold text-base">{streamer.name}</Text>
-                                {streamer.isLive && (
-                                  <View className="ml-2 bg-pink-500 px-2 py-0.5 rounded-full">
-                                    <Text className="text-white text-xs font-bold">LIVE</Text>
-                                  </View>
-                                )}
-                              </View>
-                              <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
-                              <Text className="text-gray-500 text-xs mt-1">
-                                {streamer.followerCount.toLocaleString()} followers
-                              </Text>
-                            </View>
-                          </Pressable>
-                          <Pressable
-                            onPress={() => handleUnfollowStreamer(streamer.id)}
-                            className="bg-[#1C1C24] px-4 py-2 rounded-lg"
-                          >
-                            <Text className="text-gray-400 font-semibold text-sm">Following</Text>
-                          </Pressable>
-                        </View>
-                      ))}
-                  </View>
-                )}
-
-                {/* Followed Users */}
-                {user.followingUsers && user.followingUsers.length > 0 && (
-                  <View className="mb-4">
-                    <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
-                      People
-                    </Text>
-                    {userAccounts
-                      .filter((account) => user.followingUsers?.includes(account.user.id))
-                      .map((account) => (
-                        <View
-                          key={account.user.id}
-                          className="flex-row items-center bg-[#0A0A0F] p-4 rounded-2xl mb-3"
-                        >
-                          {account.user.avatar ? (
-                            <Image
-                              source={{ uri: account.user.avatar }}
-                              style={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 28,
-                                borderWidth: 2,
-                                borderColor: account.user.isVerified ? "#A855F7" : "#374151"
-                              }}
-                              contentFit="cover"
-                            />
-                          ) : (
-                            <View
-                              className="w-14 h-14 rounded-full items-center justify-center"
-                              style={{
-                                backgroundColor: "#1C1C24",
-                                borderWidth: 2,
-                                borderColor: account.user.isVerified ? "#A855F7" : "#374151"
-                              }}
-                            >
-                              <Text className="text-white text-xl font-bold">
-                                {account.user.username.charAt(0).toUpperCase()}
-                              </Text>
-                            </View>
-                          )}
-                          <View className="flex-1 ml-4">
-                            <View className="flex-row items-center">
-                              <Text className="text-white font-bold text-base">
-                                {account.user.username}
-                              </Text>
-                              {account.user.isVerified && (
-                                <View className="ml-1.5 bg-purple-500 rounded-full p-0.5">
-                                  <Ionicons name="checkmark" size={10} color="white" />
-                                </View>
-                              )}
-                              {account.user.isInfluencer && (
-                                <View className="ml-1.5 bg-amber-500 rounded-full p-0.5">
-                                  <Ionicons name="star" size={10} color="white" />
-                                </View>
-                              )}
-                            </View>
-                            {account.user.bio && (
-                              <Text className="text-gray-400 text-sm" numberOfLines={1}>
-                                {account.user.bio}
-                              </Text>
-                            )}
-                            <Text className="text-gray-500 text-xs mt-1">
-                              {account.user.followers?.length || 0} followers
+                        <View className="flex-1 ml-4">
+                          <View className="flex-row items-center">
+                            <Text className="text-white font-bold text-base">
+                              {account.user.username}
                             </Text>
+                            {account.user.isVerified && (
+                              <View className="ml-1.5 bg-purple-500 rounded-full p-0.5">
+                                <Ionicons name="checkmark" size={10} color="white" />
+                              </View>
+                            )}
+                            {account.user.isInfluencer && (
+                              <View className="ml-1.5 bg-amber-500 rounded-full p-0.5">
+                                <Ionicons name="star" size={10} color="white" />
+                              </View>
+                            )}
                           </View>
-                          <Pressable
-                            onPress={() => handleUnfollowUser(account.user.id)}
-                            className="bg-[#1C1C24] px-4 py-2 rounded-lg"
-                          >
-                            <Text className="text-gray-400 font-semibold text-sm">Following</Text>
-                          </Pressable>
+                          {account.user.bio && (
+                            <Text className="text-gray-400 text-sm" numberOfLines={1}>
+                              {account.user.bio}
+                            </Text>
+                          )}
+                          <Text className="text-gray-500 text-xs mt-1">
+                            {account.user.followers?.length || 0} followers
+                          </Text>
                         </View>
-                      ))}
-                  </View>
-                )}
+                        <Pressable
+                          onPress={() => handleUnfollowUser(account.user.id)}
+                          className="bg-[#1C1C24] px-4 py-2 rounded-lg"
+                        >
+                          <Text className="text-gray-400 font-semibold text-sm">Following</Text>
+                        </Pressable>
+                      </View>
+                    ))}
+                </View>
+              )}
 
-                {/* Empty State */}
-                {(!user.followedStreamers || user.followedStreamers.length === 0) &&
-                  (!user.followingUsers || user.followingUsers.length === 0) && (
+              {/* Empty State */}
+              {(!user.followedStreamers || user.followedStreamers.length === 0) &&
+                (!user.followingUsers || user.followingUsers.length === 0) && (
                   <View className="items-center py-12">
                     <View className="w-20 h-20 rounded-full bg-gray-800/50 items-center justify-center mb-4">
                       <Ionicons name="people-outline" size={40} color="#6B7280" />
@@ -1292,72 +1298,72 @@ export const ProfileScreen: React.FC = () => {
                     </Pressable>
                   </View>
                 )}
-              </ScrollView>
-            </View>
+            </ScrollView>
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-        {/* Verification Request Modal */}
-        <Modal visible={showVerificationModal} animationType="slide" transparent>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            className="flex-1"
+      {/* Verification Request Modal */}
+      <Modal visible={showVerificationModal} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
+        >
+          <Pressable
+            className="flex-1 bg-black/50 justify-end"
+            onPress={() => setShowVerificationModal(false)}
           >
-            <Pressable
-              className="flex-1 bg-black/50 justify-end"
-              onPress={() => setShowVerificationModal(false)}
-            >
-              <Pressable onPress={(e) => e.stopPropagation()}>
-                <View className="bg-[#151520] rounded-t-3xl p-6">
-                  <View className="flex-row items-center justify-between mb-6">
-                    <Text className="text-white text-xl font-bold">Request Verification</Text>
-                    <Pressable onPress={() => setShowVerificationModal(false)}>
-                      <Ionicons name="close" size={28} color="white" />
-                    </Pressable>
-                  </View>
-
-                  <View className="items-center mb-6">
-                    <View className="w-16 h-16 rounded-full bg-purple-500/20 items-center justify-center mb-3">
-                      <Ionicons name="checkmark-circle" size={40} color="#A855F7" />
-                    </View>
-                    <Text className="text-gray-400 text-center text-sm px-4">
-                      The purple checkmark helps people know your account is authentic. Tell us why you should be verified.
-                    </Text>
-                  </View>
-
-                  <Text className="text-gray-400 text-sm mb-2">Why should you be verified? *</Text>
-                  <TextInput
-                    placeholder="I am a content creator, public figure, or notable in my field..."
-                    placeholderTextColor="#6B7280"
-                    value={verificationReason}
-                    onChangeText={setVerificationReason}
-                    multiline
-                    numberOfLines={3}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
-                    style={{ minHeight: 80, textAlignVertical: "top" }}
-                  />
-
-                  <Text className="text-gray-400 text-sm mb-2">Social media links (optional)</Text>
-                  <TextInput
-                    placeholder="Links to your other social profiles..."
-                    placeholderTextColor="#6B7280"
-                    value={verificationSocialProof}
-                    onChangeText={setVerificationSocialProof}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-6"
-                    autoCapitalize="none"
-                  />
-
-                  <Pressable
-                    onPress={handleRequestVerification}
-                    className="bg-purple-600 py-4 rounded-xl"
-                  >
-                    <Text className="text-white text-center font-bold">Submit Request</Text>
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <View className="bg-[#151520] rounded-t-3xl p-6">
+                <View className="flex-row items-center justify-between mb-6">
+                  <Text className="text-white text-xl font-bold">Request Verification</Text>
+                  <Pressable onPress={() => setShowVerificationModal(false)}>
+                    <Ionicons name="close" size={28} color="white" />
                   </Pressable>
                 </View>
-              </Pressable>
+
+                <View className="items-center mb-6">
+                  <View className="w-16 h-16 rounded-full bg-purple-500/20 items-center justify-center mb-3">
+                    <Ionicons name="checkmark-circle" size={40} color="#A855F7" />
+                  </View>
+                  <Text className="text-gray-400 text-center text-sm px-4">
+                    The purple checkmark helps people know your account is authentic. Tell us why you should be verified.
+                  </Text>
+                </View>
+
+                <Text className="text-gray-400 text-sm mb-2">Why should you be verified? *</Text>
+                <TextInput
+                  placeholder="I am a content creator, public figure, or notable in my field..."
+                  placeholderTextColor="#6B7280"
+                  value={verificationReason}
+                  onChangeText={setVerificationReason}
+                  multiline
+                  numberOfLines={3}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                  style={{ minHeight: 80, textAlignVertical: "top" }}
+                />
+
+                <Text className="text-gray-400 text-sm mb-2">Social media links (optional)</Text>
+                <TextInput
+                  placeholder="Links to your other social profiles..."
+                  placeholderTextColor="#6B7280"
+                  value={verificationSocialProof}
+                  onChangeText={setVerificationSocialProof}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-6"
+                  autoCapitalize="none"
+                />
+
+                <Pressable
+                  onPress={handleRequestVerification}
+                  className="bg-purple-600 py-4 rounded-xl"
+                >
+                  <Text className="text-white text-center font-bold">Submit Request</Text>
+                </Pressable>
+              </View>
             </Pressable>
-          </KeyboardAvoidingView>
-        </Modal>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };

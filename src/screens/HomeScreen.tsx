@@ -9,6 +9,7 @@ import * as WebBrowser from "expo-web-browser";
 import type { CompositeNavigationProp } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useAuthStore } from "../state/authStore";
 import { useAppStore } from "../state/appStore";
 import { StreamerCard } from "../components/StreamerCard";
 import { Badge } from "../components/Badge";
@@ -26,6 +27,7 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const streamers = useAppStore((s) => s.streamers);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const liveStreamers = streamers.filter((s) => s.isLive);
   const offlineStreamers = streamers.filter((s) => !s.isLive);
@@ -49,9 +51,28 @@ export const HomeScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <View className="px-6 py-8">
-            <Text className="text-white text-3xl font-black tracking-tighter">DDNS</Text>
-            <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Day Dreamers Night Streamers</Text>
+          <View className="px-6 py-8 flex-row items-center justify-between">
+            <View>
+              <Text className="text-white text-3xl font-black tracking-tighter">DDNS</Text>
+              <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Day Dreamers Night Streamers</Text>
+            </View>
+
+            {!isAuthenticated && (
+              <View className="flex-row items-center gap-2">
+                <Pressable
+                  onPress={() => navigation.navigate("SignIn")}
+                  className="px-4 py-2 rounded-full bg-white/5 border border-white/10"
+                >
+                  <Text className="text-white text-xs font-bold">Sign In</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => navigation.navigate("SignUp")}
+                  className="px-4 py-2 rounded-full bg-purple-500"
+                >
+                  <Text className="text-white text-xs font-bold">Join</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
 
           {/* Live Section */}
