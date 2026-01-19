@@ -12,7 +12,7 @@ web-build/
 .env
 .env.local
 .env.*.local
-.env.production
+# .env.production is committed for Vercel builds
 
 # Logs
 npm-debug.log*
