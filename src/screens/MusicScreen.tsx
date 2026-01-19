@@ -6,6 +6,7 @@ import {
   Pressable,
   FlatList,
   Dimensions,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -67,9 +68,8 @@ export const MusicScreen: React.FC = () => {
     return (
       <Pressable
         onPress={() => handlePlayTrack(item, index)}
-        className={`bg-[#151520] border ${
-          isCurrentTrack ? "border-purple-500" : "border-gray-800"
-        } rounded-xl p-4 mb-3`}
+        className={`bg-[#151520] border ${isCurrentTrack ? "border-purple-500" : "border-gray-800"
+          } rounded-xl p-4 mb-3`}
       >
         <View className="flex-row items-center">
           {/* Track Number / Playing Indicator */}
@@ -91,9 +91,8 @@ export const MusicScreen: React.FC = () => {
           {/* Track Info */}
           <View className="flex-1 ml-3">
             <Text
-              className={`font-bold text-sm ${
-                isCurrentTrack ? "text-purple-400" : "text-white"
-              }`}
+              className={`font-bold text-sm ${isCurrentTrack ? "text-purple-400" : "text-white"
+                }`}
               numberOfLines={1}
             >
               {item.title}
@@ -160,14 +159,12 @@ export const MusicScreen: React.FC = () => {
       >
         <Pressable
           onPress={() => setSelectedArtist(null)}
-          className={`px-4 py-2 rounded-full mr-2 ${
-            selectedArtist === null ? "bg-purple-600" : "bg-[#151520]"
-          }`}
+          className={`px-4 py-2 rounded-full mr-2 ${selectedArtist === null ? "bg-purple-600" : "bg-[#151520]"
+            }`}
         >
           <Text
-            className={`font-semibold text-sm ${
-              selectedArtist === null ? "text-white" : "text-gray-400"
-            }`}
+            className={`font-semibold text-sm ${selectedArtist === null ? "text-white" : "text-gray-400"
+              }`}
           >
             All Artists
           </Text>
@@ -177,14 +174,12 @@ export const MusicScreen: React.FC = () => {
           <Pressable
             key={artist.id}
             onPress={() => setSelectedArtist(artist.id)}
-            className={`px-4 py-2 rounded-full mr-2 ${
-              selectedArtist === artist.id ? "bg-purple-600" : "bg-[#151520]"
-            }`}
+            className={`px-4 py-2 rounded-full mr-2 ${selectedArtist === artist.id ? "bg-purple-600" : "bg-[#151520]"
+              }`}
           >
             <Text
-              className={`font-semibold text-sm ${
-                selectedArtist === artist.id ? "text-white" : "text-gray-400"
-              }`}
+              className={`font-semibold text-sm ${selectedArtist === artist.id ? "text-white" : "text-gray-400"
+                }`}
             >
               {artist.name}
             </Text>
@@ -197,7 +192,10 @@ export const MusicScreen: React.FC = () => {
         data={filteredTracks}
         renderItem={renderTrackItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: currentTrack ? 160 : 100 }}
+        contentContainerStyle={[
+          { padding: 16, paddingBottom: currentTrack ? 160 : 100 },
+          Platform.OS === 'web' ? { maxWidth: 800, width: '100%', alignSelf: 'center' } : {}
+        ]}
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
             <Ionicons name="musical-notes-outline" size={64} color="#374151" />
@@ -213,8 +211,8 @@ export const MusicScreen: React.FC = () => {
 
       {/* Now Playing Bar (if track is playing) */}
       {currentTrack && (
-        <View className="absolute bottom-0 left-0 right-0 bg-[#1C1C24] border-t border-gray-800 p-4">
-          <View className="flex-row items-center">
+        <View className="absolute bottom-0 left-0 right-0 bg-[#1C1C24] border-t border-gray-800 p-4 items-center">
+          <View className="flex-row items-center w-full max-w-[800px]">
             <Image
               source={{ uri: currentTrack.coverArt }}
               style={{ width: 60, height: 60, borderRadius: 8 }}

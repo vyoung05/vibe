@@ -7,6 +7,7 @@ import {
   Pressable,
   Share,
   Alert,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -239,6 +240,7 @@ export function HomeFeedScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={Platform.OS === 'web' ? { maxWidth: 600, width: '100%', alignSelf: 'center' } : {}}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

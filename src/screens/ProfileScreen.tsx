@@ -13,6 +13,7 @@ import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { ProfileGallery } from "../components/ProfileGallery";
 import { GuestPrompt } from "../components/GuestPrompt";
+import { PageContainer } from "../components/PageContainer";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { CompositeNavigationProp } from "@react-navigation/native";
@@ -247,557 +248,561 @@ export const ProfileScreen: React.FC = () => {
         className="bg-[#050509] border-b border-gray-800/50"
         style={{ paddingTop: insets.top }}
       >
-        <View className="flex-row items-center justify-between px-5 py-3">
-          <View className="flex-row items-center">
-            <Text className="text-white text-xl font-bold">{user.username}</Text>
-            {user.isVerified && (
-              <View className="ml-1.5 bg-purple-500 rounded-full p-0.5">
-                <Ionicons name="checkmark" size={12} color="white" />
-              </View>
-            )}
-            {user.isInfluencer && (
-              <View className="ml-1.5 bg-amber-500 rounded-full p-0.5">
-                <Ionicons name="star" size={12} color="white" />
-              </View>
-            )}
-            {isAdmin && (
-              <View className="ml-2 bg-purple-500/20 px-2 py-0.5 rounded-full">
-                <Text className="text-purple-400 text-xs font-semibold">ADMIN</Text>
-              </View>
-            )}
+        <PageContainer>
+          <View className="flex-row items-center justify-between px-5 py-3">
+            <View className="flex-row items-center">
+              <Text className="text-white text-xl font-bold">{user.username}</Text>
+              {user.isVerified && (
+                <View className="ml-1.5 bg-purple-500 rounded-full p-0.5">
+                  <Ionicons name="checkmark" size={12} color="white" />
+                </View>
+              )}
+              {user.isInfluencer && (
+                <View className="ml-1.5 bg-amber-500 rounded-full p-0.5">
+                  <Ionicons name="star" size={12} color="white" />
+                </View>
+              )}
+              {isAdmin && (
+                <View className="ml-2 bg-purple-500/20 px-2 py-0.5 rounded-full">
+                  <Text className="text-purple-400 text-xs font-semibold">ADMIN</Text>
+                </View>
+              )}
+            </View>
+            <View className="flex-row items-center gap-4">
+              <Pressable
+                onPress={() => {
+                  const tabNav = navigation.getParent();
+                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                  if (rootNav) {
+                    rootNav.navigate("CreatePost");
+                  }
+                }}
+                className="p-1"
+              >
+                <Ionicons name="add-circle-outline" size={26} color="#FFFFFF" />
+              </Pressable>
+              <Pressable
+                onPress={() => setSelectedTab("about")}
+                className="p-1"
+              >
+                <Ionicons name="menu-outline" size={26} color="#FFFFFF" />
+              </Pressable>
+            </View>
           </View>
-          <View className="flex-row items-center gap-4">
-            <Pressable
-              onPress={() => {
-                const tabNav = navigation.getParent();
-                const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                if (rootNav) {
-                  rootNav.navigate("CreatePost");
-                }
-              }}
-              className="p-1"
-            >
-              <Ionicons name="add-circle-outline" size={26} color="#FFFFFF" />
-            </Pressable>
-            <Pressable
-              onPress={() => setSelectedTab("about")}
-              className="p-1"
-            >
-              <Ionicons name="menu-outline" size={26} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        </View>
+        </PageContainer>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Profile Info Section */}
-        <View className="px-5 pt-5">
-          <View className="flex-row items-center">
-            {/* Avatar */}
-            <Pressable onPress={() => setShowAvatarModal(true)} className="relative">
-              {user.avatar ? (
-                <Image
-                  source={{ uri: user.avatar }}
-                  style={{
-                    width: 88,
-                    height: 88,
-                    borderRadius: 44,
-                    borderWidth: 3,
-                    borderColor: user.tier === "superfan" ? "#EC4899" : "#3B82F6"
-                  }}
-                  contentFit="cover"
-                />
-              ) : (
-                <View
-                  className="w-[88px] h-[88px] rounded-full items-center justify-center"
-                  style={{
-                    backgroundColor: user.tier === "superfan" ? "rgba(236,72,153,0.2)" : "rgba(59,130,246,0.2)",
-                    borderWidth: 3,
-                    borderColor: user.tier === "superfan" ? "#EC4899" : "#3B82F6"
-                  }}
-                >
-                  <Text className="text-white text-3xl font-bold">
-                    {user.username.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              <View className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1.5 border-2 border-[#050509]">
-                <Ionicons name="add" size={14} color="white" />
-              </View>
-            </Pressable>
-
-            {/* Stats Row */}
-            <View className="flex-1 flex-row justify-around ml-6">
-              <Pressable className="items-center">
-                <Text className="text-white text-xl font-bold">{user.followers?.length || 0}</Text>
-                <Text className="text-gray-400 text-sm">Followers</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setShowFollowingModal(true)}
-                className="items-center"
-              >
-                <Text className="text-white text-xl font-bold">
-                  {(user.followedStreamers?.length || 0) + (user.followingUsers?.length || 0)}
-                </Text>
-                <Text className="text-gray-400 text-sm">Following</Text>
-              </Pressable>
-              <Pressable className="items-center">
-                <Text className="text-white text-xl font-bold">{userPosts.length}</Text>
-                <Text className="text-gray-400 text-sm">Posts</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Name & Bio */}
-          <View className="mt-4">
-            <View className="flex-row items-center">
-              <Text className="text-white font-semibold text-base">{user.username}</Text>
-              {user.tier === "superfan" && (
-                <View className="ml-2 flex-row items-center bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-2 py-0.5 rounded-full">
-                  <Ionicons name="star" size={12} color="#EC4899" />
-                  <Text className="text-pink-400 text-xs font-medium ml-1">Super Fan</Text>
-                </View>
-              )}
-            </View>
-            {user.bio ? (
-              <Text className="text-gray-300 text-sm mt-1 leading-5">{user.bio}</Text>
-            ) : (
-              <Text className="text-gray-500 text-sm mt-1">Add a bio to tell people about yourself</Text>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <View className="flex-row mt-4 gap-2">
-            <Pressable
-              onPress={() => setShowEditProfile(true)}
-              className="flex-1 bg-[#1C1C24] py-2.5 rounded-lg"
-            >
-              <Text className="text-white text-center font-semibold text-sm">Edit Profile</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                copyToClipboard();
-              }}
-              className="flex-1 bg-[#1C1C24] py-2.5 rounded-lg"
-            >
-              <Text className="text-white text-center font-semibold text-sm">Share Profile</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setShowLogoutModal(true)}
-              className="bg-[#1C1C24] px-4 py-2.5 rounded-lg"
-            >
-              <Ionicons name="log-out-outline" size={18} color="#EF4444" />
-            </Pressable>
-          </View>
-
-          {/* Social Links Preview */}
-          {(user.socialLinks?.instagram || user.socialLinks?.tiktok || user.socialLinks?.youtube) && (
-            <View className="flex-row mt-4 gap-3">
-              {user.socialLinks?.instagram && (
-                <View className="flex-row items-center bg-[#1C1C24] px-3 py-1.5 rounded-full">
-                  <Ionicons name="logo-instagram" size={14} color="#E4405F" />
-                  <Text className="text-gray-300 text-xs ml-1.5">Instagram</Text>
-                </View>
-              )}
-              {user.socialLinks?.tiktok && (
-                <View className="flex-row items-center bg-[#1C1C24] px-3 py-1.5 rounded-full">
-                  <Ionicons name="logo-tiktok" size={14} color="#00F2EA" />
-                  <Text className="text-gray-300 text-xs ml-1.5">TikTok</Text>
-                </View>
-              )}
-              {user.socialLinks?.youtube && (
-                <View className="flex-row items-center bg-[#1C1C24] px-3 py-1.5 rounded-full">
-                  <Ionicons name="logo-youtube" size={14} color="#FF0000" />
-                  <Text className="text-gray-300 text-xs ml-1.5">YouTube</Text>
-                </View>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* Tabs */}
-        <View className="flex-row mt-5 border-b border-gray-800">
-          <Pressable
-            onPress={() => setSelectedTab("posts")}
-            className={`flex-1 py-3 items-center border-b-2 ${selectedTab === "posts" ? "border-white" : "border-transparent"}`}
-          >
-            <Ionicons
-              name="grid-outline"
-              size={24}
-              color={selectedTab === "posts" ? "#FFFFFF" : "#6B7280"}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => setSelectedTab("about")}
-            className={`flex-1 py-3 items-center border-b-2 ${selectedTab === "about" ? "border-white" : "border-transparent"}`}
-          >
-            <Ionicons
-              name="person-outline"
-              size={24}
-              color={selectedTab === "about" ? "#FFFFFF" : "#6B7280"}
-            />
-          </Pressable>
-        </View>
-
-        {/* Content */}
-        {selectedTab === "posts" ? (
-          <ProfileGallery
-            posts={userPosts}
-            onPostPress={(postId) => {
-              const tabNav = navigation.getParent();
-              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (rootNav) {
-                rootNav.navigate("PostDetail", { postId });
-              }
-            }}
-            isOwnProfile={true}
-          />
-        ) : (
+        <PageContainer>
+          {/* Profile Info Section */}
           <View className="px-5 pt-5">
-            {/* Quick Actions for Streamers/Admins */}
-            {(isStreamer || isAdmin) && (
-              <View className="mb-6">
-                <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Creator Tools</Text>
-
-                {isAdmin && (
-                  <Pressable
-                    onPress={() => {
-                      const tabNav = navigation.getParent();
-                      const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                      if (rootNav) {
-                        rootNav.navigate("AdminDashboard");
-                      }
+            <View className="flex-row items-center">
+              {/* Avatar */}
+              <Pressable onPress={() => setShowAvatarModal(true)} className="relative">
+                {user.avatar ? (
+                  <Image
+                    source={{ uri: user.avatar }}
+                    style={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 44,
+                      borderWidth: 3,
+                      borderColor: user.tier === "superfan" ? "#EC4899" : "#3B82F6"
                     }}
-                    className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
-                  >
-                    <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
-                      <Ionicons name="shield-checkmark" size={20} color="#8B5CF6" />
-                    </View>
-                    <View className="flex-1 ml-3">
-                      <Text className="text-white font-semibold">Admin Dashboard</Text>
-                      <Text className="text-gray-500 text-xs">Manage users & content</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-                  </Pressable>
-                )}
-
-                {isStreamer && (
-                  <>
-                    <Pressable
-                      onPress={() => {
-                        const tabNav = navigation.getParent();
-                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                        if (rootNav) {
-                          rootNav.navigate("Streaming");
-                        }
-                      }}
-                      className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
-                    >
-                      <View className="w-10 h-10 rounded-full bg-red-500/20 items-center justify-center">
-                        <Ionicons name="radio" size={20} color="#EF4444" />
-                      </View>
-                      <View className="flex-1 ml-3">
-                        <Text className="text-white font-semibold">Go Live</Text>
-                        <Text className="text-gray-500 text-xs">Start streaming</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        const tabNav = navigation.getParent();
-                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                        if (rootNav) {
-                          rootNav.navigate("StreamerAnalytics", { streamerId: user.id });
-                        }
-                      }}
-                      className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
-                    >
-                      <View className="w-10 h-10 rounded-full bg-cyan-500/20 items-center justify-center">
-                        <Ionicons name="analytics" size={20} color="#06B6D4" />
-                      </View>
-                      <View className="flex-1 ml-3">
-                        <Text className="text-white font-semibold">Analytics</Text>
-                        <Text className="text-gray-500 text-xs">View performance</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-                    </Pressable>
-                  </>
-                )}
-
-                {isAdmin && (
-                  <Pressable
-                    onPress={() => {
-                      const tabNav = navigation.getParent();
-                      const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                      if (rootNav) {
-                        rootNav.navigate("AdminAnalytics");
-                      }
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View
+                    className="w-[88px] h-[88px] rounded-full items-center justify-center"
+                    style={{
+                      backgroundColor: user.tier === "superfan" ? "rgba(236,72,153,0.2)" : "rgba(59,130,246,0.2)",
+                      borderWidth: 3,
+                      borderColor: user.tier === "superfan" ? "#EC4899" : "#3B82F6"
                     }}
-                    className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl"
                   >
-                    <View className="w-10 h-10 rounded-full bg-orange-500/20 items-center justify-center">
-                      <Ionicons name="stats-chart" size={20} color="#F59E0B" />
-                    </View>
-                    <View className="flex-1 ml-3">
-                      <Text className="text-white font-semibold">Platform Analytics</Text>
-                      <Text className="text-gray-500 text-xs">All streamer stats</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-                  </Pressable>
-                )}
-              </View>
-            )}
-
-            {/* Achievements Section */}
-            <View className="mb-6">
-              <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Achievements</Text>
-              <Pressable
-                onPress={() => setShowAchievements(true)}
-                className="bg-[#1C1C24] p-4 rounded-2xl"
-              >
-                <View className="flex-row items-center justify-between mb-3">
-                  <View className="flex-row items-center">
-                    <Ionicons name="trophy" size={20} color="#F59E0B" />
-                    <Text className="text-white font-semibold ml-2">Your Badges</Text>
-                  </View>
-                  <Text className="text-gray-400 text-sm">{unlockedAchievements.length}/{achievements.length}</Text>
-                </View>
-                <View className="flex-row">
-                  {unlockedAchievements.slice(0, 6).map((achievement) => (
-                    <View
-                      key={achievement.id}
-                      className="w-10 h-10 rounded-full items-center justify-center mr-2"
-                      style={{ backgroundColor: achievement.color + "30" }}
-                    >
-                      <Ionicons name={achievement.icon as any} size={18} color={achievement.color} />
-                    </View>
-                  ))}
-                  {achievements.length > 6 && (
-                    <View className="w-10 h-10 rounded-full bg-gray-700/50 items-center justify-center">
-                      <Text className="text-gray-400 text-xs font-bold">+{achievements.length - 6}</Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            </View>
-
-            {/* Verification & Influencer Status */}
-            <View className="mb-6">
-              <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
-                Status & Badges
-              </Text>
-
-              {/* Verification Status */}
-              <View className="bg-[#1C1C24] p-4 rounded-2xl mb-3">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1">
-                    <View
-                      className={`w-12 h-12 rounded-full items-center justify-center ${user.isVerified ? "bg-purple-500/20" : "bg-gray-700/50"
-                        }`}
-                    >
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={24}
-                        color={user.isVerified ? "#A855F7" : "#6B7280"}
-                      />
-                    </View>
-                    <View className="flex-1 ml-3">
-                      <Text className="text-white font-semibold">
-                        {user.isVerified ? "Verified Account" : "Get Verified"}
-                      </Text>
-                      <Text className="text-gray-400 text-xs">
-                        {user.isVerified
-                          ? "Your account has the purple checkmark"
-                          : user.verificationStatus === "pending"
-                            ? "Request pending review..."
-                            : "Request the purple verification badge"}
-                      </Text>
-                    </View>
-                  </View>
-                  {!user.isVerified && user.verificationStatus !== "pending" && (
-                    <Pressable
-                      onPress={() => setShowVerificationModal(true)}
-                      className="bg-purple-600 px-4 py-2 rounded-lg"
-                    >
-                      <Text className="text-white font-semibold text-sm">Request</Text>
-                    </Pressable>
-                  )}
-                  {user.verificationStatus === "pending" && (
-                    <View className="bg-amber-500/20 px-3 py-1.5 rounded-lg">
-                      <Text className="text-amber-400 font-semibold text-xs">PENDING</Text>
-                    </View>
-                  )}
-                  {user.isVerified && (
-                    <View className="bg-purple-500 rounded-full p-1.5">
-                      <Ionicons name="checkmark" size={16} color="white" />
-                    </View>
-                  )}
-                </View>
-              </View>
-
-              {/* Influencer Status */}
-              <Pressable
-                onPress={() => {
-                  const tabNav = navigation.getParent();
-                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                  if (rootNav) {
-                    rootNav.navigate("InviteFriends");
-                  }
-                }}
-                className="bg-[#1C1C24] p-4 rounded-2xl"
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1">
-                    <View
-                      className={`w-12 h-12 rounded-full items-center justify-center ${user.isInfluencer ? "bg-amber-500/20" : "bg-gray-700/50"
-                        }`}
-                    >
-                      <Ionicons
-                        name="star"
-                        size={24}
-                        color={user.isInfluencer ? "#F59E0B" : "#6B7280"}
-                      />
-                    </View>
-                    <View className="flex-1 ml-3">
-                      <Text className="text-white font-semibold">
-                        {user.isInfluencer ? "Influencer" : "Become an Influencer"}
-                      </Text>
-                      <Text className="text-gray-400 text-xs">
-                        {user.isInfluencer
-                          ? "You are a community influencer!"
-                          : `Invite ${INFLUENCER_THRESHOLD - (user.invitedFriends?.length || 0)} more friends`}
-                      </Text>
-                    </View>
-                  </View>
-                  {!user.isInfluencer && (
-                    <View className="items-end">
-                      <Text className="text-amber-400 font-bold text-sm">
-                        {user.invitedFriends?.length || 0}/{INFLUENCER_THRESHOLD}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={18} color="#6B7280" />
-                    </View>
-                  )}
-                  {user.isInfluencer && (
-                    <View className="bg-amber-500 rounded-full p-1.5">
-                      <Ionicons name="star" size={16} color="white" />
-                    </View>
-                  )}
-                </View>
-                {!user.isInfluencer && (
-                  <View className="mt-3">
-                    <View className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                      <View
-                        className="h-full bg-amber-500 rounded-full"
-                        style={{
-                          width: `${Math.min(((user.invitedFriends?.length || 0) / INFLUENCER_THRESHOLD) * 100, 100)}%`,
-                        }}
-                      />
-                    </View>
-                  </View>
-                )}
-              </Pressable>
-            </View>
-
-            {/* Referral Section */}
-            <View className="mb-6">
-              <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Invite Friends</Text>
-              <Pressable
-                onPress={() => {
-                  const tabNav = navigation.getParent();
-                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                  if (rootNav) {
-                    rootNav.navigate("InviteFriends");
-                  }
-                }}
-                className="bg-[#1C1C24] p-4 rounded-2xl"
-              >
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-white font-semibold">Your Referral Code</Text>
-                    <Text className="text-purple-400 text-lg font-bold mt-1">{user.referralCode}</Text>
-                  </View>
-                  <Pressable
-                    onPress={copyToClipboard}
-                    className="bg-purple-500/20 px-4 py-2 rounded-lg"
-                  >
-                    <Text className="text-purple-400 font-semibold">Copy</Text>
-                  </Pressable>
-                </View>
-                {(user.invitedFriends?.length || 0) > 0 && (
-                  <View className="mt-3 pt-3 border-t border-gray-800">
-                    <Text className="text-gray-400 text-sm">
-                      {user.invitedFriends?.length} {(user.invitedFriends?.length || 0) === 1 ? "friend" : "friends"} joined using your code
+                    <Text className="text-white text-3xl font-bold">
+                      {user.username.charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
+                <View className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1.5 border-2 border-[#050509]">
+                  <Ionicons name="add" size={14} color="white" />
+                </View>
+              </Pressable>
+
+              {/* Stats Row */}
+              <View className="flex-1 flex-row justify-around ml-6">
+                <Pressable className="items-center">
+                  <Text className="text-white text-xl font-bold">{user.followers?.length || 0}</Text>
+                  <Text className="text-gray-400 text-sm">Followers</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowFollowingModal(true)}
+                  className="items-center"
+                >
+                  <Text className="text-white text-xl font-bold">
+                    {(user.followedStreamers?.length || 0) + (user.followingUsers?.length || 0)}
+                  </Text>
+                  <Text className="text-gray-400 text-sm">Following</Text>
+                </Pressable>
+                <Pressable className="items-center">
+                  <Text className="text-white text-xl font-bold">{userPosts.length}</Text>
+                  <Text className="text-gray-400 text-sm">Posts</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Name & Bio */}
+            <View className="mt-4">
+              <View className="flex-row items-center">
+                <Text className="text-white font-semibold text-base">{user.username}</Text>
+                {user.tier === "superfan" && (
+                  <View className="ml-2 flex-row items-center bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-2 py-0.5 rounded-full">
+                    <Ionicons name="star" size={12} color="#EC4899" />
+                    <Text className="text-pink-400 text-xs font-medium ml-1">Super Fan</Text>
+                  </View>
+                )}
+              </View>
+              {user.bio ? (
+                <Text className="text-gray-300 text-sm mt-1 leading-5">{user.bio}</Text>
+              ) : (
+                <Text className="text-gray-500 text-sm mt-1">Add a bio to tell people about yourself</Text>
+              )}
+            </View>
+
+            {/* Action Buttons */}
+            <View className="flex-row mt-4 gap-2">
+              <Pressable
+                onPress={() => setShowEditProfile(true)}
+                className="flex-1 bg-[#1C1C24] py-2.5 rounded-lg"
+              >
+                <Text className="text-white text-center font-semibold text-sm">Edit Profile</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  copyToClipboard();
+                }}
+                className="flex-1 bg-[#1C1C24] py-2.5 rounded-lg"
+              >
+                <Text className="text-white text-center font-semibold text-sm">Share Profile</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setShowLogoutModal(true)}
+                className="bg-[#1C1C24] px-4 py-2.5 rounded-lg"
+              >
+                <Ionicons name="log-out-outline" size={18} color="#EF4444" />
               </Pressable>
             </View>
 
-            {/* Settings */}
-            <View className="mb-6">
-              <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Settings</Text>
+            {/* Social Links Preview */}
+            {(user.socialLinks?.instagram || user.socialLinks?.tiktok || user.socialLinks?.youtube) && (
+              <View className="flex-row mt-4 gap-3">
+                {user.socialLinks?.instagram && (
+                  <View className="flex-row items-center bg-[#1C1C24] px-3 py-1.5 rounded-full">
+                    <Ionicons name="logo-instagram" size={14} color="#E4405F" />
+                    <Text className="text-gray-300 text-xs ml-1.5">Instagram</Text>
+                  </View>
+                )}
+                {user.socialLinks?.tiktok && (
+                  <View className="flex-row items-center bg-[#1C1C24] px-3 py-1.5 rounded-full">
+                    <Ionicons name="logo-tiktok" size={14} color="#00F2EA" />
+                    <Text className="text-gray-300 text-xs ml-1.5">TikTok</Text>
+                  </View>
+                )}
+                {user.socialLinks?.youtube && (
+                  <View className="flex-row items-center bg-[#1C1C24] px-3 py-1.5 rounded-full">
+                    <Ionicons name="logo-youtube" size={14} color="#FF0000" />
+                    <Text className="text-gray-300 text-xs ml-1.5">YouTube</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
 
-              <Pressable
-                onPress={() => {
-                  const tabNav = navigation.getParent();
-                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                  if (rootNav) {
-                    rootNav.navigate("Notifications");
-                  }
-                }}
-                className="flex-row items-center bg-[#1C1C24] p-4 rounded-t-2xl border-b border-gray-800/50"
-              >
-                <Ionicons name="notifications-outline" size={22} color="#9CA3AF" />
-                <Text className="text-white flex-1 ml-3">Notifications</Text>
-                <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  const tabNav = navigation.getParent();
-                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                  if (rootNav) {
-                    rootNav.navigate("Billing");
-                  }
-                }}
-                className="flex-row items-center bg-[#1C1C24] p-4 border-b border-gray-800/50"
-              >
-                <Ionicons name="card-outline" size={22} color="#9CA3AF" />
-                <Text className="text-white flex-1 ml-3">Billing & Subscription</Text>
-                <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  const tabNav = navigation.getParent();
-                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                  if (rootNav) {
-                    rootNav.navigate("HelpSupport");
-                  }
-                }}
-                className="flex-row items-center bg-[#1C1C24] p-4 rounded-b-2xl"
-              >
-                <Ionicons name="help-circle-outline" size={22} color="#9CA3AF" />
-                <Text className="text-white flex-1 ml-3">Help & Support</Text>
-                <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-              </Pressable>
-            </View>
-
-            {/* Logout Button */}
+          {/* Tabs */}
+          <View className="flex-row mt-5 border-b border-gray-800">
             <Pressable
-              onPress={() => setShowLogoutModal(true)}
-              className="flex-row items-center justify-center bg-red-500/10 p-4 rounded-2xl mb-6"
+              onPress={() => setSelectedTab("posts")}
+              className={`flex-1 py-3 items-center border-b-2 ${selectedTab === "posts" ? "border-white" : "border-transparent"}`}
             >
-              <Ionicons name="log-out-outline" size={22} color="#EF4444" />
-              <Text className="text-red-400 font-semibold ml-2">Log Out</Text>
+              <Ionicons
+                name="grid-outline"
+                size={24}
+                color={selectedTab === "posts" ? "#FFFFFF" : "#6B7280"}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => setSelectedTab("about")}
+              className={`flex-1 py-3 items-center border-b-2 ${selectedTab === "about" ? "border-white" : "border-transparent"}`}
+            >
+              <Ionicons
+                name="person-outline"
+                size={24}
+                color={selectedTab === "about" ? "#FFFFFF" : "#6B7280"}
+              />
             </Pressable>
           </View>
-        )}
+
+          {/* Content */}
+          {selectedTab === "posts" ? (
+            <ProfileGallery
+              posts={userPosts}
+              onPostPress={(postId) => {
+                const tabNav = navigation.getParent();
+                const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                if (rootNav) {
+                  rootNav.navigate("PostDetail", { postId });
+                }
+              }}
+              isOwnProfile={true}
+            />
+          ) : (
+            <View className="px-5 pt-5">
+              {/* Quick Actions for Streamers/Admins */}
+              {(isStreamer || isAdmin) && (
+                <View className="mb-6">
+                  <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Creator Tools</Text>
+
+                  {isAdmin && (
+                    <Pressable
+                      onPress={() => {
+                        const tabNav = navigation.getParent();
+                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                        if (rootNav) {
+                          rootNav.navigate("AdminDashboard");
+                        }
+                      }}
+                      className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
+                    >
+                      <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
+                        <Ionicons name="shield-checkmark" size={20} color="#8B5CF6" />
+                      </View>
+                      <View className="flex-1 ml-3">
+                        <Text className="text-white font-semibold">Admin Dashboard</Text>
+                        <Text className="text-gray-500 text-xs">Manage users & content</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                    </Pressable>
+                  )}
+
+                  {isStreamer && (
+                    <>
+                      <Pressable
+                        onPress={() => {
+                          const tabNav = navigation.getParent();
+                          const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                          if (rootNav) {
+                            rootNav.navigate("Streaming");
+                          }
+                        }}
+                        className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
+                      >
+                        <View className="w-10 h-10 rounded-full bg-red-500/20 items-center justify-center">
+                          <Ionicons name="radio" size={20} color="#EF4444" />
+                        </View>
+                        <View className="flex-1 ml-3">
+                          <Text className="text-white font-semibold">Go Live</Text>
+                          <Text className="text-gray-500 text-xs">Start streaming</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => {
+                          const tabNav = navigation.getParent();
+                          const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                          if (rootNav) {
+                            rootNav.navigate("StreamerAnalytics", { streamerId: user.id });
+                          }
+                        }}
+                        className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
+                      >
+                        <View className="w-10 h-10 rounded-full bg-cyan-500/20 items-center justify-center">
+                          <Ionicons name="analytics" size={20} color="#06B6D4" />
+                        </View>
+                        <View className="flex-1 ml-3">
+                          <Text className="text-white font-semibold">Analytics</Text>
+                          <Text className="text-gray-500 text-xs">View performance</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                      </Pressable>
+                    </>
+                  )}
+
+                  {isAdmin && (
+                    <Pressable
+                      onPress={() => {
+                        const tabNav = navigation.getParent();
+                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                        if (rootNav) {
+                          rootNav.navigate("AdminAnalytics");
+                        }
+                      }}
+                      className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl"
+                    >
+                      <View className="w-10 h-10 rounded-full bg-orange-500/20 items-center justify-center">
+                        <Ionicons name="stats-chart" size={20} color="#F59E0B" />
+                      </View>
+                      <View className="flex-1 ml-3">
+                        <Text className="text-white font-semibold">Platform Analytics</Text>
+                        <Text className="text-gray-500 text-xs">All streamer stats</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                    </Pressable>
+                  )}
+                </View>
+              )}
+
+              {/* Achievements Section */}
+              <View className="mb-6">
+                <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Achievements</Text>
+                <Pressable
+                  onPress={() => setShowAchievements(true)}
+                  className="bg-[#1C1C24] p-4 rounded-2xl"
+                >
+                  <View className="flex-row items-center justify-between mb-3">
+                    <View className="flex-row items-center">
+                      <Ionicons name="trophy" size={20} color="#F59E0B" />
+                      <Text className="text-white font-semibold ml-2">Your Badges</Text>
+                    </View>
+                    <Text className="text-gray-400 text-sm">{unlockedAchievements.length}/{achievements.length}</Text>
+                  </View>
+                  <View className="flex-row">
+                    {unlockedAchievements.slice(0, 6).map((achievement) => (
+                      <View
+                        key={achievement.id}
+                        className="w-10 h-10 rounded-full items-center justify-center mr-2"
+                        style={{ backgroundColor: achievement.color + "30" }}
+                      >
+                        <Ionicons name={achievement.icon as any} size={18} color={achievement.color} />
+                      </View>
+                    ))}
+                    {achievements.length > 6 && (
+                      <View className="w-10 h-10 rounded-full bg-gray-700/50 items-center justify-center">
+                        <Text className="text-gray-400 text-xs font-bold">+{achievements.length - 6}</Text>
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              </View>
+
+              {/* Verification & Influencer Status */}
+              <View className="mb-6">
+                <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                  Status & Badges
+                </Text>
+
+                {/* Verification Status */}
+                <View className="bg-[#1C1C24] p-4 rounded-2xl mb-3">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center flex-1">
+                      <View
+                        className={`w-12 h-12 rounded-full items-center justify-center ${user.isVerified ? "bg-purple-500/20" : "bg-gray-700/50"
+                          }`}
+                      >
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={24}
+                          color={user.isVerified ? "#A855F7" : "#6B7280"}
+                        />
+                      </View>
+                      <View className="flex-1 ml-3">
+                        <Text className="text-white font-semibold">
+                          {user.isVerified ? "Verified Account" : "Get Verified"}
+                        </Text>
+                        <Text className="text-gray-400 text-xs">
+                          {user.isVerified
+                            ? "Your account has the purple checkmark"
+                            : user.verificationStatus === "pending"
+                              ? "Request pending review..."
+                              : "Request the purple verification badge"}
+                        </Text>
+                      </View>
+                    </View>
+                    {!user.isVerified && user.verificationStatus !== "pending" && (
+                      <Pressable
+                        onPress={() => setShowVerificationModal(true)}
+                        className="bg-purple-600 px-4 py-2 rounded-lg"
+                      >
+                        <Text className="text-white font-semibold text-sm">Request</Text>
+                      </Pressable>
+                    )}
+                    {user.verificationStatus === "pending" && (
+                      <View className="bg-amber-500/20 px-3 py-1.5 rounded-lg">
+                        <Text className="text-amber-400 font-semibold text-xs">PENDING</Text>
+                      </View>
+                    )}
+                    {user.isVerified && (
+                      <View className="bg-purple-500 rounded-full p-1.5">
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Influencer Status */}
+                <Pressable
+                  onPress={() => {
+                    const tabNav = navigation.getParent();
+                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                    if (rootNav) {
+                      rootNav.navigate("InviteFriends");
+                    }
+                  }}
+                  className="bg-[#1C1C24] p-4 rounded-2xl"
+                >
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center flex-1">
+                      <View
+                        className={`w-12 h-12 rounded-full items-center justify-center ${user.isInfluencer ? "bg-amber-500/20" : "bg-gray-700/50"
+                          }`}
+                      >
+                        <Ionicons
+                          name="star"
+                          size={24}
+                          color={user.isInfluencer ? "#F59E0B" : "#6B7280"}
+                        />
+                      </View>
+                      <View className="flex-1 ml-3">
+                        <Text className="text-white font-semibold">
+                          {user.isInfluencer ? "Influencer" : "Become an Influencer"}
+                        </Text>
+                        <Text className="text-gray-400 text-xs">
+                          {user.isInfluencer
+                            ? "You are a community influencer!"
+                            : `Invite ${INFLUENCER_THRESHOLD - (user.invitedFriends?.length || 0)} more friends`}
+                        </Text>
+                      </View>
+                    </View>
+                    {!user.isInfluencer && (
+                      <View className="items-end">
+                        <Text className="text-amber-400 font-bold text-sm">
+                          {user.invitedFriends?.length || 0}/{INFLUENCER_THRESHOLD}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+                      </View>
+                    )}
+                    {user.isInfluencer && (
+                      <View className="bg-amber-500 rounded-full p-1.5">
+                        <Ionicons name="star" size={16} color="white" />
+                      </View>
+                    )}
+                  </View>
+                  {!user.isInfluencer && (
+                    <View className="mt-3">
+                      <View className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <View
+                          className="h-full bg-amber-500 rounded-full"
+                          style={{
+                            width: `${Math.min(((user.invitedFriends?.length || 0) / INFLUENCER_THRESHOLD) * 100, 100)}%`,
+                          }}
+                        />
+                      </View>
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Referral Section */}
+              <View className="mb-6">
+                <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Invite Friends</Text>
+                <Pressable
+                  onPress={() => {
+                    const tabNav = navigation.getParent();
+                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                    if (rootNav) {
+                      rootNav.navigate("InviteFriends");
+                    }
+                  }}
+                  className="bg-[#1C1C24] p-4 rounded-2xl"
+                >
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-white font-semibold">Your Referral Code</Text>
+                      <Text className="text-purple-400 text-lg font-bold mt-1">{user.referralCode}</Text>
+                    </View>
+                    <Pressable
+                      onPress={copyToClipboard}
+                      className="bg-purple-500/20 px-4 py-2 rounded-lg"
+                    >
+                      <Text className="text-purple-400 font-semibold">Copy</Text>
+                    </Pressable>
+                  </View>
+                  {(user.invitedFriends?.length || 0) > 0 && (
+                    <View className="mt-3 pt-3 border-t border-gray-800">
+                      <Text className="text-gray-400 text-sm">
+                        {user.invitedFriends?.length} {(user.invitedFriends?.length || 0) === 1 ? "friend" : "friends"} joined using your code
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Settings */}
+              <View className="mb-6">
+                <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Settings</Text>
+
+                <Pressable
+                  onPress={() => {
+                    const tabNav = navigation.getParent();
+                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                    if (rootNav) {
+                      rootNav.navigate("Notifications");
+                    }
+                  }}
+                  className="flex-row items-center bg-[#1C1C24] p-4 rounded-t-2xl border-b border-gray-800/50"
+                >
+                  <Ionicons name="notifications-outline" size={22} color="#9CA3AF" />
+                  <Text className="text-white flex-1 ml-3">Notifications</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    const tabNav = navigation.getParent();
+                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                    if (rootNav) {
+                      rootNav.navigate("Billing");
+                    }
+                  }}
+                  className="flex-row items-center bg-[#1C1C24] p-4 border-b border-gray-800/50"
+                >
+                  <Ionicons name="card-outline" size={22} color="#9CA3AF" />
+                  <Text className="text-white flex-1 ml-3">Billing & Subscription</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    const tabNav = navigation.getParent();
+                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                    if (rootNav) {
+                      rootNav.navigate("HelpSupport");
+                    }
+                  }}
+                  className="flex-row items-center bg-[#1C1C24] p-4 rounded-b-2xl"
+                >
+                  <Ionicons name="help-circle-outline" size={22} color="#9CA3AF" />
+                  <Text className="text-white flex-1 ml-3">Help & Support</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                </Pressable>
+              </View>
+
+              {/* Logout Button */}
+              <Pressable
+                onPress={() => setShowLogoutModal(true)}
+                className="flex-row items-center justify-center bg-red-500/10 p-4 rounded-2xl mb-6"
+              >
+                <Ionicons name="log-out-outline" size={22} color="#EF4444" />
+                <Text className="text-red-400 font-semibold ml-2">Log Out</Text>
+              </Pressable>
+            </View>
+          )}
+        </PageContainer>
       </ScrollView>
 
       {/* Logout Confirmation Modal */}
@@ -1364,6 +1369,6 @@ export const ProfileScreen: React.FC = () => {
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </View >
   );
 };

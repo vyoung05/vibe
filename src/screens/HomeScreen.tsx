@@ -15,6 +15,7 @@ import { StreamerCard } from "../components/StreamerCard";
 import { Badge } from "../components/Badge";
 import { AnnouncementTicker } from "../components/AnnouncementTicker";
 import { StreamerControls } from "../components/StreamerControls";
+import { PageContainer } from "../components/PageContainer";
 import type { MainTabsParamList } from "../navigation/MainTabs";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -50,147 +51,149 @@ export const HomeScreen: React.FC = () => {
           contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View className="px-6 py-8 flex-row items-center justify-between">
-            <View>
-              <Text className="text-white text-3xl font-black tracking-tighter">DDNS</Text>
-              <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Day Dreamers Night Streamers</Text>
-            </View>
-
-            {!isAuthenticated && (
-              <View className="flex-row items-center gap-2">
-                <Pressable
-                  onPress={() => navigation.navigate("SignIn")}
-                  className="px-4 py-2 rounded-full bg-white/5 border border-white/10"
-                >
-                  <Text className="text-white text-xs font-bold">Sign In</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => navigation.navigate("SignUp")}
-                  className="px-4 py-2 rounded-full bg-purple-500"
-                >
-                  <Text className="text-white text-xs font-bold">Join</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-
-          {/* Live Section */}
-          {liveStreamers.length > 0 && (
-            <View className="mb-6">
-              <View className="px-6 mb-4 flex-row items-center">
-                <Badge variant="live">Live Now</Badge>
-                <Text className="text-white text-xl font-bold ml-3">
-                  {liveStreamers.length} {liveStreamers.length === 1 ? "Streamer" : "Streamers"}
-                </Text>
+          <PageContainer>
+            {/* Header */}
+            <View className="px-6 py-8 flex-row items-center justify-between">
+              <View>
+                <Text className="text-white text-3xl font-black tracking-tighter">DDNS</Text>
+                <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Day Dreamers Night Streamers</Text>
               </View>
 
-              {liveStreamers.map((streamer) => (
-                <View key={streamer.id} className="mb-4 px-6">
+              {!isAuthenticated && (
+                <View className="flex-row items-center gap-2">
                   <Pressable
-                    onPress={() => navigation.navigate("StreamerProfile", { streamerId: streamer.id })}
-                    className="bg-white/5 rounded-[32px] overflow-hidden border border-white/10"
+                    onPress={() => navigation.navigate("SignIn")}
+                    className="px-4 py-2 rounded-full bg-white/5 border border-white/10"
                   >
-                    {/* Live Stream Hero */}
-                    <View className="relative h-64">
-                      <Image
-                        source={{ uri: streamer.headerImages[0] || streamer.avatar }}
-                        style={{ width: "100%", height: "100%" }}
-                        contentFit="cover"
-                      />
-                      <LinearGradient
-                        colors={["transparent", "rgba(10, 10, 15, 0.95)"]}
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          height: "60%",
-                        }}
-                      />
-                      <View className="absolute top-4 right-4">
-                        <Badge variant="live">
-                          <View className="flex-row items-center">
-                            <View className="w-2 h-2 rounded-full bg-white mr-2" />
-                            <Text className="text-white text-xs font-bold uppercase">Live</Text>
-                          </View>
-                        </Badge>
-                      </View>
-
-                      {/* Stream Info Overlay */}
-                      <View className="absolute bottom-0 left-0 right-0 p-6">
-                        <View className="flex-row items-center mb-3">
-                          <Image
-                            source={{ uri: streamer.avatar }}
-                            style={{ width: 56, height: 56, borderRadius: 28, borderWidth: 3, borderColor: "#EC4899" }}
-                          />
-                          <View className="flex-1 ml-4">
-                            <Text className="text-white font-bold text-xl">{streamer.name}</Text>
-                            <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
-                          </View>
-                        </View>
-                        {streamer.liveTitle && (
-                          <Text className="text-white text-base mb-2">{streamer.liveTitle}</Text>
-                        )}
-                        <View className="flex-row items-center">
-                          <Ionicons name="eye" size={16} color="#9CA3AF" />
-                          <Text className="text-gray-400 text-sm ml-2">
-                            {streamer.followerCount.toLocaleString()} watching
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View className="p-4 flex-row gap-3">
-                      <Pressable
-                        onPress={async (e) => {
-                          e.stopPropagation();
-                          if (streamer.liveStreamUrl) {
-                            try {
-                              await WebBrowser.openBrowserAsync(streamer.liveStreamUrl);
-                            } catch (error) {
-                              Alert.alert("Error", "Could not open the stream URL");
-                            }
-                          } else {
-                            navigation.navigate("StreamerProfile", { streamerId: streamer.id });
-                          }
-                        }}
-                        className="flex-1 bg-pink-500 rounded-xl py-3"
-                      >
-                        <Text className="text-white text-center font-bold">Watch Live</Text>
-                      </Pressable>
-                      <View className="bg-purple-500/20 rounded-xl px-4 py-3">
-                        <Ionicons name="share-social" size={20} color="#8B5CF6" />
-                      </View>
-                    </View>
+                    <Text className="text-white text-xs font-bold">Sign In</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => navigation.navigate("SignUp")}
+                    className="px-4 py-2 rounded-full bg-purple-500"
+                  >
+                    <Text className="text-white text-xs font-bold">Join</Text>
                   </Pressable>
                 </View>
-              ))}
+              )}
             </View>
-          )}
 
-          {/* Streamers Grid */}
-          <View className="px-6">
-            <Text className="text-white text-2xl font-bold mb-4">
-              {liveStreamers.length > 0 ? "All Streamers" : "Our Streamers"}
-            </Text>
+            {/* Live Section */}
+            {liveStreamers.length > 0 && (
+              <View className="mb-6">
+                <View className="px-6 mb-4 flex-row items-center">
+                  <Badge variant="live">Live Now</Badge>
+                  <Text className="text-white text-xl font-bold ml-3">
+                    {liveStreamers.length} {liveStreamers.length === 1 ? "Streamer" : "Streamers"}
+                  </Text>
+                </View>
 
-            {offlineStreamers.map((streamer) => (
-              <StreamerCard
-                key={streamer.id}
-                streamer={streamer}
-                onPress={() => navigation.navigate("StreamerProfile", { streamerId: streamer.id })}
-              />
-            ))}
+                {liveStreamers.map((streamer) => (
+                  <View key={streamer.id} className="mb-4 px-6">
+                    <Pressable
+                      onPress={() => navigation.navigate("StreamerProfile", { streamerId: streamer.id })}
+                      className="bg-white/5 rounded-[32px] overflow-hidden border border-white/10"
+                    >
+                      {/* Live Stream Hero */}
+                      <View className="relative h-64">
+                        <Image
+                          source={{ uri: streamer.headerImages[0] || streamer.avatar }}
+                          style={{ width: "100%", height: "100%" }}
+                          contentFit="cover"
+                        />
+                        <LinearGradient
+                          colors={["transparent", "rgba(10, 10, 15, 0.95)"]}
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: "60%",
+                          }}
+                        />
+                        <View className="absolute top-4 right-4">
+                          <Badge variant="live">
+                            <View className="flex-row items-center">
+                              <View className="w-2 h-2 rounded-full bg-white mr-2" />
+                              <Text className="text-white text-xs font-bold uppercase">Live</Text>
+                            </View>
+                          </Badge>
+                        </View>
 
-            {streamers.length === 0 && (
-              <View className="items-center justify-center py-12">
-                <Ionicons name="people-outline" size={64} color="#374151" />
-                <Text className="text-gray-400 text-center mt-4">No streamers yet</Text>
+                        {/* Stream Info Overlay */}
+                        <View className="absolute bottom-0 left-0 right-0 p-6">
+                          <View className="flex-row items-center mb-3">
+                            <Image
+                              source={{ uri: streamer.avatar }}
+                              style={{ width: 56, height: 56, borderRadius: 28, borderWidth: 3, borderColor: "#EC4899" }}
+                            />
+                            <View className="flex-1 ml-4">
+                              <Text className="text-white font-bold text-xl">{streamer.name}</Text>
+                              <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
+                            </View>
+                          </View>
+                          {streamer.liveTitle && (
+                            <Text className="text-white text-base mb-2">{streamer.liveTitle}</Text>
+                          )}
+                          <View className="flex-row items-center">
+                            <Ionicons name="eye" size={16} color="#9CA3AF" />
+                            <Text className="text-gray-400 text-sm ml-2">
+                              {streamer.followerCount.toLocaleString()} watching
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Action Buttons */}
+                      <View className="p-4 flex-row gap-3">
+                        <Pressable
+                          onPress={async (e) => {
+                            e.stopPropagation();
+                            if (streamer.liveStreamUrl) {
+                              try {
+                                await WebBrowser.openBrowserAsync(streamer.liveStreamUrl);
+                              } catch (error) {
+                                Alert.alert("Error", "Could not open the stream URL");
+                              }
+                            } else {
+                              navigation.navigate("StreamerProfile", { streamerId: streamer.id });
+                            }
+                          }}
+                          className="flex-1 bg-pink-500 rounded-xl py-3"
+                        >
+                          <Text className="text-white text-center font-bold">Watch Live</Text>
+                        </Pressable>
+                        <View className="bg-purple-500/20 rounded-xl px-4 py-3">
+                          <Ionicons name="share-social" size={20} color="#8B5CF6" />
+                        </View>
+                      </View>
+                    </Pressable>
+                  </View>
+                ))}
               </View>
             )}
-          </View>
+
+            {/* Streamers Grid */}
+            <View className="px-6">
+              <Text className="text-white text-2xl font-bold mb-4">
+                {liveStreamers.length > 0 ? "All Streamers" : "Our Streamers"}
+              </Text>
+
+              {offlineStreamers.map((streamer) => (
+                <StreamerCard
+                  key={streamer.id}
+                  streamer={streamer}
+                  onPress={() => navigation.navigate("StreamerProfile", { streamerId: streamer.id })}
+                />
+              ))}
+
+              {streamers.length === 0 && (
+                <View className="items-center justify-center py-12">
+                  <Ionicons name="people-outline" size={64} color="#374151" />
+                  <Text className="text-gray-400 text-center mt-4">No streamers yet</Text>
+                </View>
+              )}
+            </View>
+          </PageContainer>
         </ScrollView>
       </LinearGradient>
     </View>

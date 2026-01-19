@@ -12,6 +12,7 @@ import { useChatStore } from "../state/chatStore";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { LiveChat } from "../components/LiveChat";
+import { PageContainer } from "../components/PageContainer";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -171,41 +172,40 @@ export const StreamerProfileScreen: React.FC<Props> = ({ navigation, route }) =>
       {/* Tabs - Only show when streamer is live */}
       {streamer.isLive && (
         <View className="bg-[#151520] border-b border-gray-800" style={{ paddingTop: insets.top }}>
-          <View className="flex-row">
-            <Pressable
-              onPress={() => setActiveTab("live")}
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === "live" ? "border-red-600" : "border-transparent"
-              }`}
-            >
-              <View className="flex-row items-center">
-                {activeTab === "live" && <View className="w-2 h-2 rounded-full bg-red-600 mr-2" />}
-                <Text className={`font-medium ${activeTab === "live" ? "text-white" : "text-gray-400"}`}>
-                  Live
+          <PageContainer>
+            <View className="flex-row">
+              <Pressable
+                onPress={() => setActiveTab("live")}
+                className={`flex-1 py-4 items-center border-b-2 ${activeTab === "live" ? "border-red-600" : "border-transparent"
+                  }`}
+              >
+                <View className="flex-row items-center">
+                  {activeTab === "live" && <View className="w-2 h-2 rounded-full bg-red-600 mr-2" />}
+                  <Text className={`font-medium ${activeTab === "live" ? "text-white" : "text-gray-400"}`}>
+                    Live
+                  </Text>
+                </View>
+              </Pressable>
+              <Pressable
+                onPress={() => setActiveTab("profile")}
+                className={`flex-1 py-4 items-center border-b-2 ${activeTab === "profile" ? "border-purple-600" : "border-transparent"
+                  }`}
+              >
+                <Text className={`font-medium ${activeTab === "profile" ? "text-white" : "text-gray-400"}`}>
+                  Profile
                 </Text>
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => setActiveTab("profile")}
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === "profile" ? "border-purple-600" : "border-transparent"
-              }`}
-            >
-              <Text className={`font-medium ${activeTab === "profile" ? "text-white" : "text-gray-400"}`}>
-                Profile
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setActiveTab("chat")}
-              className={`flex-1 py-4 items-center border-b-2 ${
-                activeTab === "chat" ? "border-purple-600" : "border-transparent"
-              }`}
-            >
-              <Text className={`font-medium ${activeTab === "chat" ? "text-white" : "text-gray-400"}`}>
-                Chat
-              </Text>
-            </Pressable>
-          </View>
+              </Pressable>
+              <Pressable
+                onPress={() => setActiveTab("chat")}
+                className={`flex-1 py-4 items-center border-b-2 ${activeTab === "chat" ? "border-purple-600" : "border-transparent"
+                  }`}
+              >
+                <Text className={`font-medium ${activeTab === "chat" ? "text-white" : "text-gray-400"}`}>
+                  Chat
+                </Text>
+              </Pressable>
+            </View>
+          </PageContainer>
         </View>
       )}
 
@@ -267,282 +267,283 @@ export const StreamerProfileScreen: React.FC<Props> = ({ navigation, route }) =>
         <LiveChat streamerId={streamerId} streamerName={streamer.name} />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header Carousel */}
-        <View style={{ height: CAROUSEL_HEIGHT + insets.top }}>
-          <Animated.ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={scrollHandler}
-            scrollEventThrottle={16}
-            onMomentumScrollEnd={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setCurrentImageIndex(index);
-            }}
-          >
-            {streamer.headerImages.map((image, index) => (
-              <View key={index} style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT + insets.top }}>
-                <Image
-                  source={{ uri: image }}
-                  style={{ width: "100%", height: "100%" }}
-                  contentFit="cover"
-                />
-                <LinearGradient
-                  colors={["rgba(10, 10, 15, 0.3)", "rgba(10, 10, 15, 0.9)"]}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: "60%",
-                  }}
-                />
-              </View>
-            ))}
-          </Animated.ScrollView>
-
-          {/* Back Button */}
-          <Pressable
-            onPress={() => navigation.goBack()}
-            className="absolute left-4 bg-black/40 rounded-full p-2"
-            style={{ top: insets.top + 8 }}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </Pressable>
-
-          {/* Live Badge */}
-          {streamer.isLive && (
-            <View className="absolute top-4 right-4" style={{ top: insets.top + 16 }}>
-              <Badge variant="live">
-                <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full bg-white mr-2" />
-                  <Text className="text-white text-xs font-bold uppercase">Live</Text>
-                </View>
-              </Badge>
-            </View>
-          )}
-
-          {/* Carousel Indicators */}
-          {streamer.headerImages.length > 1 && (
-            <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2">
-              {streamer.headerImages.map((_, index) => (
-                <View
-                  key={index}
-                  className="h-2 rounded-full bg-white"
-                  style={{
-                    width: currentImageIndex === index ? 24 : 8,
-                    opacity: currentImageIndex === index ? 1 : 0.5,
-                  }}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Profile Info */}
-        <View className="px-6 pt-4 pb-6">
-          <View className="flex-row items-center mb-4">
-            <Image
-              source={{ uri: streamer.avatar }}
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                borderWidth: 4,
-                borderColor: streamer.isLive ? "#EC4899" : "#8B5CF6",
+          {/* Header Carousel */}
+          <View style={{ height: CAROUSEL_HEIGHT + insets.top }}>
+            <Animated.ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                setCurrentImageIndex(index);
               }}
-            />
-            <View className="flex-1 ml-4">
-              <Text className="text-white text-2xl font-bold">{streamer.name}</Text>
-              <Text className="text-purple-400 text-lg">@{streamer.gamertag}</Text>
-              <View className="flex-row items-center mt-1">
-                <Ionicons name="people" size={14} color="#9CA3AF" />
-                <Text className="text-gray-400 text-sm ml-1">
-                  {streamer.followerCount.toLocaleString()} followers
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View className="flex-row gap-3 mb-6">
-            {isOwner ? (
-              <Button
-                onPress={() => navigation.navigate("EditStreamerProfile", { streamerId })}
-                variant="primary"
-                className="flex-1"
-              >
-                <View className="flex-row items-center">
-                  <Ionicons name="create-outline" size={20} color="#FFFFFF" />
-                  <Text className="text-white font-semibold ml-2">Edit Profile</Text>
+            >
+              {streamer.headerImages.map((image, index) => (
+                <View key={index} style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT + insets.top }}>
+                  <Image
+                    source={{ uri: image }}
+                    style={{ width: "100%", height: "100%" }}
+                    contentFit="cover"
+                  />
+                  <LinearGradient
+                    colors={["rgba(10, 10, 15, 0.3)", "rgba(10, 10, 15, 0.9)"]}
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: "60%",
+                    }}
+                  />
                 </View>
-              </Button>
-            ) : (
-              <Button
-                onPress={toggleFollow}
-                variant={isFollowing ? "secondary" : "primary"}
-                className="flex-1"
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
+              ))}
+            </Animated.ScrollView>
+
+            {/* Back Button */}
+            <Pressable
+              onPress={() => navigation.goBack()}
+              className="absolute left-4 bg-black/40 rounded-full p-2"
+              style={{ top: insets.top + 8 }}
+            >
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </Pressable>
+
+            {/* Live Badge */}
+            {streamer.isLive && (
+              <View className="absolute top-4 right-4" style={{ top: insets.top + 16 }}>
+                <Badge variant="live">
+                  <View className="flex-row items-center">
+                    <View className="w-2 h-2 rounded-full bg-white mr-2" />
+                    <Text className="text-white text-xs font-bold uppercase">Live</Text>
+                  </View>
+                </Badge>
+              </View>
             )}
-            <Button variant="secondary" onPress={handleMessage} className="px-6">
-              <Ionicons name="chatbubble-outline" size={20} color="#8B5CF6" />
-            </Button>
-            <Button variant="secondary" onPress={handleBookmark} className="px-6">
-              <Ionicons
-                name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                size={20}
-                color={isBookmarked ? "#F59E0B" : "#8B5CF6"}
-              />
-            </Button>
-            <Button variant="secondary" onPress={handleShare} className="px-6">
-              <Ionicons name="share-social-outline" size={20} color="#8B5CF6" />
-            </Button>
+
+            {/* Carousel Indicators */}
+            {streamer.headerImages.length > 1 && (
+              <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2">
+                {streamer.headerImages.map((_, index) => (
+                  <View
+                    key={index}
+                    className="h-2 rounded-full bg-white"
+                    style={{
+                      width: currentImageIndex === index ? 24 : 8,
+                      opacity: currentImageIndex === index ? 1 : 0.5,
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* Bio */}
-          <View className="mb-6">
-            <Text className="text-gray-300 text-base leading-6">{streamer.bio}</Text>
-          </View>
+          {/* Profile Info */}
+          <PageContainer>
+            <View className="px-6 pt-4 pb-6">
+              <View className="flex-row items-center mb-4">
+                <Image
+                  source={{ uri: streamer.avatar }}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    borderWidth: 4,
+                    borderColor: streamer.isLive ? "#EC4899" : "#8B5CF6",
+                  }}
+                />
+                <View className="flex-1 ml-4">
+                  <Text className="text-white text-2xl font-bold">{streamer.name}</Text>
+                  <Text className="text-purple-400 text-lg">@{streamer.gamertag}</Text>
+                  <View className="flex-row items-center mt-1">
+                    <Ionicons name="people" size={14} color="#9CA3AF" />
+                    <Text className="text-gray-400 text-sm ml-1">
+                      {streamer.followerCount.toLocaleString()} followers
+                    </Text>
+                  </View>
+                </View>
+              </View>
 
-          {/* Streaming Platforms */}
-          {streamer.streamPlatforms && (
-            Object.values(streamer.streamPlatforms).some((url) => url) && (
+              {/* Action Buttons */}
+              <View className="flex-row gap-3 mb-6">
+                {isOwner ? (
+                  <Button
+                    onPress={() => navigation.navigate("EditStreamerProfile", { streamerId })}
+                    variant="primary"
+                    className="flex-1"
+                  >
+                    <View className="flex-row items-center">
+                      <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+                      <Text className="text-white font-semibold ml-2">Edit Profile</Text>
+                    </View>
+                  </Button>
+                ) : (
+                  <Button
+                    onPress={toggleFollow}
+                    variant={isFollowing ? "secondary" : "primary"}
+                    className="flex-1"
+                  >
+                    {isFollowing ? "Following" : "Follow"}
+                  </Button>
+                )}
+                <Button variant="secondary" onPress={handleMessage} className="px-6">
+                  <Ionicons name="chatbubble-outline" size={20} color="#8B5CF6" />
+                </Button>
+                <Button variant="secondary" onPress={handleBookmark} className="px-6">
+                  <Ionicons
+                    name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                    size={20}
+                    color={isBookmarked ? "#F59E0B" : "#8B5CF6"}
+                  />
+                </Button>
+                <Button variant="secondary" onPress={handleShare} className="px-6">
+                  <Ionicons name="share-social-outline" size={20} color="#8B5CF6" />
+                </Button>
+              </View>
+
+              {/* Bio */}
               <View className="mb-6">
-                <Text className="text-white text-lg font-bold mb-3">Watch Live</Text>
+                <Text className="text-gray-300 text-base leading-6">{streamer.bio}</Text>
+              </View>
+
+              {/* Streaming Platforms */}
+              {streamer.streamPlatforms && (
+                Object.values(streamer.streamPlatforms).some((url) => url) && (
+                  <View className="mb-6">
+                    <Text className="text-white text-lg font-bold mb-3">Watch Live</Text>
+                    <View className="flex-row flex-wrap gap-3">
+                      {streamer.streamPlatforms.twitch && (
+                        <Pressable
+                          onPress={() => openURL(streamer.streamPlatforms!.twitch!)}
+                          className="bg-[#9146FF] rounded-xl px-4 py-3 flex-row items-center"
+                        >
+                          <Ionicons name="logo-twitch" size={20} color="white" />
+                          <Text className="text-white ml-2 font-medium">Twitch</Text>
+                        </Pressable>
+                      )}
+                      {streamer.streamPlatforms.youtube && (
+                        <Pressable
+                          onPress={() => openURL(streamer.streamPlatforms!.youtube!)}
+                          className="bg-[#FF0000] rounded-xl px-4 py-3 flex-row items-center"
+                        >
+                          <Ionicons name="logo-youtube" size={20} color="white" />
+                          <Text className="text-white ml-2 font-medium">YouTube Live</Text>
+                        </Pressable>
+                      )}
+                      {streamer.streamPlatforms.tiktok && (
+                        <Pressable
+                          onPress={() => openURL(streamer.streamPlatforms!.tiktok!)}
+                          className="bg-black rounded-xl px-4 py-3 flex-row items-center border border-white"
+                        >
+                          <Ionicons name="logo-tiktok" size={20} color="white" />
+                          <Text className="text-white ml-2 font-medium">TikTok Live</Text>
+                        </Pressable>
+                      )}
+                      {streamer.streamPlatforms.instagram && (
+                        <Pressable
+                          onPress={() => openURL(streamer.streamPlatforms!.instagram!)}
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl px-4 py-3 flex-row items-center"
+                          style={{ backgroundColor: "#E1306C" }}
+                        >
+                          <Ionicons name="logo-instagram" size={20} color="white" />
+                          <Text className="text-white ml-2 font-medium">Instagram Live</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                )
+              )}
+
+              {/* Social Links */}
+              <View className="mb-6">
+                <Text className="text-white text-lg font-bold mb-3">Connect</Text>
                 <View className="flex-row flex-wrap gap-3">
-                  {streamer.streamPlatforms.twitch && (
+                  {streamer.socialLinks.twitch && (
                     <Pressable
-                      onPress={() => openURL(streamer.streamPlatforms!.twitch!)}
-                      className="bg-[#9146FF] rounded-xl px-4 py-3 flex-row items-center"
+                      onPress={() => openSocialLink("twitch", streamer.socialLinks.twitch!)}
+                      className="bg-[#151520] border border-purple-500/30 rounded-xl px-4 py-3 flex-row items-center"
                     >
-                      <Ionicons name="logo-twitch" size={20} color="white" />
+                      <Ionicons name="logo-twitch" size={20} color="#8B5CF6" />
                       <Text className="text-white ml-2 font-medium">Twitch</Text>
                     </Pressable>
                   )}
-                  {streamer.streamPlatforms.youtube && (
+                  {streamer.socialLinks.youtube && (
                     <Pressable
-                      onPress={() => openURL(streamer.streamPlatforms!.youtube!)}
-                      className="bg-[#FF0000] rounded-xl px-4 py-3 flex-row items-center"
+                      onPress={() => openSocialLink("youtube", streamer.socialLinks.youtube!)}
+                      className="bg-[#151520] border border-red-500/30 rounded-xl px-4 py-3 flex-row items-center"
                     >
-                      <Ionicons name="logo-youtube" size={20} color="white" />
-                      <Text className="text-white ml-2 font-medium">YouTube Live</Text>
+                      <Ionicons name="logo-youtube" size={20} color="#EF4444" />
+                      <Text className="text-white ml-2 font-medium">YouTube</Text>
                     </Pressable>
                   )}
-                  {streamer.streamPlatforms.tiktok && (
+                  {streamer.socialLinks.instagram && (
                     <Pressable
-                      onPress={() => openURL(streamer.streamPlatforms!.tiktok!)}
-                      className="bg-black rounded-xl px-4 py-3 flex-row items-center border border-white"
+                      onPress={() => openSocialLink("instagram", streamer.socialLinks.instagram!)}
+                      className="bg-[#151520] border border-pink-500/30 rounded-xl px-4 py-3 flex-row items-center"
                     >
-                      <Ionicons name="logo-tiktok" size={20} color="white" />
-                      <Text className="text-white ml-2 font-medium">TikTok Live</Text>
+                      <Ionicons name="logo-instagram" size={20} color="#EC4899" />
+                      <Text className="text-white ml-2 font-medium">Instagram</Text>
                     </Pressable>
                   )}
-                  {streamer.streamPlatforms.instagram && (
+                  {streamer.socialLinks.twitter && (
                     <Pressable
-                      onPress={() => openURL(streamer.streamPlatforms!.instagram!)}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl px-4 py-3 flex-row items-center"
-                      style={{ backgroundColor: "#E1306C" }}
+                      onPress={() => openSocialLink("twitter", streamer.socialLinks.twitter!)}
+                      className="bg-[#151520] border border-cyan-500/30 rounded-xl px-4 py-3 flex-row items-center"
                     >
-                      <Ionicons name="logo-instagram" size={20} color="white" />
-                      <Text className="text-white ml-2 font-medium">Instagram Live</Text>
+                      <Ionicons name="logo-twitter" size={20} color="#06B6D4" />
+                      <Text className="text-white ml-2 font-medium">Twitter</Text>
+                    </Pressable>
+                  )}
+                  {streamer.socialLinks.tiktok && (
+                    <Pressable
+                      onPress={() => openSocialLink("tiktok", streamer.socialLinks.tiktok!)}
+                      className="bg-[#151520] border border-gray-500/30 rounded-xl px-4 py-3 flex-row items-center"
+                    >
+                      <Ionicons name="logo-tiktok" size={20} color="#FFFFFF" />
+                      <Text className="text-white ml-2 font-medium">TikTok</Text>
                     </Pressable>
                   )}
                 </View>
               </View>
-            )
-          )}
 
-          {/* Social Links */}
-          <View className="mb-6">
-            <Text className="text-white text-lg font-bold mb-3">Connect</Text>
-            <View className="flex-row flex-wrap gap-3">
-              {streamer.socialLinks.twitch && (
-                <Pressable
-                  onPress={() => openSocialLink("twitch", streamer.socialLinks.twitch!)}
-                  className="bg-[#151520] border border-purple-500/30 rounded-xl px-4 py-3 flex-row items-center"
-                >
-                  <Ionicons name="logo-twitch" size={20} color="#8B5CF6" />
-                  <Text className="text-white ml-2 font-medium">Twitch</Text>
-                </Pressable>
-              )}
-              {streamer.socialLinks.youtube && (
-                <Pressable
-                  onPress={() => openSocialLink("youtube", streamer.socialLinks.youtube!)}
-                  className="bg-[#151520] border border-red-500/30 rounded-xl px-4 py-3 flex-row items-center"
-                >
-                  <Ionicons name="logo-youtube" size={20} color="#EF4444" />
-                  <Text className="text-white ml-2 font-medium">YouTube</Text>
-                </Pressable>
-              )}
-              {streamer.socialLinks.instagram && (
-                <Pressable
-                  onPress={() => openSocialLink("instagram", streamer.socialLinks.instagram!)}
-                  className="bg-[#151520] border border-pink-500/30 rounded-xl px-4 py-3 flex-row items-center"
-                >
-                  <Ionicons name="logo-instagram" size={20} color="#EC4899" />
-                  <Text className="text-white ml-2 font-medium">Instagram</Text>
-                </Pressable>
-              )}
-              {streamer.socialLinks.twitter && (
-                <Pressable
-                  onPress={() => openSocialLink("twitter", streamer.socialLinks.twitter!)}
-                  className="bg-[#151520] border border-cyan-500/30 rounded-xl px-4 py-3 flex-row items-center"
-                >
-                  <Ionicons name="logo-twitter" size={20} color="#06B6D4" />
-                  <Text className="text-white ml-2 font-medium">Twitter</Text>
-                </Pressable>
-              )}
-              {streamer.socialLinks.tiktok && (
-                <Pressable
-                  onPress={() => openSocialLink("tiktok", streamer.socialLinks.tiktok!)}
-                  className="bg-[#151520] border border-gray-500/30 rounded-xl px-4 py-3 flex-row items-center"
-                >
-                  <Ionicons name="logo-tiktok" size={20} color="#FFFFFF" />
-                  <Text className="text-white ml-2 font-medium">TikTok</Text>
-                </Pressable>
-              )}
-            </View>
-          </View>
-
-          {/* Schedule */}
-          {streamer.schedule.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-white text-lg font-bold mb-3">Streaming Schedule</Text>
-              <View className="bg-[#151520] rounded-xl p-4 border border-gray-800">
-                {streamer.schedule.map((schedule, index) => (
-                  <View
-                    key={index}
-                    className={`flex-row justify-between py-2 ${
-                      index !== streamer.schedule.length - 1 ? "border-b border-gray-800" : ""
-                    }`}
-                  >
-                    <Text className="text-gray-300 font-medium">{schedule.day}</Text>
-                    <Text className="text-purple-400">
-                      {schedule.startTime} - {schedule.endTime} {schedule.timezone}
-                    </Text>
+              {/* Schedule */}
+              {streamer.schedule.length > 0 && (
+                <View className="mb-6">
+                  <Text className="text-white text-lg font-bold mb-3">Streaming Schedule</Text>
+                  <View className="bg-[#151520] rounded-xl p-4 border border-gray-800">
+                    {streamer.schedule.map((schedule, index) => (
+                      <View
+                        key={index}
+                        className={`flex-row justify-between py-2 ${index !== streamer.schedule.length - 1 ? "border-b border-gray-800" : ""
+                          }`}
+                      >
+                        <Text className="text-gray-300 font-medium">{schedule.day}</Text>
+                        <Text className="text-purple-400">
+                          {schedule.startTime} - {schedule.endTime} {schedule.timezone}
+                        </Text>
+                      </View>
+                    ))}
                   </View>
-                ))}
+                </View>
+              )}
+
+              {/* Placeholder Sections */}
+              <View className="mb-6">
+                <Text className="text-white text-lg font-bold mb-3">Recent Content</Text>
+                <View className="bg-[#151520] rounded-xl p-8 border border-gray-800 items-center">
+                  <Ionicons name="play-circle-outline" size={48} color="#374151" />
+                  <Text className="text-gray-400 mt-3">No content yet</Text>
+                </View>
               </View>
-            </View>
-          )}
 
-          {/* Placeholder Sections */}
-          <View className="mb-6">
-            <Text className="text-white text-lg font-bold mb-3">Recent Content</Text>
-            <View className="bg-[#151520] rounded-xl p-8 border border-gray-800 items-center">
-              <Ionicons name="play-circle-outline" size={48} color="#374151" />
-              <Text className="text-gray-400 mt-3">No content yet</Text>
+              {/* Book Button */}
+              <Button onPress={() => navigation.goBack()} size="lg">
+                Book {streamer.name}
+              </Button>
             </View>
-          </View>
-
-          {/* Book Button */}
-          <Button onPress={() => navigation.goBack()} size="lg">
-            Book {streamer.name}
-          </Button>
-        </View>
-      </ScrollView>
+          </PageContainer>
+        </ScrollView>
       )}
     </View>
   );

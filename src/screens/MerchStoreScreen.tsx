@@ -16,6 +16,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import type { MainTabsParamList } from "../navigation/MainTabs";
+import { PageContainer } from "../components/PageContainer";
 import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
 import type { MerchProduct, MerchCategory, Promotion } from "../types/printify";
@@ -190,202 +191,202 @@ export const MerchStoreScreen: React.FC = () => {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Active Promotions Banner */}
-        {activePromotions.length > 0 && (
-          <View className="px-6 pt-4">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {activePromotions.map((promo) => (
-                <Pressable
-                  key={promo.id}
-                  className="mr-3"
-                  style={{ width: SCREEN_WIDTH - 80 }}
-                >
-                  <View className="bg-gradient-to-r from-purple-900 to-pink-900 p-4 rounded-xl border border-purple-500/30">
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-1">
-                        <View className="flex-row items-center mb-1">
-                          <Ionicons name="flash" size={16} color="#F59E0B" />
-                          <Text className="text-yellow-400 text-xs font-bold ml-1">
-                            LIMITED TIME
+        <PageContainer>
+          {/* Active Promotions Banner */}
+          {activePromotions.length > 0 && (
+            <View className="px-6 pt-4">
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {activePromotions.map((promo) => (
+                  <Pressable
+                    key={promo.id}
+                    className="mr-3"
+                    style={{ width: SCREEN_WIDTH - 80 }}
+                  >
+                    <View className="bg-gradient-to-r from-purple-900 to-pink-900 p-4 rounded-xl border border-purple-500/30">
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1">
+                          <View className="flex-row items-center mb-1">
+                            <Ionicons name="flash" size={16} color="#F59E0B" />
+                            <Text className="text-yellow-400 text-xs font-bold ml-1">
+                              LIMITED TIME
+                            </Text>
+                          </View>
+                          <Text className="text-white font-bold text-lg">{promo.name}</Text>
+                          <Text className="text-purple-300">
+                            {promo.type === "percentage_off"
+                              ? `${promo.value}% OFF`
+                              : promo.type === "fixed_amount_off"
+                                ? `$${promo.value} OFF`
+                                : "FREE SHIPPING"}
+                          </Text>
+                          {promo.code && (
+                            <View className="flex-row items-center mt-2">
+                              <View className="bg-white/20 px-3 py-1 rounded">
+                                <Text className="text-white font-mono font-bold">{promo.code}</Text>
+                              </View>
+                            </View>
+                          )}
+                        </View>
+                        <View className="items-end">
+                          <Text className="text-gray-400 text-xs">Ends in</Text>
+                          <Text className="text-white font-bold text-lg">
+                            {countdown[promo.id] || getTimeRemaining(promo.endDate)}
                           </Text>
                         </View>
-                        <Text className="text-white font-bold text-lg">{promo.name}</Text>
-                        <Text className="text-purple-300">
-                          {promo.type === "percentage_off"
-                            ? `${promo.value}% OFF`
-                            : promo.type === "fixed_amount_off"
-                            ? `$${promo.value} OFF`
-                            : "FREE SHIPPING"}
-                        </Text>
-                        {promo.code && (
-                          <View className="flex-row items-center mt-2">
-                            <View className="bg-white/20 px-3 py-1 rounded">
-                              <Text className="text-white font-mono font-bold">{promo.code}</Text>
-                            </View>
-                          </View>
-                        )}
-                      </View>
-                      <View className="items-end">
-                        <Text className="text-gray-400 text-xs">Ends in</Text>
-                        <Text className="text-white font-bold text-lg">
-                          {countdown[promo.id] || getTimeRemaining(promo.endDate)}
-                        </Text>
                       </View>
                     </View>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Categories */}
-        <View className="py-4">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 24 }}
-          >
-            {CATEGORIES.map((cat) => (
-              <Pressable
-                key={cat.value}
-                onPress={() => setSelectedCategory(cat.value)}
-                className={`px-4 py-2 rounded-full mr-2 ${
-                  selectedCategory === cat.value
-                    ? "bg-purple-600"
-                    : "bg-[#151520] border border-gray-700"
-                }`}
-              >
-                <Text
-                  className={
-                    selectedCategory === cat.value ? "text-white font-bold" : "text-gray-400"
-                  }
-                >
-                  {cat.label}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Featured Products Section */}
-        {selectedCategory === "all" && featuredProducts.length > 0 && (
-          <View className="mb-6">
-            <View className="flex-row items-center justify-between px-6 mb-3">
-              <Text className="text-white font-bold text-lg">Featured</Text>
-              <Pressable>
-                <Text className="text-purple-400 text-sm">See All</Text>
-              </Pressable>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
+          )}
+
+          {/* Categories */}
+          <View className="py-4">
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24 }}
             >
-              {featuredProducts.map((product) => (
+              {CATEGORIES.map((cat) => (
                 <Pressable
-                  key={product.id}
-                  onPress={() => {
-                    const tabNav = navigation?.getParent();
-                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                    if (rootNav) {
-                      rootNav.navigate("MerchProductDetail", { productId: product.id });
-                    }
-                  }}
-                  className="bg-[#151520] rounded-xl border border-gray-800 overflow-hidden mr-4"
-                  style={{ width: 180 }}
+                  key={cat.value}
+                  onPress={() => setSelectedCategory(cat.value)}
+                  className={`px-4 py-2 rounded-full mr-2 ${selectedCategory === cat.value
+                    ? "bg-purple-600"
+                    : "bg-[#151520] border border-gray-700"
+                    }`}
                 >
-                  {product.images[0] && (
-                    <Image
-                      source={{ uri: product.images[0] }}
-                      style={{ width: 180, height: 180 }}
-                      contentFit="cover"
-                    />
-                  )}
-                  <View className="p-3">
-                    {/* Seller Profile */}
-                    <View className="flex-row items-center mb-1">
-                      <Image
-                        source={{ uri: product.streamerAvatar || "https://i.pravatar.cc/150?img=50" }}
-                        style={{ width: 18, height: 18, borderRadius: 9 }}
-                        contentFit="cover"
-                      />
-                      <Text className="text-gray-400 text-xs ml-1.5">{product.streamerName}</Text>
-                    </View>
-                    <Text className="text-white font-semibold" numberOfLines={1}>
-                      {product.title}
-                    </Text>
-                    <Text className="text-green-400 font-bold mt-1">
-                      ${product.finalPrice.toFixed(2)}
-                    </Text>
-                  </View>
+                  <Text
+                    className={
+                      selectedCategory === cat.value ? "text-white font-bold" : "text-gray-400"
+                    }
+                  >
+                    {cat.label}
+                  </Text>
                 </Pressable>
               ))}
             </ScrollView>
           </View>
-        )}
 
-        {/* Sort Options */}
-        <View className="flex-row items-center justify-between px-6 mb-4">
-          <Text className="text-gray-400 text-sm">{filteredProducts.length} products</Text>
-          <Pressable
-            onPress={() => setShowFilters(!showFilters)}
-            className="flex-row items-center"
-          >
-            <Ionicons name="filter" size={16} color="#A855F7" />
-            <Text className="text-purple-400 text-sm ml-1">Sort & Filter</Text>
-          </Pressable>
-        </View>
-
-        {/* Sort Options Dropdown */}
-        {showFilters && (
-          <View className="mx-6 mb-4 bg-[#151520] rounded-xl p-4 border border-gray-800">
-            <Text className="text-white font-bold mb-3">Sort By</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {[
-                { label: "Featured", value: "featured" as const },
-                { label: "Newest", value: "newest" as const },
-                { label: "Price: Low", value: "price_low" as const },
-                { label: "Price: High", value: "price_high" as const },
-                { label: "Best Selling", value: "best_selling" as const },
-              ].map((opt) => (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => {
-                    setSortBy(opt.value);
-                    setShowFilters(false);
-                  }}
-                  className={`px-3 py-2 rounded-lg ${
-                    sortBy === opt.value ? "bg-purple-600" : "bg-gray-700"
-                  }`}
-                >
-                  <Text className="text-white text-sm">{opt.label}</Text>
+          {/* Featured Products Section */}
+          {selectedCategory === "all" && featuredProducts.length > 0 && (
+            <View className="mb-6">
+              <View className="flex-row items-center justify-between px-6 mb-3">
+                <Text className="text-white font-bold text-lg">Featured</Text>
+                <Pressable>
+                  <Text className="text-purple-400 text-sm">See All</Text>
                 </Pressable>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Products Grid */}
-        <View className="px-6 pb-6">
-          <View className="flex-row flex-wrap justify-between">
-            {filteredProducts.map((product) => (
-              <View key={product.id}>
-                {renderProductCard({ item: product })}
               </View>
-            ))}
-          </View>
-
-          {filteredProducts.length === 0 && (
-            <View className="items-center py-12">
-              <Ionicons name="shirt-outline" size={64} color="#4B5563" />
-              <Text className="text-gray-400 mt-4">No products found</Text>
-              <Text className="text-gray-600 text-sm text-center mt-2">
-                Try adjusting your filters or search query
-              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 24 }}
+              >
+                {featuredProducts.map((product) => (
+                  <Pressable
+                    key={product.id}
+                    onPress={() => {
+                      const tabNav = navigation?.getParent();
+                      const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                      if (rootNav) {
+                        rootNav.navigate("MerchProductDetail", { productId: product.id });
+                      }
+                    }}
+                    className="bg-[#151520] rounded-xl border border-gray-800 overflow-hidden mr-4"
+                    style={{ width: 180 }}
+                  >
+                    {product.images[0] && (
+                      <Image
+                        source={{ uri: product.images[0] }}
+                        style={{ width: 180, height: 180 }}
+                        contentFit="cover"
+                      />
+                    )}
+                    <View className="p-3">
+                      {/* Seller Profile */}
+                      <View className="flex-row items-center mb-1">
+                        <Image
+                          source={{ uri: product.streamerAvatar || "https://i.pravatar.cc/150?img=50" }}
+                          style={{ width: 18, height: 18, borderRadius: 9 }}
+                          contentFit="cover"
+                        />
+                        <Text className="text-gray-400 text-xs ml-1.5">{product.streamerName}</Text>
+                      </View>
+                      <Text className="text-white font-semibold" numberOfLines={1}>
+                        {product.title}
+                      </Text>
+                      <Text className="text-green-400 font-bold mt-1">
+                        ${product.finalPrice.toFixed(2)}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
           )}
-        </View>
+
+          {/* Sort Options */}
+          <View className="flex-row items-center justify-between px-6 mb-4">
+            <Text className="text-gray-400 text-sm">{filteredProducts.length} products</Text>
+            <Pressable
+              onPress={() => setShowFilters(!showFilters)}
+              className="flex-row items-center"
+            >
+              <Ionicons name="filter" size={16} color="#A855F7" />
+              <Text className="text-purple-400 text-sm ml-1">Sort & Filter</Text>
+            </Pressable>
+          </View>
+
+          {/* Sort Options Dropdown */}
+          {showFilters && (
+            <View className="mx-6 mb-4 bg-[#151520] rounded-xl p-4 border border-gray-800">
+              <Text className="text-white font-bold mb-3">Sort By</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {[
+                  { label: "Featured", value: "featured" as const },
+                  { label: "Newest", value: "newest" as const },
+                  { label: "Price: Low", value: "price_low" as const },
+                  { label: "Price: High", value: "price_high" as const },
+                  { label: "Best Selling", value: "best_selling" as const },
+                ].map((opt) => (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => {
+                      setSortBy(opt.value);
+                      setShowFilters(false);
+                    }}
+                    className={`px-3 py-2 rounded-lg ${sortBy === opt.value ? "bg-purple-600" : "bg-gray-700"
+                      }`}
+                  >
+                    <Text className="text-white text-sm">{opt.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Products Grid */}
+          <View className="px-6 pb-6">
+            <View className="flex-row flex-wrap justify-between">
+              {filteredProducts.map((product) => (
+                <View key={product.id}>
+                  {renderProductCard({ item: product })}
+                </View>
+              ))}
+            </View>
+
+            {filteredProducts.length === 0 && (
+              <View className="items-center py-12">
+                <Ionicons name="shirt-outline" size={64} color="#4B5563" />
+                <Text className="text-gray-400 mt-4">No products found</Text>
+                <Text className="text-gray-600 text-sm text-center mt-2">
+                  Try adjusting your filters or search query
+                </Text>
+              </View>
+            )}
+          </View>
+        </PageContainer>
       </ScrollView>
 
       {/* Floating Cart Button */}

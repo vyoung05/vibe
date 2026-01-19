@@ -22,6 +22,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAppStore } from "../state/appStore";
 import { useAuthStore } from "../state/authStore";
 import { GuestPrompt } from "../components/GuestPrompt";
+import { PageContainer } from "../components/PageContainer";
 import type { MainTabsParamList } from "../navigation/MainTabs";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import type { BookingType, Booking } from "../types";
@@ -137,246 +138,256 @@ export const BookingsScreen: React.FC = () => {
     <View className="flex-1 bg-[#0A0A0F]">
       <LinearGradient colors={["#0A0A0F", "#151520"]} style={{ flex: 1 }}>
         {/* Header */}
-        <View style={{ paddingTop: insets.top }} className="px-6 pb-4 border-b border-gray-800">
-          <Text className="text-white text-3xl font-bold mb-1">Bookings</Text>
-          <Text className="text-gray-400 text-sm">Book your favorite streamers</Text>
+        <View style={{ paddingTop: insets.top }} className="border-b border-gray-800">
+          <PageContainer>
+            <View className="px-6 pb-4">
+              <Text className="text-white text-3xl font-bold mb-1">Bookings</Text>
+              <Text className="text-gray-400 text-sm">Book your favorite streamers</Text>
+            </View>
+          </PageContainer>
         </View>
 
         {/* Tabs */}
-        <View className="flex-row border-b border-gray-800">
-          <Pressable
-            onPress={() => setActiveTab("browse")}
-            className={`flex-1 py-3 ${activeTab === "browse" ? "border-b-2 border-purple-500" : ""}`}
-          >
-            <Text className={`text-center font-semibold ${activeTab === "browse" ? "text-purple-400" : "text-gray-400"}`}>
-              Browse
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveTab("my-bookings")}
-            className={`flex-1 py-3 ${activeTab === "my-bookings" ? "border-b-2 border-purple-500" : ""}`}
-          >
-            <View className="flex-row items-center justify-center">
-              <Text className={`font-semibold ${activeTab === "my-bookings" ? "text-purple-400" : "text-gray-400"}`}>
-                My Bookings
-              </Text>
-              {myBookings.length > 0 && (
-                <View className="bg-purple-600 w-5 h-5 rounded-full items-center justify-center ml-2">
-                  <Text className="text-white text-xs font-bold">{myBookings.length}</Text>
+        <View className="border-b border-gray-800">
+          <PageContainer>
+            <View className="flex-row">
+              <Pressable
+                onPress={() => setActiveTab("browse")}
+                className={`flex-1 py-3 ${activeTab === "browse" ? "border-b-2 border-purple-500" : ""}`}
+              >
+                <Text className={`text-center font-semibold ${activeTab === "browse" ? "text-purple-400" : "text-gray-400"}`}>
+                  Browse
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setActiveTab("my-bookings")}
+                className={`flex-1 py-3 ${activeTab === "my-bookings" ? "border-b-2 border-purple-500" : ""}`}
+              >
+                <View className="flex-row items-center justify-center">
+                  <Text className={`font-semibold ${activeTab === "my-bookings" ? "text-purple-400" : "text-gray-400"}`}>
+                    My Bookings
+                  </Text>
+                  {myBookings.length > 0 && (
+                    <View className="bg-purple-600 w-5 h-5 rounded-full items-center justify-center ml-2">
+                      <Text className="text-white text-xs font-bold">{myBookings.length}</Text>
+                    </View>
+                  )}
                 </View>
-              )}
+              </Pressable>
             </View>
-          </Pressable>
+          </PageContainer>
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-          {/* Browse Tab */}
-          {activeTab === "browse" && (
-            <View className="p-6">
-              {/* Info Banner */}
-              <View className="bg-purple-900/30 p-4 rounded-xl border border-purple-500/30 mb-6">
-                <View className="flex-row items-center mb-2">
-                  <Ionicons name="sparkles" size={20} color="#A855F7" />
-                  <Text className="text-purple-300 font-bold ml-2">Book Direct!</Text>
+          <PageContainer>
+            {/* Browse Tab */}
+            {activeTab === "browse" && (
+              <View className="p-6">
+                {/* Info Banner */}
+                <View className="bg-purple-900/30 p-4 rounded-xl border border-purple-500/30 mb-6">
+                  <View className="flex-row items-center mb-2">
+                    <Ionicons name="sparkles" size={20} color="#A855F7" />
+                    <Text className="text-purple-300 font-bold ml-2">Book Direct!</Text>
+                  </View>
+                  <Text className="text-gray-300 text-sm">
+                    Request shoutouts, collaborations, coaching sessions, and more from your favorite streamers.
+                  </Text>
                 </View>
-                <Text className="text-gray-300 text-sm">
-                  Request shoutouts, collaborations, coaching sessions, and more from your favorite streamers.
-                </Text>
-              </View>
 
-              {/* Booking Types Overview */}
-              <Text className="text-white font-bold text-lg mb-3">What can you book?</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
-                <View className="flex-row gap-3">
-                  {BOOKING_TYPES.slice(0, 5).map((type) => (
-                    <View key={type.value} className="bg-[#151520] p-4 rounded-xl border border-gray-800" style={{ width: 140 }}>
-                      <Ionicons name={type.icon as any} size={24} color="#8B5CF6" />
-                      <Text className="text-white font-semibold mt-2">{type.label}</Text>
-                      <Text className="text-gray-400 text-xs mt-1" numberOfLines={2}>{type.description}</Text>
-                    </View>
-                  ))}
-                </View>
-              </ScrollView>
-
-              {/* Available Streamers */}
-              <Text className="text-white font-bold text-lg mb-3">Available Streamers</Text>
-
-              {bookableStreamers.length > 0 ? (
-                bookableStreamers.map((streamer) => (
-                  <Pressable
-                    key={streamer.id}
-                    onPress={() => handleOpenBooking(streamer.id)}
-                    className="bg-[#151520] p-4 rounded-xl border border-gray-800 mb-3"
-                  >
-                    <View className="flex-row items-center">
-                      <Image
-                        source={{ uri: streamer.avatar }}
-                        style={{ width: 56, height: 56, borderRadius: 28 }}
-                        contentFit="cover"
-                      />
-                      <View className="flex-1 ml-3">
-                        <View className="flex-row items-center">
-                          <Text className="text-white font-bold text-lg">{streamer.name}</Text>
-                          {streamer.isLive && (
-                            <View className="bg-red-500 px-2 py-0.5 rounded ml-2">
-                              <Text className="text-white text-xs font-bold">LIVE</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
-                        <Text className="text-gray-400 text-xs mt-1">
-                          {streamer.bookingSettings?.services?.length || 0} services available
-                        </Text>
+                {/* Booking Types Overview */}
+                <Text className="text-white font-bold text-lg mb-3">What can you book?</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
+                  <View className="flex-row gap-3">
+                    {BOOKING_TYPES.slice(0, 5).map((type) => (
+                      <View key={type.value} className="bg-[#151520] p-4 rounded-xl border border-gray-800" style={{ width: 140 }}>
+                        <Ionicons name={type.icon as any} size={24} color="#8B5CF6" />
+                        <Text className="text-white font-semibold mt-2">{type.label}</Text>
+                        <Text className="text-gray-400 text-xs mt-1" numberOfLines={2}>{type.description}</Text>
                       </View>
-                      <View className="bg-purple-600 px-4 py-2 rounded-xl">
-                        <Text className="text-white font-bold">Book</Text>
-                      </View>
-                    </View>
+                    ))}
+                  </View>
+                </ScrollView>
 
-                    {/* Services Preview */}
-                    {streamer.bookingSettings?.services && streamer.bookingSettings.services.length > 0 && (
-                      <View className="flex-row flex-wrap mt-3 pt-3 border-t border-gray-800">
-                        {streamer.bookingSettings.services.filter(s => s.isActive).slice(0, 3).map((service) => (
-                          <View key={service.id} className="bg-gray-800 px-3 py-1 rounded-full mr-2 mb-2">
-                            <Text className="text-gray-300 text-xs">
-                              {service.name} - ${service.price}
-                            </Text>
+                {/* Available Streamers */}
+                <Text className="text-white font-bold text-lg mb-3">Available Streamers</Text>
+
+                {bookableStreamers.length > 0 ? (
+                  bookableStreamers.map((streamer) => (
+                    <Pressable
+                      key={streamer.id}
+                      onPress={() => handleOpenBooking(streamer.id)}
+                      className="bg-[#151520] p-4 rounded-xl border border-gray-800 mb-3"
+                    >
+                      <View className="flex-row items-center">
+                        <Image
+                          source={{ uri: streamer.avatar }}
+                          style={{ width: 56, height: 56, borderRadius: 28 }}
+                          contentFit="cover"
+                        />
+                        <View className="flex-1 ml-3">
+                          <View className="flex-row items-center">
+                            <Text className="text-white font-bold text-lg">{streamer.name}</Text>
+                            {streamer.isLive && (
+                              <View className="bg-red-500 px-2 py-0.5 rounded ml-2">
+                                <Text className="text-white text-xs font-bold">LIVE</Text>
+                              </View>
+                            )}
                           </View>
-                        ))}
+                          <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
+                          <Text className="text-gray-400 text-xs mt-1">
+                            {streamer.bookingSettings?.services?.length || 0} services available
+                          </Text>
+                        </View>
+                        <View className="bg-purple-600 px-4 py-2 rounded-xl">
+                          <Text className="text-white font-bold">Book</Text>
+                        </View>
                       </View>
-                    )}
-                  </Pressable>
-                ))
-              ) : (
-                // Show all streamers with option to request bookings
-                streamers.length > 0 ? (
-                  <>
-                    <Text className="text-gray-400 text-sm mb-3">
-                      These streamers have not set up booking yet. Tap to view their profile.
-                    </Text>
-                    {streamers.map((streamer) => (
-                      <Pressable
-                        key={streamer.id}
-                        onPress={() => rootNavigation?.navigate("StreamerProfile", { streamerId: streamer.id })}
+
+                      {/* Services Preview */}
+                      {streamer.bookingSettings?.services && streamer.bookingSettings.services.length > 0 && (
+                        <View className="flex-row flex-wrap mt-3 pt-3 border-t border-gray-800">
+                          {streamer.bookingSettings.services.filter(s => s.isActive).slice(0, 3).map((service) => (
+                            <View key={service.id} className="bg-gray-800 px-3 py-1 rounded-full mr-2 mb-2">
+                              <Text className="text-gray-300 text-xs">
+                                {service.name} - ${service.price}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </Pressable>
+                  ))
+                ) : (
+                  // Show all streamers with option to request bookings
+                  streamers.length > 0 ? (
+                    <>
+                      <Text className="text-gray-400 text-sm mb-3">
+                        These streamers have not set up booking yet. Tap to view their profile.
+                      </Text>
+                      {streamers.map((streamer) => (
+                        <Pressable
+                          key={streamer.id}
+                          onPress={() => rootNavigation?.navigate("StreamerProfile", { streamerId: streamer.id })}
+                          className="bg-[#151520] p-4 rounded-xl border border-gray-800 mb-3"
+                        >
+                          <View className="flex-row items-center">
+                            <Image
+                              source={{ uri: streamer.avatar }}
+                              style={{ width: 48, height: 48, borderRadius: 24 }}
+                              contentFit="cover"
+                            />
+                            <View className="flex-1 ml-3">
+                              <Text className="text-white font-bold">{streamer.name}</Text>
+                              <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                          </View>
+                        </Pressable>
+                      ))}
+                    </>
+                  ) : (
+                    <View className="items-center py-12">
+                      <Ionicons name="calendar-outline" size={64} color="#4B5563" />
+                      <Text className="text-gray-400 text-lg mt-4">No streamers available yet</Text>
+                      <Text className="text-gray-500 text-sm text-center mt-2">
+                        Check back later for bookable streamers
+                      </Text>
+                    </View>
+                  )
+                )}
+              </View>
+            )}
+
+            {/* My Bookings Tab */}
+            {activeTab === "my-bookings" && (
+              <View className="p-6">
+                {!user ? (
+                  <View className="py-12">
+                    <GuestPrompt
+                      title="Your Bookings"
+                      description="Sign in to book sessions with your favorite streamers and manage your appointments."
+                      icon="calendar-outline"
+                    />
+                  </View>
+                ) : myBookings.length > 0 ? (
+                  myBookings.map((booking) => {
+                    const streamer = streamers.find((s) => booking.streamerIds.includes(s.id));
+                    return (
+                      <View
+                        key={booking.id}
                         className="bg-[#151520] p-4 rounded-xl border border-gray-800 mb-3"
                       >
-                        <View className="flex-row items-center">
-                          <Image
-                            source={{ uri: streamer.avatar }}
-                            style={{ width: 48, height: 48, borderRadius: 24 }}
-                            contentFit="cover"
-                          />
-                          <View className="flex-1 ml-3">
-                            <Text className="text-white font-bold">{streamer.name}</Text>
-                            <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
+                        <View className="flex-row items-center justify-between mb-3">
+                          <View className="flex-row items-center">
+                            {streamer && (
+                              <Image
+                                source={{ uri: streamer.avatar }}
+                                style={{ width: 40, height: 40, borderRadius: 20 }}
+                                contentFit="cover"
+                              />
+                            )}
+                            <View className="ml-3">
+                              <Text className="text-white font-bold">{streamer?.name || "Unknown Streamer"}</Text>
+                              <Text className="text-gray-400 text-sm capitalize">{booking.type.replace("-", " ")}</Text>
+                            </View>
                           </View>
-                          <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                          <View className={`px-3 py-1 rounded-full ${getStatusBgColor(booking.status)}`}>
+                            <Text className={`text-xs font-bold capitalize ${getStatusColor(booking.status)}`}>
+                              {booking.status}
+                            </Text>
+                          </View>
                         </View>
-                      </Pressable>
-                    ))}
-                  </>
+
+                        <View className="bg-[#0A0A0F] p-3 rounded-xl">
+                          <View className="flex-row items-center mb-2">
+                            <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                            <Text className="text-gray-300 ml-2">{booking.preferredDate}</Text>
+                            {booking.preferredTime && (
+                              <Text className="text-gray-300 ml-2">at {booking.preferredTime}</Text>
+                            )}
+                          </View>
+                          {booking.budget > 0 && (
+                            <View className="flex-row items-center mb-2">
+                              <Ionicons name="cash-outline" size={16} color="#9CA3AF" />
+                              <Text className="text-green-400 font-bold ml-2">${booking.budget}</Text>
+                            </View>
+                          )}
+                          {booking.notes && (
+                            <Text className="text-gray-400 text-sm">{booking.notes}</Text>
+                          )}
+                        </View>
+
+                        {booking.streamerResponse && (
+                          <View className="mt-3 pt-3 border-t border-gray-800">
+                            <Text className="text-gray-400 text-xs mb-1">Response from streamer:</Text>
+                            <Text className="text-white text-sm">{booking.streamerResponse}</Text>
+                          </View>
+                        )}
+
+                        <Text className="text-gray-500 text-xs mt-3">
+                          Created: {new Date(booking.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    );
+                  })
                 ) : (
                   <View className="items-center py-12">
                     <Ionicons name="calendar-outline" size={64} color="#4B5563" />
-                    <Text className="text-gray-400 text-lg mt-4">No streamers available yet</Text>
+                    <Text className="text-gray-400 text-lg mt-4">No bookings yet</Text>
                     <Text className="text-gray-500 text-sm text-center mt-2">
-                      Check back later for bookable streamers
+                      Browse available streamers and book your first session!
                     </Text>
-                  </View>
-                )
-              )}
-            </View>
-          )}
-
-          {/* My Bookings Tab */}
-          {activeTab === "my-bookings" && (
-            <View className="p-6">
-              {!user ? (
-                <View className="py-12">
-                  <GuestPrompt
-                    title="Your Bookings"
-                    description="Sign in to book sessions with your favorite streamers and manage your appointments."
-                    icon="calendar-outline"
-                  />
-                </View>
-              ) : myBookings.length > 0 ? (
-                myBookings.map((booking) => {
-                  const streamer = streamers.find((s) => booking.streamerIds.includes(s.id));
-                  return (
-                    <View
-                      key={booking.id}
-                      className="bg-[#151520] p-4 rounded-xl border border-gray-800 mb-3"
+                    <Pressable
+                      onPress={() => setActiveTab("browse")}
+                      className="bg-purple-600 px-6 py-3 rounded-xl mt-4"
                     >
-                      <View className="flex-row items-center justify-between mb-3">
-                        <View className="flex-row items-center">
-                          {streamer && (
-                            <Image
-                              source={{ uri: streamer.avatar }}
-                              style={{ width: 40, height: 40, borderRadius: 20 }}
-                              contentFit="cover"
-                            />
-                          )}
-                          <View className="ml-3">
-                            <Text className="text-white font-bold">{streamer?.name || "Unknown Streamer"}</Text>
-                            <Text className="text-gray-400 text-sm capitalize">{booking.type.replace("-", " ")}</Text>
-                          </View>
-                        </View>
-                        <View className={`px-3 py-1 rounded-full ${getStatusBgColor(booking.status)}`}>
-                          <Text className={`text-xs font-bold capitalize ${getStatusColor(booking.status)}`}>
-                            {booking.status}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View className="bg-[#0A0A0F] p-3 rounded-xl">
-                        <View className="flex-row items-center mb-2">
-                          <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                          <Text className="text-gray-300 ml-2">{booking.preferredDate}</Text>
-                          {booking.preferredTime && (
-                            <Text className="text-gray-300 ml-2">at {booking.preferredTime}</Text>
-                          )}
-                        </View>
-                        {booking.budget > 0 && (
-                          <View className="flex-row items-center mb-2">
-                            <Ionicons name="cash-outline" size={16} color="#9CA3AF" />
-                            <Text className="text-green-400 font-bold ml-2">${booking.budget}</Text>
-                          </View>
-                        )}
-                        {booking.notes && (
-                          <Text className="text-gray-400 text-sm">{booking.notes}</Text>
-                        )}
-                      </View>
-
-                      {booking.streamerResponse && (
-                        <View className="mt-3 pt-3 border-t border-gray-800">
-                          <Text className="text-gray-400 text-xs mb-1">Response from streamer:</Text>
-                          <Text className="text-white text-sm">{booking.streamerResponse}</Text>
-                        </View>
-                      )}
-
-                      <Text className="text-gray-500 text-xs mt-3">
-                        Created: {new Date(booking.createdAt).toLocaleDateString()}
-                      </Text>
-                    </View>
-                  );
-                })
-              ) : (
-                <View className="items-center py-12">
-                  <Ionicons name="calendar-outline" size={64} color="#4B5563" />
-                  <Text className="text-gray-400 text-lg mt-4">No bookings yet</Text>
-                  <Text className="text-gray-500 text-sm text-center mt-2">
-                    Browse available streamers and book your first session!
-                  </Text>
-                  <Pressable
-                    onPress={() => setActiveTab("browse")}
-                    className="bg-purple-600 px-6 py-3 rounded-xl mt-4"
-                  >
-                    <Text className="text-white font-bold">Browse Streamers</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          )}
+                      <Text className="text-white font-bold">Browse Streamers</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            )}
+          </PageContainer>
         </ScrollView>
 
         {/* Booking Modal */}
