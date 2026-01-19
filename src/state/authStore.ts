@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (error) {
-            console.log("[Auth] Password reset error:", error.message);
+            console.error("[Auth] Password reset error object:", JSON.stringify(error, null, 2));
             set({ isLoading: false, error: error.message });
             return false;
           }

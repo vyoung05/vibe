@@ -5,18 +5,21 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 
-// Guard against missing configuration to prevent app crash on web/Vercel
+// Guard against missing configuration
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error(
-    "[Supabase] Error: Missing environment variables. " +
-    "Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY."
+  console.warn(
+    "[Supabase] Warning: Missing environment variables EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY. " +
+    "Falling back to placeholders. This will cause 'Failed to fetch' errors in production."
   );
+} else {
+  const maskedUrl = SUPABASE_URL.substring(0, 12) + "..." + SUPABASE_URL.substring(SUPABASE_URL.length - 4);
+  console.log(`[Supabase] Initializing with URL: ${maskedUrl}`);
 }
 
-// Create Supabase client with safe defaults or valid config
+// Create Supabase client
 export const supabase = createClient(
-  SUPABASE_URL || "https://placeholder-project.supabase.co", 
-  SUPABASE_ANON_KEY || "placeholder-key", 
+  SUPABASE_URL || "https://placeholder-project.supabase.co",
+  SUPABASE_ANON_KEY || "placeholder-key",
   {
     auth: {
       storage: AsyncStorage,
