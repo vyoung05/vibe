@@ -9,7 +9,6 @@ export default {
     newArchEnabled: true,
     web: {
       bundler: "metro",
-      output: "static",
       publicPath: "/"
     },
     ios: {

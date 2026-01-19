@@ -1,4 +1,5 @@
 // Web entry point
+console.log("[IndexWeb] Initializing...");
 import "./global.css";
 import "./web.css";
 import "react-native-get-random-values";

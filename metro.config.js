@@ -43,6 +43,7 @@ config.resolver = {
         "react-native-ios-context-menu",
         "react-native-ios-utilities",
         "lottie-react-native",
+        "react-native-worklets-core",
       ];
 
       if (nativeOnlyModules.some((mod) => moduleName.includes(mod))) {
