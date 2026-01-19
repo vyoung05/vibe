@@ -14,6 +14,7 @@ interface AuthState {
   signUp: (email: string, password: string, username: string, tier: "free" | "superfan") => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
   updateUser: (userData: Partial<User>) => void;
   toggleBookmark: (streamerId: string) => void;
   checkSession: () => Promise<void>;
@@ -56,6 +57,32 @@ export const useAuthStore = create<AuthState>()(
           return true;
         } catch (error) {
           console.log("[Auth] Password reset exception:", error);
+          set({ isLoading: false, error: String(error) });
+          return false;
+        }
+      },
+
+      updatePassword: async (password: string): Promise<boolean> => {
+        try {
+          set({ isLoading: true, error: null, successMessage: null });
+          console.log("[Auth] Updating password");
+
+          const { error } = await supabase.auth.updateUser({ password });
+
+          if (error) {
+            console.log("[Auth] Update password error:", error.message);
+            set({ isLoading: false, error: error.message });
+            return false;
+          }
+
+          console.log("[Auth] Password updated successfully");
+          set({
+            isLoading: false,
+            successMessage: "Password updated successfully!"
+          });
+          return true;
+        } catch (error) {
+          console.log("[Auth] Update password exception:", error);
           set({ isLoading: false, error: String(error) });
           return false;
         }

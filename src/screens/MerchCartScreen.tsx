@@ -12,6 +12,9 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useMerchStore } from "../state/merchStore";
+import { LinearGradient } from "expo-linear-gradient";
+import { PageContainer } from "../components/PageContainer";
+import { Platform } from "react-native";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -29,124 +32,156 @@ export const MerchCartScreen: React.FC = () => {
   if (cart.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-[#0A0A0F]" edges={["top"]}>
-        <View className="flex-row items-center px-6 py-4 border-b border-gray-800">
-          <Pressable onPress={() => navigation.goBack()} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </Pressable>
-          <Text className="text-white text-xl font-bold">My Cart</Text>
-        </View>
+        <PageContainer>
+          <View className="flex-row items-center px-6 py-4 border-b border-white/5">
+            <Pressable
+              onPress={() => navigation.goBack()}
+              className="w-10 h-10 bg-white/5 rounded-full items-center justify-center border border-white/10 mr-3"
+            >
+              <Ionicons name="arrow-back" size={20} color="white" />
+            </Pressable>
+            <Text className="text-white text-xl font-black italic tracking-tight uppercase">My Bag</Text>
+          </View>
 
-        <View className="flex-1 items-center justify-center px-6">
-          <Ionicons name="bag-outline" size={80} color="#4B5563" />
-          <Text className="text-white text-xl font-bold mt-4">Your cart is empty</Text>
-          <Text className="text-gray-400 text-center mt-2">
-            Browse merch from your favorite streamers and add items to your cart
-          </Text>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            className="bg-purple-600 px-8 py-4 rounded-xl mt-6"
-          >
-            <Text className="text-white font-bold">Browse Merch</Text>
-          </Pressable>
-        </View>
+          <View className="flex-1 items-center justify-center px-6 max-w-[400px] self-center py-20">
+            <View className="w-24 h-24 bg-white/5 rounded-full items-center justify-center mb-6">
+              <Ionicons name="bag-outline" size={40} color="#4B5563" />
+            </View>
+            <Text className="text-white text-2xl font-black mb-2 italic">YOUR BAG IS EMPTY</Text>
+            <Text className="text-gray-500 text-center font-bold text-sm tracking-wide">
+              Time to fill it with some official gear from your favorite streamers.
+            </Text>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              className="mt-8 overflow-hidden rounded-2xl w-full"
+            >
+              <LinearGradient
+                colors={["#8B5CF6", "#D946EF"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="py-4 items-center"
+              >
+                <Text className="text-white font-black uppercase tracking-widest text-sm">EXPLORE THE STORE</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </PageContainer>
       </SafeAreaView>
     );
   }
-
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0F]" edges={["top"]}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-800">
-        <View className="flex-row items-center">
-          <Pressable onPress={() => navigation.goBack()} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="white" />
+      <PageContainer>
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-6 py-4 border-b border-white/5">
+          <View className="flex-row items-center">
+            <Pressable
+              onPress={() => navigation.goBack()}
+              className="w-10 h-10 bg-white/5 rounded-full items-center justify-center border border-white/10 mr-3"
+            >
+              <Ionicons name="arrow-back" size={20} color="white" />
+            </Pressable>
+            <Text className="text-white text-xl font-black italic tracking-tight uppercase">My Bag</Text>
+          </View>
+          <Pressable onPress={clearCart}>
+            <Text className="text-red-500 text-[10px] font-black uppercase tracking-widest">Clear Bag</Text>
           </Pressable>
-          <Text className="text-white text-xl font-bold">My Cart</Text>
         </View>
-        <Pressable onPress={clearCart}>
-          <Text className="text-red-400 font-semibold">Clear All</Text>
-        </Pressable>
-      </View>
+      </PageContainer>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="p-6">
-          {cart.map((item) => (
-            <View
-              key={item.id}
-              className="bg-[#151520] rounded-xl border border-gray-800 p-4 mb-4"
-            >
-              <View className="flex-row">
-                {item.productImage && (
-                  <Image
-                    source={{ uri: item.productImage }}
-                    style={{ width: 80, height: 80, borderRadius: 8 }}
-                    contentFit="cover"
-                  />
-                )}
-                <View className="flex-1 ml-4">
-                  <Text className="text-gray-400 text-xs">{item.streamerName}</Text>
-                  <Text className="text-white font-semibold" numberOfLines={2}>
-                    {item.productTitle}
-                  </Text>
-                  <Text className="text-gray-500 text-sm">{item.variantTitle}</Text>
-                  <Text className="text-green-400 font-bold mt-1">
-                    ${item.unitPrice.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Quantity Controls */}
-              <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-gray-800">
-                <View className="flex-row items-center">
-                  <Pressable
-                    onPress={() => updateCartItem(item.id, item.quantity - 1)}
-                    className="w-8 h-8 rounded-lg bg-gray-700 items-center justify-center"
-                  >
-                    <Ionicons name="remove" size={16} color="white" />
-                  </Pressable>
-                  <Text className="text-white font-bold mx-4">{item.quantity}</Text>
-                  <Pressable
-                    onPress={() => updateCartItem(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-lg bg-gray-700 items-center justify-center"
-                  >
-                    <Ionicons name="add" size={16} color="white" />
-                  </Pressable>
+        <PageContainer>
+          <View className="p-6">
+            {cart.map((item) => (
+              <View
+                key={item.id}
+                className="bg-white/5 rounded-3xl border border-white/10 p-5 mb-5 shadow-2xl shadow-black/60"
+              >
+                <View className="flex-row">
+                  {item.productImage && (
+                    <Image
+                      source={{ uri: item.productImage }}
+                      style={{ width: 100, height: 100, borderRadius: 16 }}
+                      contentFit="cover"
+                    />
+                  )}
+                  <View className="flex-1 ml-5">
+                    <Text className="text-purple-500 text-[10px] font-black uppercase tracking-widest mb-1">{item.streamerName}</Text>
+                    <Text className="text-white font-bold text-lg leading-tight mb-1" numberOfLines={2}>
+                      {item.productTitle}
+                    </Text>
+                    <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{item.variantTitle}</Text>
+                    <Text className="text-green-400 font-black text-xl mt-1">
+                      ${item.unitPrice.toFixed(2)}
+                    </Text>
+                  </View>
                 </View>
 
-                <View className="flex-row items-center">
-                  <Text className="text-white font-bold mr-4">
-                    ${(item.unitPrice * item.quantity).toFixed(2)}
-                  </Text>
-                  <Pressable
-                    onPress={() => removeFromCart(item.id)}
-                    className="w-8 h-8 rounded-lg bg-red-600/20 items-center justify-center"
-                  >
-                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                  </Pressable>
+                {/* Quantity Controls */}
+                <View className="flex-row items-center justify-between mt-5 pt-5 border-t border-white/5">
+                  <View className="flex-row items-center bg-black/20 p-1 rounded-2xl border border-white/5">
+                    <Pressable
+                      onPress={() => updateCartItem(item.id, item.quantity - 1)}
+                      className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10"
+                    >
+                      <Ionicons name="remove" size={16} color="white" />
+                    </Pressable>
+                    <Text className="text-white font-black text-lg mx-5">{item.quantity}</Text>
+                    <Pressable
+                      onPress={() => updateCartItem(item.id, item.quantity + 1)}
+                      className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10"
+                    >
+                      <Ionicons name="add" size={16} color="white" />
+                    </Pressable>
+                  </View>
+
+                  <View className="flex-row items-center">
+                    <View className="items-end mr-4">
+                      <Text className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-0.5">Line Total</Text>
+                      <Text className="text-white font-black text-lg leading-none">
+                        ${(item.unitPrice * item.quantity).toFixed(2)}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => removeFromCart(item.id)}
+                      className="w-10 h-10 rounded-xl bg-red-500/10 items-center justify-center border border-red-500/20"
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    </Pressable>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        </PageContainer>
       </ScrollView>
 
       {/* Bottom Summary */}
-      <View className="bg-[#151520] border-t border-gray-800 px-6 py-4">
-        <View className="flex-row items-center justify-between mb-2">
-          <Text className="text-gray-400">Subtotal ({itemCount} items)</Text>
-          <Text className="text-white font-bold">${subtotal.toFixed(2)}</Text>
-        </View>
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-gray-500 text-sm">Shipping calculated at checkout</Text>
-        </View>
-        <Pressable
-          onPress={() => navigation.navigate("MerchCheckout")}
-          className="bg-purple-600 py-4 rounded-xl"
-        >
-          <Text className="text-white text-center font-bold">
-            Proceed to Checkout
-          </Text>
-        </Pressable>
+      <View className="bg-black/90 border-t border-white/10 items-center">
+        <PageContainer>
+          <View className="px-6 py-6 w-full max-w-[800px]">
+            <View className="flex-row items-center justify-between mb-4">
+              <View>
+                <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Estimated Total</Text>
+                <Text className="text-white text-3xl font-black tracking-tight">${subtotal.toFixed(2)}</Text>
+              </View>
+              <Text className="text-gray-500 text-[10px] font-bold uppercase text-right w-24">Shipping & tax calculated next</Text>
+            </View>
+            <Pressable
+              onPress={() => navigation.navigate("MerchCheckout")}
+              className="overflow-hidden rounded-2xl"
+            >
+              <LinearGradient
+                colors={["#8B5CF6", "#D946EF"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="py-5 items-center"
+              >
+                <Text className="text-white font-black uppercase tracking-widest text-sm">PROCEED TO SECURE CHECKOUT</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </PageContainer>
       </View>
     </SafeAreaView>
   );

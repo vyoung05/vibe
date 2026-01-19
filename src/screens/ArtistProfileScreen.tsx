@@ -270,44 +270,46 @@ export const ArtistProfileScreen: React.FC = () => {
     return (
       <Pressable
         onPress={() => handlePlayTrack(track)}
-        className={`flex-row items-center p-4 mb-3 rounded-2xl ${isCurrentTrack ? "bg-purple-900/40" : "bg-[#151520]"}`}
+        className={`flex-row items-center p-5 mb-4 rounded-3xl border ${isCurrentTrack ? "bg-purple-500/10 border-purple-500/30 shadow-2xl shadow-purple-500/20" : "bg-white/5 border-white/10"
+          }`}
       >
-        <View className="relative">
+        <View className="relative shadow-2xl">
           <Image
             source={{ uri: track.coverArt }}
-            className="w-14 h-14 rounded-xl"
+            className="w-16 h-16 rounded-2xl"
             contentFit="cover"
           />
           <View className="absolute inset-0 items-center justify-center">
-            <View className="w-8 h-8 rounded-full bg-black/60 items-center justify-center">
+            <View className="w-10 h-10 rounded-full bg-black/40 items-center justify-center border border-white/10">
               <Ionicons
                 name={isCurrentTrack && isPlaying ? "pause" : "play"}
-                size={16}
+                size={20}
                 color="white"
               />
             </View>
           </View>
           {track.isHot && (
-            <View className="absolute -top-1 -right-1 bg-orange-500 rounded-full p-1">
+            <View className="absolute -top-1 -right-1 bg-orange-500 rounded-full p-1 border-2 border-[#0A0A0F]">
               <Ionicons name="flame" size={10} color="white" />
             </View>
           )}
         </View>
 
-        <View className="flex-1 ml-4">
-          <Text className="text-white font-bold text-base" numberOfLines={1}>
+        <View className="flex-1 ml-5">
+          <Text className="text-white font-black text-base italic tracking-tight" numberOfLines={1}>
             {track.title}
           </Text>
-          <View className="flex-row items-center mt-1">
-            <Ionicons name="play" size={12} color="#9CA3AF" />
-            <Text className="text-gray-400 text-xs ml-1">{track.playCount.toLocaleString()} plays</Text>
-            <Text className="text-gray-600 mx-2">|</Text>
-            <Text className="text-gray-400 text-xs">{formatDuration(track.duration)}</Text>
+          <View className="flex-row items-center mt-2">
+            <View className="bg-white/5 px-2 py-0.5 rounded-md flex-row items-center border border-white/5">
+              <Ionicons name="play" size={8} color="#9CA3AF" />
+              <Text className="text-gray-500 text-[9px] font-bold ml-1">{track.playCount.toLocaleString()}</Text>
+            </View>
+            <View className="w-1 h-1 rounded-full bg-gray-700 mx-3" />
+            <Text className="text-gray-500 text-[9px] font-black tracking-widest">{formatDuration(track.duration)}</Text>
             {track.price && (
-              <>
-                <Text className="text-gray-600 mx-2">|</Text>
-                <Text className="text-green-400 text-xs font-bold">${track.price}</Text>
-              </>
+              <View className="ml-3 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
+                <Text className="text-green-400 text-[9px] font-black tracking-widest uppercase">${track.price}</Text>
+              </View>
             )}
           </View>
         </View>
@@ -316,15 +318,15 @@ export const ArtistProfileScreen: React.FC = () => {
           <View className="flex-row">
             <Pressable
               onPress={() => openEditTrack(track)}
-              className="p-2 mr-1"
+              className="w-8 h-8 rounded-full bg-white/5 items-center justify-center mr-2 border border-white/10"
             >
-              <Ionicons name="create-outline" size={20} color="#8B5CF6" />
+              <Ionicons name="pencil-sharp" size={14} color="#A78BFA" />
             </Pressable>
             <Pressable
               onPress={() => handleDeleteTrack(track.id)}
-              className="p-2"
+              className="w-8 h-8 rounded-full bg-white/5 items-center justify-center border border-red-500/20"
             >
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              <Ionicons name="trash-sharp" size={14} color="#EF4444" />
             </Pressable>
           </View>
         )}
@@ -349,69 +351,69 @@ export const ArtistProfileScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <PageContainer>
           {/* Header Image */}
-          <View className="relative h-64">
+          <View className="relative h-72">
             <Image
               source={{ uri: artist.headerImages[0] || artist.avatar }}
               className="w-full h-full"
               contentFit="cover"
             />
             <LinearGradient
-              colors={["transparent", "rgba(10, 10, 15, 0.8)", "#0A0A0F"]}
-              style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 120 }}
+              colors={["rgba(10, 10, 15, 0.4)", "rgba(10, 10, 15, 0.8)", "#0A0A0F"]}
+              style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 200 }}
             />
             <Pressable
               onPress={() => navigation.goBack()}
-              className="absolute left-4 bg-black/50 rounded-full p-2"
-              style={{ top: insets.top + 8 }}
+              className="absolute left-6 bg-white/10 rounded-full p-2 border border-white/20 shadow-2xl"
+              style={{ top: insets.top + 16 }}
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </Pressable>
           </View>
 
           {/* Artist Info */}
-          <View className="px-5 -mt-16">
+          <View className="px-6 -mt-20">
             <View className="flex-row items-end">
-              <Image
-                source={{ uri: artist.avatar }}
-                className="w-28 h-28 rounded-2xl border-4 border-[#0A0A0F]"
-                contentFit="cover"
-              />
-              <View className="flex-1 ml-4 mb-2">
-                <View className="flex-row items-center">
-                  <Text className="text-white text-2xl font-bold">{artist.stageName}</Text>
+              <View className="shadow-2xl shadow-purple-500/20">
+                <Image
+                  source={{ uri: artist.avatar }}
+                  className="w-32 h-32 rounded-3xl border-4 border-[#0A0A0F]"
+                  contentFit="cover"
+                />
+              </View>
+              <View className="flex-1 ml-5 mb-4">
+                <View className="flex-row items-center flex-wrap">
+                  <Text className="text-white text-3xl font-black italic tracking-tighter uppercase">{artist.stageName}</Text>
                   {artist.isVerified && (
-                    <Ionicons name="checkmark-circle" size={20} color="#8B5CF6" style={{ marginLeft: 6 }} />
+                    <View className="ml-2 bg-purple-500/20 p-1 rounded-full border border-purple-500/30">
+                      <Ionicons name="checkmark-sharp" size={14} color="#A78BFA" />
+                    </View>
                   )}
                   {artist.hotStatus && (
-                    <View className="ml-2 flex-row items-center bg-orange-500/20 px-2 py-0.5 rounded-full">
-                      <Ionicons name="flame" size={12} color="#F97316" />
-                      <Text className="text-orange-400 text-xs font-bold ml-1">HOT</Text>
+                    <View className="ml-2 flex-row items-center bg-orange-500/10 px-2 py-0.5 rounded-md border border-orange-500/20">
+                      <Ionicons name="flame" size={10} color="#F97316" />
+                      <Text className="text-orange-400 text-[10px] font-black uppercase tracking-widest ml-1">HOT</Text>
                     </View>
                   )}
                 </View>
                 {artist.genre && (
-                  <Text className="text-purple-400 text-sm">{artist.genre}</Text>
+                  <Text className="text-purple-500 text-[10px] font-black uppercase tracking-[3px] mt-1">{artist.genre}</Text>
                 )}
               </View>
             </View>
 
             {/* Stats */}
-            <View className="flex-row mt-5 mb-4">
-              <View className="flex-1 items-center">
-                <Text className="text-white text-xl font-bold">{artist.followerCount.toLocaleString()}</Text>
-                <Text className="text-gray-400 text-xs">Followers</Text>
+            <View className="flex-row mt-8 mb-6 bg-white/5 rounded-3xl border border-white/10 p-5 shadow-2xl">
+              <View className="flex-1 items-center border-r border-white/5">
+                <Text className="text-white text-lg font-black italic">{artist.followerCount.toLocaleString()}</Text>
+                <Text className="text-gray-500 text-[9px] font-black uppercase tracking-widest mt-0.5">FOLLOWS</Text>
+              </View>
+              <View className="flex-1 items-center border-r border-white/5">
+                <Text className="text-white text-lg font-black italic">{artist.tracks.length}</Text>
+                <Text className="text-gray-500 text-[9px] font-black uppercase tracking-widest mt-0.5">TRACKS</Text>
               </View>
               <View className="flex-1 items-center">
-                <Text className="text-white text-xl font-bold">{artist.tracks.length}</Text>
-                <Text className="text-gray-400 text-xs">Tracks</Text>
-              </View>
-              <View className="flex-1 items-center">
-                <Text className="text-white text-xl font-bold">{artist.totalPlays.toLocaleString()}</Text>
-                <Text className="text-gray-400 text-xs">Plays</Text>
-              </View>
-              <View className="flex-1 items-center">
-                <Text className="text-white text-xl font-bold">{artist.albums.length}</Text>
-                <Text className="text-gray-400 text-xs">Albums</Text>
+                <Text className="text-white text-lg font-black italic">{(artist.totalPlays / 1000).toFixed(1)}K</Text>
+                <Text className="text-gray-500 text-[9px] font-black uppercase tracking-widest mt-0.5">PLAYS</Text>
               </View>
             </View>
 
@@ -419,45 +421,81 @@ export const ArtistProfileScreen: React.FC = () => {
             {!isOwnProfile ? (
               <Pressable
                 onPress={handleFollowToggle}
-                className={`py-3 rounded-xl mb-4 ${isFollowing ? "bg-[#1F1F2E]" : "bg-purple-600"}`}
+                className="mb-6 overflow-hidden rounded-2xl shadow-xl shadow-purple-500/20"
               >
-                <Text className={`text-center font-bold ${isFollowing ? "text-purple-400" : "text-white"}`}>
-                  {isFollowing ? "Following" : "Follow"}
-                </Text>
+                <LinearGradient
+                  colors={isFollowing ? ["#1F1F2E", "#1F1F2E"] : ["#8B5CF6", "#D946EF"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="py-4 items-center border border-white/10"
+                >
+                  <Text className={`font-black uppercase tracking-widest text-xs ${isFollowing ? "text-purple-400" : "text-white"}`}>
+                    {isFollowing ? "FOLLOWING" : "FOLLOW ARTIST"}
+                  </Text>
+                </LinearGradient>
               </Pressable>
             ) : (
-              <View className="flex-row mb-4">
+              <View className="flex-row mb-6">
                 <Pressable
                   onPress={() => navigation.navigate("CreateMusicSheet" as any, { artistId })}
-                  className="flex-1 bg-pink-600 py-3 rounded-xl mr-2 flex-row items-center justify-center"
+                  className="flex-1 mr-2 overflow-hidden rounded-2xl shadow-xl shadow-pink-500/20"
                 >
-                  <Ionicons name="musical-notes" size={18} color="white" />
-                  <Text className="text-white font-bold ml-2">Create Music</Text>
+                  <LinearGradient
+                    colors={["#EC4899", "#D946EF"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="py-4 flex-row items-center justify-center border border-white/10"
+                  >
+                    <Ionicons name="musical-notes" size={16} color="white" />
+                    <Text className="text-white font-black uppercase tracking-widest text-[10px] ml-2">CREATE SHEET</Text>
+                  </LinearGradient>
                 </Pressable>
                 <Pressable
                   onPress={() => {
                     resetTrackForm();
                     setShowAddTrack(true);
                   }}
-                  className="flex-1 bg-purple-600 py-3 rounded-xl flex-row items-center justify-center"
+                  className="flex-1 ml-2 overflow-hidden rounded-2xl shadow-xl shadow-purple-500/20"
                 >
-                  <Ionicons name="cloud-upload" size={18} color="white" />
-                  <Text className="text-white font-bold ml-2">Upload Track</Text>
+                  <LinearGradient
+                    colors={["#8B5CF6", "#7C3AED"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="py-4 flex-row items-center justify-center border border-white/10"
+                  >
+                    <Ionicons name="cloud-upload" size={16} color="white" />
+                    <Text className="text-white font-black uppercase tracking-widest text-[10px] ml-2">UPLOAD AUDIO</Text>
+                  </LinearGradient>
                 </Pressable>
               </View>
             )}
 
             {/* Tabs */}
-            <View className="flex-row bg-[#151520] rounded-xl p-1 mb-4">
+            <View className="flex-row bg-white/5 rounded-2xl p-1.5 mb-8 border border-white/10 shadow-2xl">
               {(["music", "albums", "about"] as const).map((tab) => (
                 <Pressable
                   key={tab}
                   onPress={() => setActiveTab(tab)}
-                  className={`flex-1 py-2.5 rounded-lg ${activeTab === tab ? "bg-purple-600" : ""}`}
+                  className="flex-1"
                 >
-                  <Text className={`text-center font-semibold capitalize ${activeTab === tab ? "text-white" : "text-gray-400"}`}>
-                    {tab}
-                  </Text>
+                  {activeTab === tab ? (
+                    <LinearGradient
+                      colors={["#8B5CF6", "#D946EF"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      className="py-3 rounded-xl items-center"
+                    >
+                      <Text className="text-white font-black uppercase tracking-widest text-[10px]">
+                        {tab}
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View className="py-3 items-center">
+                      <Text className="text-gray-500 font-black uppercase tracking-widest text-[10px]">
+                        {tab}
+                      </Text>
+                    </View>
+                  )}
                 </Pressable>
               ))}
             </View>
@@ -554,38 +592,56 @@ export const ArtistProfileScreen: React.FC = () => {
 
       {/* Now Playing Bar */}
       {currentlyPlaying && (
-        <View className="absolute bottom-0 left-0 right-0 bg-[#1F1F2E] border-t border-[#2A2A3E] items-center" style={{ paddingBottom: insets.bottom }}>
-          <View className="flex-row items-center p-4 w-full max-w-[800px]">
-            {(() => {
-              const playingTrack = artist.tracks.find((t) => t.id === currentlyPlaying);
-              if (!playingTrack) return null;
-              return (
-                <>
-                  <Image source={{ uri: playingTrack.coverArt }} className="w-12 h-12 rounded-lg" contentFit="cover" />
-                  <View className="flex-1 ml-3">
-                    <Text className="text-white font-bold" numberOfLines={1}>{playingTrack.title}</Text>
-                    <Text className="text-gray-400 text-xs">{artist.stageName}</Text>
-                  </View>
-                  <Pressable onPress={() => handlePlayTrack(playingTrack)} className="p-3">
-                    <Ionicons name={isPlaying ? "pause" : "play"} size={24} color="white" />
-                  </Pressable>
-                  <Pressable
-                    onPress={async () => {
-                      if (sound) {
-                        await sound.unloadAsync();
-                        setSound(null);
-                      }
-                      setCurrentlyPlaying(null);
-                      setIsPlaying(false);
-                    }}
-                    className="p-3"
-                  >
-                    <Ionicons name="close" size={24} color="#9CA3AF" />
-                  </Pressable>
-                </>
-              );
-            })()}
-          </View>
+        <View className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-white/10 items-center" style={{ paddingBottom: insets.bottom }}>
+          <PageContainer>
+            <View className="flex-row items-center p-6 w-full max-w-[800px] border border-white/5 bg-white/5 m-4 rounded-3xl shadow-2xl">
+              {(() => {
+                const playingTrack = artist.tracks.find((t) => t.id === currentlyPlaying);
+                if (!playingTrack) return null;
+                return (
+                  <>
+                    <View className="relative">
+                      <Image source={{ uri: playingTrack.coverArt }} className="w-14 h-14 rounded-2xl" contentFit="cover" />
+                      <LinearGradient
+                        colors={["transparent", "rgba(0,0,0,0.4)"]}
+                        className="absolute inset-0 rounded-2xl"
+                      />
+                    </View>
+                    <View className="flex-1 ml-4">
+                      <Text className="text-white font-black text-lg italic tracking-tight" numberOfLines={1}>{playingTrack.title}</Text>
+                      <Text className="text-purple-500 text-[10px] font-black uppercase tracking-widest mt-1">{artist.stageName}</Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <Pressable
+                        onPress={() => handlePlayTrack(playingTrack)}
+                        className="w-12 h-12 rounded-full overflow-hidden shadow-xl shadow-purple-500/40 mr-3"
+                      >
+                        <LinearGradient
+                          colors={["#8B5CF6", "#D946EF"]}
+                          className="w-full h-full items-center justify-center"
+                        >
+                          <Ionicons name={isPlaying ? "pause" : "play"} size={24} color="white" />
+                        </LinearGradient>
+                      </Pressable>
+                      <Pressable
+                        onPress={async () => {
+                          if (sound) {
+                            await sound.unloadAsync();
+                            setSound(null);
+                          }
+                          setCurrentlyPlaying(null);
+                          setIsPlaying(false);
+                        }}
+                        className="w-10 h-10 rounded-full bg-white/5 items-center justify-center border border-white/10"
+                      >
+                        <Ionicons name="close-sharp" size={20} color="#9CA3AF" />
+                      </Pressable>
+                    </View>
+                  </>
+                );
+              })()}
+            </View>
+          </PageContainer>
         </View>
       )}
 
@@ -602,13 +658,16 @@ export const ArtistProfileScreen: React.FC = () => {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <TextInput
-                placeholder="Track Title *"
-                placeholderTextColor="#6B7280"
-                value={trackForm.title}
-                onChangeText={(text) => setTrackForm({ ...trackForm, title: text })}
-                className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
-              />
+              <View className="bg-[#0A0A0F] rounded-2xl p-4 border border-white/5 mb-6">
+                <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 ml-1">TRACK TITLE</Text>
+                <TextInput
+                  placeholder="E.g. Midnight Waves"
+                  placeholderTextColor="#374151"
+                  value={trackForm.title}
+                  onChangeText={(text) => setTrackForm({ ...trackForm, title: text })}
+                  className="text-white text-base font-bold italic tracking-tight"
+                />
+              </View>
 
               <View className="flex-row mb-4">
                 <Pressable

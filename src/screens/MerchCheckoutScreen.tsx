@@ -15,6 +15,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
+import { LinearGradient } from "expo-linear-gradient";
+import { PageContainer } from "../components/PageContainer";
 import type { MerchShippingAddress } from "../types/printify";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -131,238 +133,256 @@ export const MerchCheckoutScreen: React.FC = () => {
         className="flex-1"
       >
         {/* Header */}
-        <View className="flex-row items-center px-6 py-4 border-b border-gray-800">
-          <Pressable onPress={() => navigation.goBack()} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </Pressable>
-          <Text className="text-white text-xl font-bold">Checkout</Text>
-        </View>
+        <PageContainer>
+          <View className="flex-row items-center px-6 py-4 border-b border-white/5">
+            <Pressable
+              onPress={() => navigation.goBack()}
+              className="w-10 h-10 bg-white/5 rounded-full items-center justify-center border border-white/10 mr-3"
+            >
+              <Ionicons name="arrow-back" size={20} color="white" />
+            </Pressable>
+            <Text className="text-white text-xl font-black italic tracking-tight uppercase">Checkout</Text>
+          </View>
+        </PageContainer>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          <View className="p-6">
-            {/* Shipping Address */}
-            <Text className="text-white font-bold text-lg mb-4">Shipping Address</Text>
-            <View className="bg-[#151520] rounded-xl border border-gray-800 p-4 mb-6">
-              <View className="flex-row mb-4">
-                <View className="flex-1 mr-2">
-                  <Text className="text-gray-400 text-sm mb-2">First Name *</Text>
-                  <TextInput
-                    placeholder="John"
-                    placeholderTextColor="#6B7280"
-                    value={shippingForm.firstName}
-                    onChangeText={(text) => setShippingForm({ ...shippingForm, firstName: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                  />
-                </View>
-                <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 text-sm mb-2">Last Name *</Text>
-                  <TextInput
-                    placeholder="Doe"
-                    placeholderTextColor="#6B7280"
-                    value={shippingForm.lastName}
-                    onChangeText={(text) => setShippingForm({ ...shippingForm, lastName: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                  />
-                </View>
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-gray-400 text-sm mb-2">Address *</Text>
-                <TextInput
-                  placeholder="123 Main Street"
-                  placeholderTextColor="#6B7280"
-                  value={shippingForm.address1}
-                  onChangeText={(text) => setShippingForm({ ...shippingForm, address1: text })}
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                />
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-gray-400 text-sm mb-2">Apt, Suite (Optional)</Text>
-                <TextInput
-                  placeholder="Apt 4B"
-                  placeholderTextColor="#6B7280"
-                  value={shippingForm.address2}
-                  onChangeText={(text) => setShippingForm({ ...shippingForm, address2: text })}
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                />
-              </View>
-
-              <View className="flex-row mb-4">
-                <View className="flex-1 mr-2">
-                  <Text className="text-gray-400 text-sm mb-2">City *</Text>
-                  <TextInput
-                    placeholder="New York"
-                    placeholderTextColor="#6B7280"
-                    value={shippingForm.city}
-                    onChangeText={(text) => setShippingForm({ ...shippingForm, city: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                  />
-                </View>
-                <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 text-sm mb-2">State *</Text>
-                  <TextInput
-                    placeholder="NY"
-                    placeholderTextColor="#6B7280"
-                    value={shippingForm.state}
-                    onChangeText={(text) => setShippingForm({ ...shippingForm, state: text })}
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                  />
-                </View>
-              </View>
-
-              <View className="flex-row">
-                <View className="flex-1 mr-2">
-                  <Text className="text-gray-400 text-sm mb-2">ZIP Code *</Text>
-                  <TextInput
-                    placeholder="10001"
-                    placeholderTextColor="#6B7280"
-                    value={shippingForm.zipCode}
-                    onChangeText={(text) => setShippingForm({ ...shippingForm, zipCode: text })}
-                    keyboardType="number-pad"
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                  />
-                </View>
-                <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 text-sm mb-2">Phone</Text>
-                  <TextInput
-                    placeholder="(555) 123-4567"
-                    placeholderTextColor="#6B7280"
-                    value={shippingForm.phone}
-                    onChangeText={(text) => setShippingForm({ ...shippingForm, phone: text })}
-                    keyboardType="phone-pad"
-                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl"
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* Shipping Method */}
-            <Text className="text-white font-bold text-lg mb-4">Shipping Method</Text>
-            <View className="mb-6">
-              <Pressable
-                onPress={() => setShippingMethod("standard")}
-                className={`bg-[#151520] rounded-xl border p-4 mb-3 flex-row items-center justify-between ${
-                  shippingMethod === "standard" ? "border-purple-500" : "border-gray-800"
-                }`}
-              >
-                <View className="flex-row items-center">
-                  <View
-                    className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${
-                      shippingMethod === "standard" ? "border-purple-500" : "border-gray-600"
-                    }`}
-                  >
-                    {shippingMethod === "standard" && (
-                      <View className="w-3 h-3 rounded-full bg-purple-500" />
-                    )}
+          <PageContainer>
+            <View className="p-6">
+              {/* Shipping Address */}
+              <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Shipping Information</Text>
+              <View className="bg-white/5 rounded-3xl border border-white/10 p-6 mb-8">
+                <View className="flex-row mb-5">
+                  <View className="flex-1 mr-2">
+                    <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">First Name</Text>
+                    <TextInput
+                      placeholder="John"
+                      placeholderTextColor="#4B5563"
+                      value={shippingForm.firstName}
+                      onChangeText={(text) => setShippingForm({ ...shippingForm, firstName: text })}
+                      className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                    />
                   </View>
-                  <View>
-                    <Text className="text-white font-semibold">Standard Shipping</Text>
-                    <Text className="text-gray-400 text-sm">5-7 business days</Text>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Last Name</Text>
+                    <TextInput
+                      placeholder="Doe"
+                      placeholderTextColor="#4B5563"
+                      value={shippingForm.lastName}
+                      onChangeText={(text) => setShippingForm({ ...shippingForm, lastName: text })}
+                      className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                    />
                   </View>
                 </View>
-                <Text className="text-white font-bold">$4.99</Text>
-              </Pressable>
 
-              <Pressable
-                onPress={() => setShippingMethod("express")}
-                className={`bg-[#151520] rounded-xl border p-4 flex-row items-center justify-between ${
-                  shippingMethod === "express" ? "border-purple-500" : "border-gray-800"
-                }`}
-              >
-                <View className="flex-row items-center">
-                  <View
-                    className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${
-                      shippingMethod === "express" ? "border-purple-500" : "border-gray-600"
-                    }`}
-                  >
-                    {shippingMethod === "express" && (
-                      <View className="w-3 h-3 rounded-full bg-purple-500" />
-                    )}
+                <View className="mb-5">
+                  <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Street Address</Text>
+                  <TextInput
+                    placeholder="123 Main Street"
+                    placeholderTextColor="#4B5563"
+                    value={shippingForm.address1}
+                    onChangeText={(text) => setShippingForm({ ...shippingForm, address1: text })}
+                    className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                  />
+                </View>
+
+                <View className="mb-5">
+                  <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Apt, Suite (Optional)</Text>
+                  <TextInput
+                    placeholder="Apt 4B"
+                    placeholderTextColor="#4B5563"
+                    value={shippingForm.address2}
+                    onChangeText={(text) => setShippingForm({ ...shippingForm, address2: text })}
+                    className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                  />
+                </View>
+
+                <View className="flex-row mb-5">
+                  <View className="flex-1 mr-2">
+                    <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">City</Text>
+                    <TextInput
+                      placeholder="New York"
+                      placeholderTextColor="#4B5563"
+                      value={shippingForm.city}
+                      onChangeText={(text) => setShippingForm({ ...shippingForm, city: text })}
+                      className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                    />
                   </View>
-                  <View>
-                    <Text className="text-white font-semibold">Express Shipping</Text>
-                    <Text className="text-gray-400 text-sm">2-3 business days</Text>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">State</Text>
+                    <TextInput
+                      placeholder="NY"
+                      placeholderTextColor="#4B5563"
+                      value={shippingForm.state}
+                      onChangeText={(text) => setShippingForm({ ...shippingForm, state: text })}
+                      className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                    />
                   </View>
                 </View>
-                <Text className="text-white font-bold">$9.99</Text>
-              </Pressable>
-            </View>
 
-            {/* Promo Code */}
-            <Text className="text-white font-bold text-lg mb-4">Promo Code</Text>
-            <View className="bg-[#151520] rounded-xl border border-gray-800 p-4 mb-6">
-              <View className="flex-row">
-                <TextInput
-                  placeholder="Enter promo code"
-                  placeholderTextColor="#6B7280"
-                  value={promoCode}
-                  onChangeText={setPromoCode}
-                  autoCapitalize="characters"
-                  className="flex-1 bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mr-3"
-                />
+                <View className="flex-row">
+                  <View className="flex-1 mr-2">
+                    <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">ZIP Code</Text>
+                    <TextInput
+                      placeholder="10001"
+                      placeholderTextColor="#4B5563"
+                      value={shippingForm.zipCode}
+                      onChangeText={(text) => setShippingForm({ ...shippingForm, zipCode: text })}
+                      keyboardType="number-pad"
+                      className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                    />
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Phone</Text>
+                    <TextInput
+                      placeholder="(555) 000-0000"
+                      placeholderTextColor="#4B5563"
+                      value={shippingForm.phone}
+                      onChangeText={(text) => setShippingForm({ ...shippingForm, phone: text })}
+                      keyboardType="phone-pad"
+                      className="bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-bold"
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Shipping Method */}
+              <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Shipping Method</Text>
+              <View className="mb-8">
                 <Pressable
-                  onPress={handleApplyPromo}
-                  className="bg-purple-600 px-6 py-3 rounded-xl"
+                  onPress={() => setShippingMethod("standard")}
+                  className={`bg-white/5 rounded-3xl border p-5 mb-4 flex-row items-center justify-between ${shippingMethod === "standard" ? "border-purple-500" : "border-white/10"
+                    }`}
                 >
-                  <Text className="text-white font-bold">Apply</Text>
+                  <View className="flex-row items-center">
+                    <View
+                      className={`w-6 h-6 rounded-full border-2 mr-4 items-center justify-center ${shippingMethod === "standard" ? "border-purple-500 bg-purple-500/10" : "border-white/20"
+                        }`}
+                    >
+                      {shippingMethod === "standard" && (
+                        <View className="w-3 h-3 rounded-full bg-purple-500" />
+                      )}
+                    </View>
+                    <View>
+                      <Text className="text-white font-bold">Standard Shipping</Text>
+                      <Text className="text-gray-500 text-xs font-medium">5-7 business days</Text>
+                    </View>
+                  </View>
+                  <Text className="text-white font-black">$4.99</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setShippingMethod("express")}
+                  className={`bg-white/5 rounded-3xl border p-5 flex-row items-center justify-between ${shippingMethod === "express" ? "border-purple-500" : "border-white/10"
+                    }`}
+                >
+                  <View className="flex-row items-center">
+                    <View
+                      className={`w-6 h-6 rounded-full border-2 mr-4 items-center justify-center ${shippingMethod === "express" ? "border-purple-500 bg-purple-500/10" : "border-white/20"
+                        }`}
+                    >
+                      {shippingMethod === "express" && (
+                        <View className="w-3 h-3 rounded-full bg-purple-500" />
+                      )}
+                    </View>
+                    <View>
+                      <Text className="text-white font-bold">Express Shipping</Text>
+                      <Text className="text-gray-500 text-xs font-medium">2-3 business days</Text>
+                    </View>
+                  </View>
+                  <Text className="text-white font-black">$9.99</Text>
                 </Pressable>
               </View>
-              {appliedPromo && (
-                <Text
-                  className={`mt-3 text-sm ${
-                    appliedPromo.discount > 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {appliedPromo.message}
-                </Text>
-              )}
-            </View>
 
-            {/* Order Summary */}
-            <Text className="text-white font-bold text-lg mb-4">Order Summary</Text>
-            <View className="bg-[#151520] rounded-xl border border-gray-800 p-4 mb-6">
-              <View className="flex-row justify-between mb-3">
-                <Text className="text-gray-400">Subtotal ({itemCount} items)</Text>
-                <Text className="text-white">${subtotal.toFixed(2)}</Text>
-              </View>
-              {discount > 0 && (
-                <View className="flex-row justify-between mb-3">
-                  <Text className="text-green-400">Discount</Text>
-                  <Text className="text-green-400">-${discount.toFixed(2)}</Text>
+              {/* Promo Code */}
+              <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Promo Code</Text>
+              <View className="bg-white/5 rounded-3xl border border-white/10 p-5 mb-8">
+                <View className="flex-row">
+                  <TextInput
+                    placeholder="Enter code"
+                    placeholderTextColor="#4B5563"
+                    value={promoCode}
+                    onChangeText={setPromoCode}
+                    autoCapitalize="characters"
+                    className="flex-1 bg-black/20 text-white px-4 py-3.5 rounded-2xl border border-white/5 font-black uppercase"
+                  />
+                  <Pressable
+                    onPress={handleApplyPromo}
+                    className="bg-white/10 px-6 ml-3 rounded-2xl border border-white/10 items-center justify-center"
+                  >
+                    <Text className="text-white font-black text-xs uppercase tracking-widest">Apply</Text>
+                  </Pressable>
                 </View>
-              )}
-              <View className="flex-row justify-between mb-3">
-                <Text className="text-gray-400">Shipping</Text>
-                <Text className="text-white">${shippingCost.toFixed(2)}</Text>
+                {appliedPromo && (
+                  <View className="mt-3 flex-row items-center">
+                    <Ionicons
+                      name={appliedPromo.discount > 0 ? "checkmark-circle" : "alert-circle"}
+                      size={14}
+                      color={appliedPromo.discount > 0 ? "#10B981" : "#EF4444"}
+                    />
+                    <Text
+                      className={`ml-1.5 text-xs font-bold ${appliedPromo.discount > 0 ? "text-green-400" : "text-red-400"
+                        }`}
+                    >
+                      {appliedPromo.message}
+                    </Text>
+                  </View>
+                )}
               </View>
-              <View className="flex-row justify-between mb-3">
-                <Text className="text-gray-400">Tax</Text>
-                <Text className="text-white">${tax.toFixed(2)}</Text>
-              </View>
-              <View className="border-t border-gray-700 pt-3 mt-3">
-                <View className="flex-row justify-between">
-                  <Text className="text-white font-bold text-lg">Total</Text>
-                  <Text className="text-green-400 font-bold text-lg">${total.toFixed(2)}</Text>
+
+              {/* Order Summary */}
+              <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Grand Total</Text>
+              <View className="bg-white/5 rounded-3xl border border-white/10 p-6 mb-12">
+                <View className="flex-row justify-between mb-4">
+                  <Text className="text-gray-500 font-bold">Subtotal</Text>
+                  <Text className="text-white font-black tracking-tight">${subtotal.toFixed(2)}</Text>
+                </View>
+                {discount > 0 && (
+                  <View className="flex-row justify-between mb-4">
+                    <Text className="text-green-500 font-bold">Discount</Text>
+                    <Text className="text-green-500 font-black tracking-tight">-${discount.toFixed(2)}</Text>
+                  </View>
+                )}
+                <View className="flex-row justify-between mb-4">
+                  <Text className="text-gray-500 font-bold">Shipping</Text>
+                  <Text className="text-white font-black tracking-tight">${shippingCost.toFixed(2)}</Text>
+                </View>
+                <View className="flex-row justify-between mb-6">
+                  <Text className="text-gray-500 font-bold">Estimated Tax</Text>
+                  <Text className="text-white font-black tracking-tight">${tax.toFixed(2)}</Text>
+                </View>
+                <View className="border-t border-white/10 pt-6">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-white font-black text-xl uppercase tracking-widest italic">Total</Text>
+                    <Text className="text-green-400 font-black text-3xl tracking-tighter">${total.toFixed(2)}</Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
+          </PageContainer>
         </ScrollView>
 
         {/* Place Order Button */}
-        <View className="bg-[#151520] border-t border-gray-800 px-6 py-4">
-          <Pressable
-            onPress={handlePlaceOrder}
-            disabled={!validateForm() || isProcessing}
-            className={`py-4 rounded-xl ${
-              validateForm() && !isProcessing ? "bg-purple-600" : "bg-gray-700"
-            }`}
-          >
-            <Text className="text-white text-center font-bold">
-              {isProcessing ? "Processing..." : `Place Order - $${total.toFixed(2)}`}
-            </Text>
-          </Pressable>
+        <View className="bg-black/90 border-t border-white/10 items-center">
+          <PageContainer>
+            <View className="px-6 py-6 w-full max-w-[800px]">
+              <Pressable
+                onPress={handlePlaceOrder}
+                disabled={!validateForm() || isProcessing}
+                className="overflow-hidden rounded-2xl"
+              >
+                <LinearGradient
+                  colors={validateForm() && !isProcessing ? ["#8B5CF6", "#D946EF"] : ["#1F1F2E", "#1F1F2E"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="py-5 items-center"
+                >
+                  <Text className="text-white font-black uppercase tracking-widest text-sm">
+                    {isProcessing ? "PROCESSING SECURELY..." : `PLACE ORDER - $${total.toFixed(2)}`}
+                  </Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </PageContainer>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

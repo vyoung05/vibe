@@ -40,12 +40,14 @@ import { InviteFriendsScreen } from "../screens/InviteFriendsScreen";
 import { ArtistProfileScreen } from "../screens/ArtistProfileScreen";
 import { CreateMusicSheetScreen } from "../screens/CreateMusicSheetScreen";
 import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
+import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { MainTabs } from "./MainTabs";
 
 export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
   ForgotPassword: undefined;
+  ResetPassword: undefined;
   MainTabs: undefined;
   DiscoverPeople: undefined;
   InviteFriends: undefined;
@@ -97,6 +99,7 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
       <Stack.Screen name="InviteFriends" component={InviteFriendsScreen} />
       {/* Admin screens - registered before MainTabs for proper navigation from nested tabs */}

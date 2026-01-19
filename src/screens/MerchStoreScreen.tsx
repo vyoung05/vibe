@@ -7,9 +7,11 @@ import {
   TextInput,
   FlatList,
   Dimensions,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { useNavigation, CompositeNavigationProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -115,40 +117,48 @@ export const MerchStoreScreen: React.FC = () => {
           rootNav.navigate("MerchProductDetail", { productId: item.id });
         }
       }}
-      className="bg-[#151520] rounded-xl border border-gray-800 overflow-hidden mb-4"
-      style={{ width: (SCREEN_WIDTH - 48) / 2 - 8 }}
+      className="bg-[#1C1C26] rounded-2xl border border-white/5 overflow-hidden mb-5 shadow-lg shadow-black/40"
+      style={{ width: Platform.OS === 'web' ? 280 : (SCREEN_WIDTH - 48) / 2 - 8 }}
     >
       {item.images[0] && (
         <View className="relative">
           <Image
             source={{ uri: item.images[0] }}
-            style={{ width: "100%", height: 160 }}
+            style={{ width: "100%", height: Platform.OS === 'web' ? 240 : 180 }}
             contentFit="cover"
           />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.4)"]}
+            className="absolute inset-0"
+          />
           {item.isFeatured && (
-            <View className="absolute top-2 left-2 bg-yellow-500 px-2 py-0.5 rounded">
-              <Text className="text-black text-xs font-bold">FEATURED</Text>
+            <View className="absolute top-3 left-3 bg-purple-600 px-2 py-1 rounded-md shadow-sm">
+              <Text className="text-white text-[10px] font-black tracking-widest">HOT</Text>
             </View>
           )}
         </View>
       )}
-      <View className="p-3">
-        {/* Seller Profile */}
-        <View className="flex-row items-center mb-2">
+      <View className="p-4 bg-[#1C1C26]">
+        {/* Seller Info */}
+        <View className="flex-row items-center mb-2 opacity-60">
           <Image
             source={{ uri: item.streamerAvatar || "https://i.pravatar.cc/150?img=50" }}
-            style={{ width: 20, height: 20, borderRadius: 10 }}
+            style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}
             contentFit="cover"
           />
-          <Text className="text-gray-400 text-xs ml-1.5" numberOfLines={1}>{item.streamerName}</Text>
+          <Text className="text-gray-300 text-[10px] uppercase font-bold tracking-wider ml-1.5" numberOfLines={1}>{item.streamerName}</Text>
         </View>
-        <Text className="text-white font-semibold" numberOfLines={2}>
+        <Text className="text-white font-bold text-base mb-1" numberOfLines={1}>
           {item.title}
         </Text>
-        <Text className="text-green-400 font-bold mt-2">
-          ${item.finalPrice.toFixed(2)}
-        </Text>
-        <Text className="text-gray-500 text-xs">{item.unitsSold} sold</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-purple-400 font-black text-lg">
+            ${item.finalPrice.toFixed(2)}
+          </Text>
+          <View className="bg-white/5 px-2 py-1 rounded-lg">
+            <Text className="text-gray-500 text-[10px] font-bold">{item.unitsSold} sold</Text>
+          </View>
+        </View>
       </View>
     </Pressable>
   );
@@ -156,39 +166,45 @@ export const MerchStoreScreen: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0F]" edges={["top"]}>
       {/* Header */}
-      <View className="px-6 py-4 border-b border-gray-800">
+      <LinearGradient
+        colors={["#0A0A0F", "#151520"]}
+        className="px-6 py-4 border-b border-white/5"
+      >
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-white text-2xl font-bold">Merch Store</Text>
+          <View>
+            <Text className="text-white text-2xl font-black italic tracking-tighter">THE STORE</Text>
+            <Text className="text-purple-500 text-[10px] font-bold tracking-widest uppercase">Official DDNS Gear</Text>
+          </View>
           <Pressable
             onPress={() => navigation?.navigate("MerchCart")}
-            className="relative"
+            className="w-10 h-10 bg-white/5 rounded-full items-center justify-center border border-white/10"
           >
-            <Ionicons name="bag-outline" size={24} color="white" />
+            <Ionicons name="bag-outline" size={20} color="white" />
             {itemCount > 0 && (
-              <View className="absolute -top-2 -right-2 bg-purple-600 w-5 h-5 rounded-full items-center justify-center">
-                <Text className="text-white text-xs font-bold">{itemCount}</Text>
+              <View className="absolute -top-1 -right-1 bg-purple-600 w-5 h-5 rounded-full items-center justify-center border-2 border-[#151520]">
+                <Text className="text-white text-[10px] font-black">{itemCount}</Text>
               </View>
             )}
           </Pressable>
         </View>
 
         {/* Search Bar */}
-        <View className="flex-row items-center bg-[#151520] rounded-xl px-4 py-3">
-          <Ionicons name="search" size={20} color="#6B7280" />
+        <View className="flex-row items-center bg-black/40 rounded-2xl px-4 py-3 border border-white/5">
+          <Ionicons name="search" size={18} color="#6B7280" />
           <TextInput
-            placeholder="Search merch..."
-            placeholderTextColor="#6B7280"
+            placeholder="Search the collection..."
+            placeholderTextColor="#4B5563"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            className="flex-1 text-white ml-3"
+            className="flex-1 text-white ml-3 font-medium"
           />
           {searchQuery && (
             <Pressable onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={20} color="#6B7280" />
+              <Ionicons name="close-circle" size={18} color="#6B7280" />
             </Pressable>
           )}
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <PageContainer>
@@ -200,19 +216,24 @@ export const MerchStoreScreen: React.FC = () => {
                   <Pressable
                     key={promo.id}
                     className="mr-3"
-                    style={{ width: SCREEN_WIDTH - 80 }}
+                    style={{ width: Platform.OS === 'web' ? 400 : SCREEN_WIDTH - 80 }}
                   >
-                    <View className="bg-gradient-to-r from-purple-900 to-pink-900 p-4 rounded-xl border border-purple-500/30">
+                    <LinearGradient
+                      colors={["#4C1D95", "#831843"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      className="p-5 rounded-2xl border border-white/10"
+                    >
                       <View className="flex-row items-center justify-between">
                         <View className="flex-1">
                           <View className="flex-row items-center mb-1">
-                            <Ionicons name="flash" size={16} color="#F59E0B" />
-                            <Text className="text-yellow-400 text-xs font-bold ml-1">
+                            <Ionicons name="flash" size={14} color="#F59E0B" />
+                            <Text className="text-yellow-400 text-[10px] font-black ml-1 tracking-widest uppercase">
                               LIMITED TIME
                             </Text>
                           </View>
-                          <Text className="text-white font-bold text-lg">{promo.name}</Text>
-                          <Text className="text-purple-300">
+                          <Text className="text-white font-black text-xl mb-1">{promo.name}</Text>
+                          <Text className="text-purple-200 font-bold text-lg">
                             {promo.type === "percentage_off"
                               ? `${promo.value}% OFF`
                               : promo.type === "fixed_amount_off"
@@ -220,21 +241,21 @@ export const MerchStoreScreen: React.FC = () => {
                                 : "FREE SHIPPING"}
                           </Text>
                           {promo.code && (
-                            <View className="flex-row items-center mt-2">
-                              <View className="bg-white/20 px-3 py-1 rounded">
-                                <Text className="text-white font-mono font-bold">{promo.code}</Text>
+                            <View className="flex-row items-center mt-3">
+                              <View className="bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">
+                                <Text className="text-white font-mono font-black text-sm">{promo.code}</Text>
                               </View>
                             </View>
                           )}
                         </View>
-                        <View className="items-end">
-                          <Text className="text-gray-400 text-xs">Ends in</Text>
-                          <Text className="text-white font-bold text-lg">
+                        <View className="items-end bg-black/20 p-3 rounded-xl">
+                          <Text className="text-purple-300 text-[10px] font-bold mb-1 uppercase">Ends in</Text>
+                          <Text className="text-white font-black text-lg">
                             {countdown[promo.id] || getTimeRemaining(promo.endDate)}
                           </Text>
                         </View>
                       </View>
-                    </View>
+                    </LinearGradient>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -248,24 +269,33 @@ export const MerchStoreScreen: React.FC = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24 }}
             >
-              {CATEGORIES.map((cat) => (
-                <Pressable
-                  key={cat.value}
-                  onPress={() => setSelectedCategory(cat.value)}
-                  className={`px-4 py-2 rounded-full mr-2 ${selectedCategory === cat.value
-                    ? "bg-purple-600"
-                    : "bg-[#151520] border border-gray-700"
-                    }`}
-                >
-                  <Text
-                    className={
-                      selectedCategory === cat.value ? "text-white font-bold" : "text-gray-400"
-                    }
+              {CATEGORIES.map((cat) => {
+                const isSelected = selectedCategory === cat.value;
+                return (
+                  <Pressable
+                    key={cat.value}
+                    onPress={() => setSelectedCategory(cat.value)}
+                    className="mr-2"
                   >
-                    {cat.label}
-                  </Text>
-                </Pressable>
-              ))}
+                    {isSelected ? (
+                      <LinearGradient
+                        colors={["#8B5CF6", "#7C3AED"]}
+                        className="px-5 py-2.5 rounded-full border border-white/20"
+                      >
+                        <Text className="text-white font-black text-xs uppercase tracking-widest">
+                          {cat.label}
+                        </Text>
+                      </LinearGradient>
+                    ) : (
+                      <View className="px-5 py-2.5 rounded-full border border-white/10 bg-white/5">
+                        <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest">
+                          {cat.label}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </View>
 

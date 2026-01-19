@@ -90,7 +90,15 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
 
-              <Pressable onPress={() => navigation.navigate("ForgotPassword")} className="mt-6">
+              <Pressable
+                onPress={() => {
+                  console.log("[SignIn] Forgot Password link pressed");
+                  console.log("[SignIn] Available routes:", navigation.getState()?.routeNames);
+                  navigation.navigate("ForgotPassword");
+                }}
+                className="mt-6"
+                hitSlop={20}
+              >
                 <Text className="text-purple-400 text-center text-sm font-medium">Forgot your password?</Text>
               </Pressable>
 

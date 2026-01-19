@@ -39,6 +39,8 @@ import { AdminMerchStoreScreen } from "./src/screens/AdminMerchStoreScreen";
 import { StreamerMerchScreen } from "./src/screens/StreamerMerchScreen";
 import { DiscoverPeopleScreen } from "./src/screens/DiscoverPeopleScreen";
 import { InviteFriendsScreen } from "./src/screens/InviteFriendsScreen";
+import { ForgotPasswordScreen } from "./src/screens/ForgotPasswordScreen";
+import { ResetPasswordScreen } from "./src/screens/ResetPasswordScreen";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { useAuthStore } from "./src/state/authStore";
 import { useAppStore } from "./src/state/appStore";
@@ -81,6 +83,8 @@ export default function App() {
         if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !session) {
           // User signed out or token refresh failed
           signOut();
+        } else if (event === "PASSWORD_RECOVERY") {
+          console.log("[Auth] Password recovery event detected");
         }
       }
     );
@@ -141,16 +145,14 @@ export default function App() {
       <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {/* Main application entry point for everyone */}
-            <Stack.Screen name="MainTabs" component={MainTabs} />
+            {/* Auth flow screens - Moved outside to ensure consistent availability */}
+            <Stack.Screen name="SignIn" component={SignInScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
 
-            {/* Auth flow screens */}
-            {!isAuthenticated && (
-              <>
-                <Stack.Screen name="SignIn" component={SignInScreen} />
-                <Stack.Screen name="SignUp" component={SignUpScreen} />
-              </>
-            )}
+            {/* Main application entry point */}
+            <Stack.Screen name="MainTabs" component={MainTabs} />
 
             {/* Shared and protected screens */}
             <Stack.Screen name="StreamerProfile" component={StreamerProfileScreen} />
@@ -201,7 +203,7 @@ export default function App() {
           </Stack.Navigator>
           <StatusBar style="light" />
         </NavigationContainer>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+      </SafeAreaProvider >
+    </GestureHandlerRootView >
   );
 }

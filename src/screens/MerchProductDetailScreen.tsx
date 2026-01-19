@@ -8,7 +8,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
+import { PageContainer } from "../components/PageContainer";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
@@ -104,270 +106,276 @@ export const MerchProductDetailScreen: React.FC = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0F]" edges={["top"]}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4">
-        <Pressable onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </Pressable>
-        <Pressable
-          onPress={() => navigation.navigate("MerchCart")}
-          className="relative"
-        >
-          <Ionicons name="bag-outline" size={24} color="white" />
-          {itemCount > 0 && (
-            <View className="absolute -top-2 -right-2 bg-purple-600 w-5 h-5 rounded-full items-center justify-center">
-              <Text className="text-white text-xs font-bold">{itemCount}</Text>
-            </View>
-          )}
-        </Pressable>
-      </View>
+      <PageContainer>
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-6 py-4">
+          <Pressable
+            onPress={() => navigation.goBack()}
+            className="w-10 h-10 bg-white/5 rounded-full items-center justify-center border border-white/10"
+          >
+            <Ionicons name="arrow-back" size={20} color="white" />
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("MerchCart")}
+            className="w-10 h-10 bg-white/5 rounded-full items-center justify-center border border-white/10"
+          >
+            <Ionicons name="bag-outline" size={20} color="white" />
+            {itemCount > 0 && (
+              <View className="absolute -top-1 -right-1 bg-purple-600 w-5 h-5 rounded-full items-center justify-center border-2 border-[#0A0A0F]">
+                <Text className="text-white text-[10px] font-black">{itemCount}</Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+      </PageContainer>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Image Gallery */}
-        <View>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setCurrentImageIndex(index);
-            }}
-            scrollEventThrottle={16}
-          >
-            {product.images.map((image, index) => (
-              <Image
-                key={index}
-                source={{ uri: image }}
-                style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH }}
-                contentFit="cover"
-              />
-            ))}
-          </ScrollView>
-
-          {/* Image Indicators */}
-          {product.images.length > 1 && (
-            <View className="flex-row justify-center mt-3">
-              {product.images.map((_, index) => (
-                <View
-                  key={index}
-                  className={`w-2 h-2 rounded-full mx-1 ${
-                    index === currentImageIndex ? "bg-purple-500" : "bg-gray-600"
-                  }`}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Product Info */}
-        <View className="px-6 pt-6 pb-32">
-          {/* Streamer & Title */}
-          <Pressable
-            onPress={() => navigation.navigate("StreamerProfile", { streamerId: product.streamerId })}
-            className="flex-row items-center mb-2"
-          >
-            <Text className="text-purple-400 text-sm font-semibold">
-              {product.streamerName}
-            </Text>
-            <Ionicons name="chevron-forward" size={14} color="#A855F7" />
-          </Pressable>
-
-          <Text className="text-white text-2xl font-bold mb-2">{product.title}</Text>
-
-          {/* Price */}
-          <View className="flex-row items-baseline mb-4">
-            <Text className="text-green-400 text-3xl font-bold">
-              ${finalPrice.toFixed(2)}
-            </Text>
-            {selectedVariant?.additionalPrice ? (
-              <Text className="text-gray-500 text-sm ml-2">
-                (base ${product.finalPrice.toFixed(2)})
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Tags */}
-          {product.tags.length > 0 && (
-            <View className="flex-row flex-wrap mb-4">
-              {product.tags.map((tag) => (
-                <View
-                  key={tag}
-                  className="bg-gray-800 px-3 py-1 rounded-full mr-2 mb-2"
-                >
-                  <Text className="text-gray-400 text-xs">{tag}</Text>
+        <PageContainer>
+          {/* Image Gallery */}
+          <View className="bg-[#151520] border-b border-white/5">
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                setCurrentImageIndex(index);
+              }}
+              scrollEventThrottle={16}
+            >
+              {product.images.map((image, index) => (
+                <View key={index} style={{ width: SCREEN_WIDTH, height: 400 }}>
+                  <Image
+                    source={{ uri: image }}
+                    style={{ width: "100%", height: "100%" }}
+                    contentFit="contain"
+                  />
+                  <LinearGradient
+                    colors={["transparent", "rgba(10,10,15,0.2)"]}
+                    className="absolute inset-0"
+                  />
                 </View>
               ))}
-            </View>
-          )}
+            </ScrollView>
 
-          {/* Description */}
-          <Text className="text-gray-400 mb-6">{product.description}</Text>
-
-          {/* Size Selection */}
-          {sizes.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-white font-bold mb-3">Size</Text>
-              <View className="flex-row flex-wrap">
-                {sizes.map((size) => {
-                  const isSelected = selectedSize === size;
-                  const variant = findVariant(size, selectedColor);
-                  const isAvailable = variant?.isAvailable;
-
-                  return (
-                    <Pressable
-                      key={size}
-                      onPress={() => isAvailable && handleSizeSelect(size!)}
-                      className={`px-4 py-3 rounded-xl mr-2 mb-2 border ${
-                        isSelected
-                          ? "bg-purple-600 border-purple-600"
-                          : isAvailable
-                          ? "bg-[#151520] border-gray-700"
-                          : "bg-gray-900 border-gray-800 opacity-50"
+            {/* Image Indicators */}
+            {product.images.length > 1 && (
+              <View className="flex-row justify-center absolute bottom-4 left-0 right-0">
+                {product.images.map((_, index) => (
+                  <View
+                    key={index}
+                    className={`h-1 rounded-full mx-1 ${index === currentImageIndex ? "w-6 bg-purple-500" : "w-2 bg-white/20"
                       }`}
-                      disabled={!isAvailable}
-                    >
-                      <Text
-                        className={`font-semibold ${
-                          isSelected ? "text-white" : isAvailable ? "text-gray-300" : "text-gray-600"
-                        }`}
-                      >
-                        {size}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                  />
+                ))}
               </View>
-            </View>
-          )}
-
-          {/* Color Selection */}
-          {colors.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-white font-bold mb-3">Color</Text>
-              <View className="flex-row flex-wrap">
-                {colors.map((color) => {
-                  const isSelected = selectedColor === color;
-                  const variant = findVariant(selectedSize, color);
-                  const isAvailable = variant?.isAvailable;
-
-                  return (
-                    <Pressable
-                      key={color}
-                      onPress={() => isAvailable && handleColorSelect(color!)}
-                      className={`px-4 py-3 rounded-xl mr-2 mb-2 border ${
-                        isSelected
-                          ? "bg-purple-600 border-purple-600"
-                          : isAvailable
-                          ? "bg-[#151520] border-gray-700"
-                          : "bg-gray-900 border-gray-800 opacity-50"
-                      }`}
-                      disabled={!isAvailable}
-                    >
-                      <Text
-                        className={`font-semibold ${
-                          isSelected ? "text-white" : isAvailable ? "text-gray-300" : "text-gray-600"
-                        }`}
-                      >
-                        {color}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
-          {/* Quantity */}
-          <View className="mb-6">
-            <Text className="text-white font-bold mb-3">Quantity</Text>
-            <View className="flex-row items-center">
-              <Pressable
-                onPress={decrementQuantity}
-                className="w-12 h-12 rounded-xl bg-[#151520] border border-gray-700 items-center justify-center"
-              >
-                <Ionicons name="remove" size={20} color="white" />
-              </Pressable>
-              <Text className="text-white text-xl font-bold mx-6">{quantity}</Text>
-              <Pressable
-                onPress={incrementQuantity}
-                className="w-12 h-12 rounded-xl bg-[#151520] border border-gray-700 items-center justify-center"
-              >
-                <Ionicons name="add" size={20} color="white" />
-              </Pressable>
-            </View>
+            )}
           </View>
 
-          {/* Stock Status */}
-          {selectedVariant && (
-            <View className="flex-row items-center mb-6">
-              <View
-                className={`w-3 h-3 rounded-full mr-2 ${
-                  selectedVariant.stockStatus === "in_stock"
-                    ? "bg-green-500"
-                    : selectedVariant.stockStatus === "low_stock"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
-                }`}
-              />
-              <Text
-                className={
-                  selectedVariant.stockStatus === "in_stock"
-                    ? "text-green-400"
-                    : selectedVariant.stockStatus === "low_stock"
-                    ? "text-yellow-400"
-                    : "text-red-400"
-                }
-              >
-                {selectedVariant.stockStatus === "in_stock"
-                  ? "In Stock"
-                  : selectedVariant.stockStatus === "low_stock"
-                  ? "Low Stock - Order Soon"
-                  : "Out of Stock"}
+          {/* Product Info */}
+          <View className="px-6 pt-8 pb-32">
+            {/* Streamer & Title */}
+            <Pressable
+              onPress={() => navigation.navigate("StreamerProfile", { streamerId: product.streamerId })}
+              className="flex-row items-center mb-3 bg-purple-500/10 self-start px-3 py-1.5 rounded-full border border-purple-500/20"
+            >
+              <Text className="text-purple-400 text-xs font-black tracking-widest uppercase">
+                {product.streamerName}
               </Text>
-            </View>
-          )}
+              <Ionicons name="chevron-forward" size={12} color="#A855F7" style={{ marginLeft: 4 }} />
+            </Pressable>
 
-          {/* Stats */}
-          <View className="flex-row items-center">
-            <Ionicons name="cart-outline" size={16} color="#6B7280" />
-            <Text className="text-gray-500 text-sm ml-1">
-              {product.unitsSold} sold
-            </Text>
+            <Text className="text-white text-3xl font-black mb-3 italic tracking-tight">{product.title}</Text>
+
+            {/* Price */}
+            <View className="flex-row items-baseline mb-6">
+              <Text className="text-green-400 text-3xl font-black">
+                ${finalPrice.toFixed(2)}
+              </Text>
+              {selectedVariant?.additionalPrice ? (
+                <Text className="text-gray-500 text-sm ml-3 font-bold uppercase tracking-widest">
+                  (+${selectedVariant.additionalPrice} Option)
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Glass Container for details */}
+            <View className="bg-white/5 p-6 rounded-3xl border border-white/10 mb-8">
+              <Text className="text-gray-300 leading-relaxed text-base">{product.description}</Text>
+
+              {/* Tags */}
+              {product.tags.length > 0 && (
+                <View className="flex-row flex-wrap mt-6">
+                  {product.tags.map((tag) => (
+                    <View
+                      key={tag}
+                      className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg mr-2 mb-2"
+                    >
+                      <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest">{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Size Selection */}
+            {sizes.length > 0 && (
+              <View className="mb-8">
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-white font-black uppercase tracking-widest text-xs">Select Size</Text>
+                  <Text className="text-gray-500 text-[10px] font-bold">SIZE CHART</Text>
+                </View>
+                <View className="flex-row flex-wrap">
+                  {sizes.map((size) => {
+                    const isSelected = selectedSize === size;
+                    const variant = findVariant(size, selectedColor);
+                    const isAvailable = variant?.isAvailable;
+
+                    return (
+                      <Pressable
+                        key={size}
+                        onPress={() => isAvailable && handleSizeSelect(size!)}
+                        className="mr-3 mb-3"
+                        disabled={!isAvailable}
+                      >
+                        {isSelected ? (
+                          <LinearGradient
+                            colors={["#8B5CF6", "#6D28D9"]}
+                            className="px-6 py-3 rounded-2xl"
+                          >
+                            <Text className="text-white font-black text-sm">{size}</Text>
+                          </LinearGradient>
+                        ) : (
+                          <View className={`px-6 py-3 rounded-2xl border ${isAvailable ? "bg-white/5 border-white/10" : "bg-transparent border-white/5 opacity-50"}`}>
+                            <Text className={`font-black text-sm ${isAvailable ? "text-gray-300" : "text-gray-600"}`}>
+                              {size}
+                            </Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Color Selection */}
+            {colors.length > 0 && (
+              <View className="mb-8">
+                <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Select Color</Text>
+                <View className="flex-row flex-wrap">
+                  {colors.map((color) => {
+                    const isSelected = selectedColor === color;
+                    const variant = findVariant(selectedSize, color);
+                    const isAvailable = variant?.isAvailable;
+
+                    return (
+                      <Pressable
+                        key={color}
+                        onPress={() => isAvailable && handleColorSelect(color!)}
+                        className="mr-3 mb-3"
+                        disabled={!isAvailable}
+                      >
+                        {isSelected ? (
+                          <LinearGradient
+                            colors={["#8B5CF6", "#6D28D9"]}
+                            className="px-5 py-3 rounded-2xl"
+                          >
+                            <Text className="text-white font-bold text-sm">{color}</Text>
+                          </LinearGradient>
+                        ) : (
+                          <View className={`px-5 py-3 rounded-2xl border ${isAvailable ? "bg-white/5 border-white/10" : "bg-transparent border-white/5 opacity-50"}`}>
+                            <Text className={`font-bold text-sm ${isAvailable ? "text-gray-300" : "text-gray-600"}`}>
+                              {color}
+                            </Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Quantity */}
+            <View className="mb-8 p-6 bg-white/5 rounded-3xl border border-white/10">
+              <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Quantity</Text>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <Pressable
+                    onPress={decrementQuantity}
+                    className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 items-center justify-center"
+                  >
+                    <Ionicons name="remove" size={20} color="white" />
+                  </Pressable>
+                  <Text className="text-white text-2xl font-black mx-8">{quantity}</Text>
+                  <Pressable
+                    onPress={incrementQuantity}
+                    className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 items-center justify-center"
+                  >
+                    <Ionicons name="add" size={20} color="white" />
+                  </Pressable>
+                </View>
+
+                {selectedVariant && (
+                  <View className="flex-row items-center">
+                    <View
+                      className={`w-2 h-2 rounded-full mr-2 ${selectedVariant.stockStatus === "in_stock"
+                        ? "bg-green-500"
+                        : selectedVariant.stockStatus === "low_stock"
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                        }`}
+                    />
+                    <Text
+                      className={`text-[10px] font-black uppercase tracking-tighter ${selectedVariant.stockStatus === "in_stock"
+                        ? "text-green-500"
+                        : selectedVariant.stockStatus === "low_stock"
+                          ? "text-yellow-500"
+                          : "text-red-500"
+                        }`}
+                    >
+                      {selectedVariant.stockStatus.replace('_', ' ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
           </View>
-        </View>
+        </PageContainer>
       </ScrollView>
 
       {/* Bottom CTA */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0F] border-t border-gray-800 px-6 py-4">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-gray-400">Total</Text>
-          <Text className="text-white text-2xl font-bold">${totalPrice.toFixed(2)}</Text>
-        </View>
-        <Pressable
-          onPress={handleAddToCart}
-          disabled={!selectedVariant?.isAvailable}
-          className={`py-4 rounded-xl flex-row items-center justify-center ${
-            addedToCart
-              ? "bg-green-600"
-              : selectedVariant?.isAvailable
-              ? "bg-purple-600"
-              : "bg-gray-700"
-          }`}
-        >
-          <Ionicons
-            name={addedToCart ? "checkmark-circle" : "bag-add"}
-            size={20}
-            color="white"
-          />
-          <Text className="text-white font-bold ml-2">
-            {addedToCart
-              ? "Added to Cart!"
-              : selectedVariant?.isAvailable
-              ? "Add to Cart"
-              : "Out of Stock"}
-          </Text>
-        </Pressable>
+      <View className="absolute bottom-0 left-0 right-0 bg-black/80 border-t border-white/10 items-center">
+        <PageContainer>
+          <View className="px-6 py-6 w-full max-w-[800px] flex-row items-center justify-between">
+            <View>
+              <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Price</Text>
+              <Text className="text-white text-2xl font-black tracking-tight">${totalPrice.toFixed(2)}</Text>
+            </View>
+            <Pressable
+              onPress={handleAddToCart}
+              disabled={!selectedVariant?.isAvailable}
+              className="overflow-hidden rounded-2xl"
+            >
+              <LinearGradient
+                colors={addedToCart ? ["#059669", "#10B981"] : ["#8B5CF6", "#D946EF"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="px-10 py-4 flex-row items-center justify-center"
+              >
+                <Ionicons
+                  name={addedToCart ? "checkmark-circle" : "bag-add"}
+                  size={20}
+                  color="white"
+                />
+                <Text className="text-white font-black uppercase tracking-widest ml-3 text-sm">
+                  {addedToCart ? "YAY!" : "GET IT"}
+                </Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </PageContainer>
       </View>
     </SafeAreaView>
   );
