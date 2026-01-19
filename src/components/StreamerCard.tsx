@@ -13,7 +13,7 @@ interface StreamerCardProps {
 export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, onPress }) => {
   return (
     <Pressable onPress={onPress} className="mb-4">
-      <View className="bg-[#151520] rounded-2xl overflow-hidden border border-gray-800">
+      <View className="bg-white/5 rounded-[32px] overflow-hidden border border-white/10">
         {/* Header Image */}
         <View className="relative h-40">
           <Image
@@ -46,8 +46,8 @@ export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, onPress })
               style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
             />
             <View className="flex-1">
-              <Text className="text-white font-bold text-lg">{streamer.name}</Text>
-              <Text className="text-purple-400 text-sm">@{streamer.gamertag}</Text>
+              <Text className="text-white font-black text-lg tracking-tight">{streamer.name}</Text>
+              <Text className="text-purple-400 text-sm font-bold">@{streamer.gamertag}</Text>
             </View>
           </View>
 

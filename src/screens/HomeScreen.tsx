@@ -31,10 +31,10 @@ export const HomeScreen: React.FC = () => {
   const offlineStreamers = streamers.filter((s) => !s.isLive);
 
   return (
-    <View className="flex-1 bg-[#0A0A0F]">
+    <View className="flex-1 bg-[#050508]">
       <LinearGradient
-        colors={["#0A0A0F", "#151520"]}
-        style={{ flex: 1 }}
+        colors={["#0A0A15", "#050508"]}
+        className="flex-1"
       >
         {/* Announcement Ticker */}
         <View style={{ paddingTop: insets.top }}>
@@ -49,9 +49,9 @@ export const HomeScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <View className="px-6 py-4">
-            <Text className="text-white text-3xl font-bold">DDNS</Text>
-            <Text className="text-gray-400 text-sm">Day Dreamers Night Streamers</Text>
+          <View className="px-6 py-8">
+            <Text className="text-white text-3xl font-black tracking-tighter">DDNS</Text>
+            <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Day Dreamers Night Streamers</Text>
           </View>
 
           {/* Live Section */}
@@ -68,7 +68,7 @@ export const HomeScreen: React.FC = () => {
                 <View key={streamer.id} className="mb-4 px-6">
                   <Pressable
                     onPress={() => navigation.navigate("StreamerProfile", { streamerId: streamer.id })}
-                    className="bg-[#151520] rounded-3xl overflow-hidden border border-pink-500/30"
+                    className="bg-white/5 rounded-[32px] overflow-hidden border border-white/10"
                   >
                     {/* Live Stream Hero */}
                     <View className="relative h-64">

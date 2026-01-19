@@ -56,106 +56,109 @@ export const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0F]">
+    <View className="flex-1 bg-[#050508]">
       <LinearGradient
-        colors={["#0A0A0F", "#151520", "#0A0A0F"]}
-        style={{ flex: 1 }}
+        colors={["#0A0A15", "#050508"]}
+        className="flex-1"
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
         >
           <ScrollView
-            contentContainerClassName="px-6 py-12"
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center" }}
+            className="px-6 py-12"
             keyboardShouldPersistTaps="handled"
           >
-            <View className="mb-8">
-              <Text className="text-white text-4xl font-bold mb-2">Join DDNS</Text>
-              <Text className="text-gray-400 text-lg">Create your account</Text>
-            </View>
-
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={errors.email}
-            />
-
-            <Input
-              label="Username"
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Choose a username"
-              autoCapitalize="none"
-              error={errors.username}
-            />
-
-            <Input
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Create a password"
-              secureTextEntry
-              error={errors.password}
-            />
-
-            <Input
-              label="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm your password"
-              secureTextEntry
-              error={errors.confirmPassword}
-            />
-
-            {/* Tier Selection */}
-            <View className="mb-6">
-              <Text className="text-gray-300 text-sm font-medium mb-3">Select Membership Tier</Text>
-
-              <Pressable
-                onPress={() => setSelectedTier("free")}
-                className={`bg-[#1F1F2E] border-2 rounded-2xl p-4 mb-3 ${
-                  selectedTier === "free" ? "border-purple-500" : "border-gray-700"
-                }`}
-              >
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-white text-lg font-bold">Free Tier</Text>
-                  <Badge variant="free">Free</Badge>
+            <View
+              className="w-full max-w-[500px] p-8 rounded-[32px] glass-vibrant border border-white/10 shadow-2xl"
+              style={Platform.OS === 'web' ? {
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              } : {}}
+            >
+              <View className="items-center mb-10">
+                <View className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 mb-6 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  <Text className="text-white text-3xl font-bold">V</Text>
                 </View>
-                <Text className="text-gray-400 text-sm">
-                  Follow streamers, browse content, and get basic notifications
-                </Text>
-              </Pressable>
+                <Text className="text-white text-3xl font-bold tracking-tight mb-2 text-center">Create Account</Text>
+                <Text className="text-gray-400 text-base text-center">Join the DDNS community today</Text>
+              </View>
 
-              <Pressable
-                onPress={() => setSelectedTier("superfan")}
-                className={`bg-[#1F1F2E] border-2 rounded-2xl p-4 ${
-                  selectedTier === "superfan" ? "border-purple-500" : "border-gray-700"
-                }`}
-              >
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-white text-lg font-bold">Super Fan</Text>
-                  <Badge variant="superfan">Super Fan</Badge>
+              <View className="flex-row gap-4 mb-2">
+                <View className="flex-1">
+                  <Input
+                    label="Username"
+                    value={username}
+                    onChangeText={setUsername}
+                    placeholder="vibeuser"
+                    autoCapitalize="none"
+                    error={errors.username}
+                  />
                 </View>
-                <Text className="text-gray-400 text-sm mb-2">
-                  Full access to exclusive content, merch discounts, and priority support
-                </Text>
-                <Text className="text-purple-400 text-sm font-semibold">Coming Soon</Text>
-              </Pressable>
-            </View>
+              </View>
 
-            <Button onPress={handleSignUp} className="mt-4" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
-            </Button>
+              <Input
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="email@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                error={errors.email}
+              />
 
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-gray-400">Already have an account? </Text>
-              <Pressable onPress={() => navigation.navigate("SignIn")}>
-                <Text className="text-purple-400 font-semibold">Sign In</Text>
-              </Pressable>
+              <Input
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                error={errors.password}
+              />
+
+              <Input
+                label="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                error={errors.confirmPassword}
+              />
+
+              <View className="mb-8 mt-2">
+                <Text className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Membership Plan</Text>
+
+                <View className="flex-row gap-3">
+                  <Pressable
+                    onPress={() => setSelectedTier("free")}
+                    className={`flex-1 p-4 rounded-2xl border transition-all duration-200 ${selectedTier === "free" ? "bg-purple-500/20 border-purple-500/50" : "bg-white/5 border-white/5"
+                      }`}
+                  >
+                    <Text className={`font-bold mb-1 ${selectedTier === "free" ? "text-white" : "text-gray-400"}`}>Free</Text>
+                    <Text className="text-gray-500 text-[10px] leading-tight">Basic access & features</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setSelectedTier("superfan")}
+                    className={`flex-1 p-4 rounded-2xl border transition-all duration-200 ${selectedTier === "superfan" ? "bg-purple-500/20 border-purple-500/50" : "bg-white/5 border-white/5"
+                      }`}
+                  >
+                    <Text className={`font-bold mb-1 ${selectedTier === "superfan" ? "text-white" : "text-gray-400"}`}>Super Fan</Text>
+                    <Text className="text-gray-500 text-[10px] leading-tight">Exclusive perks & status</Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              <Button onPress={handleSignUp} className="shadow-lg shadow-purple-500/20" disabled={isLoading}>
+                {isLoading ? "Creating Account..." : "Create Account"}
+              </Button>
+
+              <View className="flex-row justify-center mt-10 pt-8 border-t border-white/5">
+                <Text className="text-gray-500 text-sm">Already have an account? </Text>
+                <Pressable onPress={() => navigation.navigate("SignIn")}>
+                  <Text className="text-purple-400 font-bold text-sm">Sign In</Text>
+                </Pressable>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

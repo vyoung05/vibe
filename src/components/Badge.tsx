@@ -46,8 +46,8 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", cla
 
   if (variant === "free") {
     return (
-      <View className={cn("bg-gray-700 rounded-full px-3 py-1", className)}>
-        <Text className="text-gray-300 text-xs font-semibold uppercase tracking-wide">
+      <View className={cn("bg-white/10 rounded-full px-3 py-1", className)}>
+        <Text className="text-gray-300 text-[10px] font-black uppercase tracking-widest">
           {children}
         </Text>
       </View>
@@ -55,8 +55,8 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", cla
   }
 
   return (
-    <View className={cn("bg-gray-800 rounded-full px-3 py-1", className)}>
-      <Text className="text-gray-400 text-xs font-medium">
+    <View className={cn("bg-white/5 rounded-full px-3 py-1", className)}>
+      <Text className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">
         {children}
       </Text>
     </View>

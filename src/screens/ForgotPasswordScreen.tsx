@@ -43,72 +43,82 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0F]">
+    <View className="flex-1 bg-[#050508]">
       <LinearGradient
-        colors={["#0A0A0F", "#151520", "#0A0A0F"]}
-        style={{ flex: 1 }}
+        colors={["#0A0A15", "#050508"]}
+        className="flex-1"
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
         >
           <ScrollView
-            contentContainerClassName="flex-1 justify-center px-6"
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center" }}
+            className="px-6 py-12"
             keyboardShouldPersistTaps="handled"
           >
-            <View className="mb-12">
-              <Text className="text-white text-4xl font-bold mb-2">Reset Password</Text>
-              <Text className="text-gray-400 text-lg">
-                Enter your email and we will send you a link to reset your password
-              </Text>
-            </View>
-
-            {successMessage ? (
-              <View className="bg-green-900/30 border border-green-500 rounded-2xl p-6 mb-6">
-                <View className="flex-row items-center mb-3">
-                  <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
-                  <Text className="text-green-400 text-lg font-semibold ml-2">Email Sent!</Text>
+            <View
+              className="w-full max-w-[450px] p-8 rounded-[32px] glass-vibrant border border-white/10 shadow-2xl"
+              style={Platform.OS === 'web' ? {
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              } : {}}
+            >
+              <View className="items-center mb-10">
+                <View className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 mb-6 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  <Ionicons name="key-outline" size={32} color="white" />
                 </View>
-                <Text className="text-green-300 text-base">
-                  {successMessage}
-                </Text>
-                <Text className="text-gray-400 text-sm mt-3">
-                  Did not receive the email? Check your spam folder or try again.
-                </Text>
+                <Text className="text-white text-3xl font-bold tracking-tight mb-2 text-center">Reset Password</Text>
+                <Text className="text-gray-400 text-base text-center">Enter your email and we'll send a recovery link</Text>
               </View>
-            ) : (
-              <Input
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Enter your email"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                error={error || authError || ""}
-              />
-            )}
 
-            {!successMessage && (
-              <Button onPress={handleResetPassword} className="mt-4" disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send Reset Link"}
-              </Button>
-            )}
+              {successMessage ? (
+                <View className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 mb-8">
+                  <View className="flex-row items-center mb-3">
+                    <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
+                    <Text className="text-green-400 text-lg font-semibold ml-2">Email Sent!</Text>
+                  </View>
+                  <Text className="text-green-300/80 text-sm leading-relaxed">
+                    {successMessage}
+                  </Text>
+                  <Text className="text-gray-500 text-xs mt-4">
+                    Check your spam folder if you can't find it.
+                  </Text>
+                </View>
+              ) : (
+                <Input
+                  label="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="email@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  error={error || authError || ""}
+                />
+              )}
 
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-gray-400">Remember your password? </Text>
-              <Pressable onPress={() => navigation.navigate("SignIn")}>
-                <Text className="text-purple-400 font-semibold">Sign In</Text>
-              </Pressable>
+              {!successMessage && (
+                <Button onPress={handleResetPassword} className="mt-4 shadow-lg shadow-purple-500/20" disabled={isLoading}>
+                  {isLoading ? "Sending..." : "Send Reset Link"}
+                </Button>
+              )}
+
+              <View className="flex-row justify-center mt-8 pt-8 border-t border-white/5">
+                <Text className="text-gray-500 text-sm">Remembered it? </Text>
+                <Pressable onPress={() => navigation.navigate("SignIn")}>
+                  <Text className="text-purple-400 font-bold text-sm">Sign In</Text>
+                </Pressable>
+              </View>
+
+              {successMessage && (
+                <Button
+                  onPress={() => navigation.navigate("SignIn")}
+                  className="mt-6"
+                  variant="secondary"
+                >
+                  Back to Login
+                </Button>
+              )}
             </View>
-
-            {successMessage && (
-              <Button
-                onPress={() => navigation.navigate("SignIn")}
-                className="mt-6"
-              >
-                Back to Sign In
-              </Button>
-            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
