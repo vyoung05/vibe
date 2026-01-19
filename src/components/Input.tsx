@@ -34,17 +34,18 @@ export const Input: React.FC<InputProps> = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#6B7280"
+        placeholderTextColor="#9CA3AF"
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
         className={cn(
-          "bg-[#1F1F2E] border border-gray-700 rounded-xl px-4 py-3 text-white text-base",
-          error && "border-red-500"
+          "bg-[#0F0F17] border border-white/10 rounded-2xl px-5 py-4 text-white text-base transition-all duration-200",
+          "focus:border-purple-500/50 focus:bg-[#151520]",
+          error && "border-red-500/50"
         )}
       />
       {error && (
-        <Text className="text-red-400 text-xs mt-1">{error}</Text>
+        <Text className="text-red-400 text-xs mt-2 ml-1">{error}</Text>
       )}
     </View>
   );

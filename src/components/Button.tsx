@@ -40,12 +40,12 @@ export const Button: React.FC<ButtonProps> = ({
         className={cn("rounded-xl overflow-hidden", className)}
       >
         <LinearGradient
-          colors={disabled ? ["#4B5563", "#374151"] : ["#8B5CF6", "#EC4899"]}
+          colors={disabled ? ["#374151", "#1F2937"] : ["#9333EA", "#DB2777"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{ paddingHorizontal: size === "sm" ? 16 : size === "md" ? 24 : 32, paddingVertical: size === "sm" ? 8 : size === "md" ? 12 : 16 }}
         >
-          <Text className={cn("text-white font-semibold text-center", textSizeClasses[size])}>
+          <Text className={cn("text-white font-bold tracking-wide text-center", textSizeClasses[size])}>
             {children}
           </Text>
         </LinearGradient>
@@ -59,7 +59,7 @@ export const Button: React.FC<ButtonProps> = ({
         onPress={onPress}
         disabled={disabled}
         className={cn(
-          "rounded-xl border-2 border-purple-500/50 bg-purple-500/10",
+          "rounded-2xl border border-white/10 bg-white/5",
           sizeClasses[size],
           disabled && "opacity-50",
           className
