@@ -13,7 +13,8 @@
     "serve": "npx serve dist",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "prebuild": "patch-package"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -132,6 +133,12 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
+    "@babel/plugin-transform-class-properties": "^7.28.6",
+    "@babel/plugin-transform-export-namespace-from": "^7.27.1",
+    "@babel/plugin-transform-flow-strip-types": "^7.27.1",
+    "@babel/plugin-transform-object-rest-spread": "^7.28.6",
+    "@babel/plugin-transform-react-jsx": "^7.23.0",
     "@expo/webpack-config": "^19.0.1",
     "@types/react": "~19.0.10",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
@@ -142,9 +149,9 @@
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "react-native-css-interop": "^0.2.1",
     "react-native-svg-transformer": "^1.5.2",
-    "typescript": "~5.8.3",
-    "@babel/plugin-transform-react-jsx": "^7.23.0"
+    "typescript": "~5.8.3"
   },
   "private": true,
   "patchedDependencies": {
