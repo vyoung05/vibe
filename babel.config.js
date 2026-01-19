@@ -8,16 +8,16 @@ module.exports = function (api) {
           visitor: {
             MemberExpression(path) {
               const { node } = path;
-              if (
+              // Safely check for import.meta.env
+              const isImportMeta =
                 node.object &&
                 node.object.type === 'MetaProperty' &&
                 node.object.meta &&
                 node.object.meta.name === 'import' &&
                 node.object.property &&
-                node.object.property.name === 'meta' &&
-                node.property &&
-                node.property.name === 'env'
-              ) {
+                node.object.property.name === 'meta';
+
+              if (isImportMeta && node.property && node.property.name === 'env') {
                 path.replaceWithSourceString('process.env');
               }
             },
