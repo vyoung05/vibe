@@ -39,8 +39,13 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true, error: null, successMessage: null });
           console.log("[Auth] Requesting password reset for:", email);
 
+          // Use web URL for web platform, deep link for mobile
+          const redirectTo = typeof window !== 'undefined'
+            ? `${window.location.origin}/reset-password`
+            : 'ddns://reset-password';
+
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: "ddns://reset-password",
+            redirectTo,
           });
 
           if (error) {
