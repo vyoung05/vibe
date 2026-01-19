@@ -5,15 +5,27 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 
-// Create Supabase client
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+// Guard against missing configuration to prevent app crash on web/Vercel
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error(
+    "[Supabase] Error: Missing environment variables. " +
+    "Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY."
+  );
+}
+
+// Create Supabase client with safe defaults or valid config
+export const supabase = createClient(
+  SUPABASE_URL || "https://placeholder-project.supabase.co", 
+  SUPABASE_ANON_KEY || "placeholder-key", 
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
+);
 
 // Database types
 export interface Database {
