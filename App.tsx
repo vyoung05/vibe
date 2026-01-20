@@ -103,11 +103,18 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("[Auth] Auth state changed:", event);
+        console.log("[Auth] Session:", session);
+
         if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !session) {
           // User signed out or token refresh failed
           signOut();
         } else if (event === "PASSWORD_RECOVERY") {
-          console.log("[Auth] Password recovery event detected");
+          console.log("[Auth] Password recovery event detected - session should be established");
+          // Session is automatically established by Supabase from the URL hash
+          // The user can now update their password
+        } else if (event === "SIGNED_IN" && session) {
+          // Update auth store with session
+          checkSession();
         }
       }
     );
