@@ -192,10 +192,6 @@ export default function App() {
 
             {isAuthenticated ? (
               <>
-                {needsOnboarding && (
-                  <Stack.Screen name="DiscoverPeople" component={DiscoverPeopleScreen} />
-                )}
-
                 {/* Admin screens */}
                 <Stack.Screen name="AdminManagement" component={AdminManagementScreen} />
                 <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
