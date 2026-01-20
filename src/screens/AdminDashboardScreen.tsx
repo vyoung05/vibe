@@ -1420,13 +1420,22 @@ return (
 
       {activeTab === "streamers" && (
         <View className="px-4 pb-4">
-          {/* Create Streamer Button */}
+          {/* Create Streamer Button with gradient and shadow */}
           <Pressable
             onPress={() => setShowCreateStreamer(true)}
-            className="bg-purple-600 py-2.5 rounded-xl mb-3 flex-row items-center justify-center"
+            className="bg-gradient-to-r from-purple-600 to-purple-700 py-3.5 rounded-2xl mb-4 flex-row items-center justify-center border border-purple-400/30"
+            style={{
+              shadowColor: "#8B5CF6",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 6,
+            }}
           >
-            <Ionicons name="add-circle" size={20} color="white" />
-            <Text className="text-white font-bold text-sm ml-2">Create Streamer</Text>
+            <View className="bg-white/20 rounded-full p-1 mr-2">
+              <Ionicons name="add-circle" size={22} color="white" />
+            </View>
+            <Text className="text-white font-extrabold text-base tracking-wide">Create Streamer</Text>
           </Pressable>
 
           {/* Streamers List */}
@@ -1453,64 +1462,128 @@ return (
             dbStreamers.map((streamer: Streamer) => (
               <View
                 key={streamer.id}
-                className="bg-[#151520] p-3 rounded-xl mb-3 border border-gray-800"
+                className="bg-gradient-to-br from-[#1a1a2e] to-[#16162a] p-4 rounded-2xl mb-4 border border-purple-500/20 shadow-2xl"
+                style={{
+                  shadowColor: streamer.isLive ? "#EC4899" : "#8B5CF6",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }}
               >
-                <View className="flex-row items-center justify-between mb-3">
+                {/* Header with Avatar and Info */}
+                <View className="flex-row items-start justify-between mb-4">
                   <View className="flex-row items-center flex-1">
-                    {streamer.avatar ? (
-                      <Image
-                        source={{ uri: streamer.avatar }}
-                        style={{ width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: streamer.isLive ? "#EC4899" : "#8B5CF6" }}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <View className="w-12 h-12 rounded-full bg-purple-600 items-center justify-center">
-                        <Text className="text-white font-bold">{streamer.name[0]}</Text>
+                    {/* Avatar with gradient border */}
+                    <View
+                      className="rounded-full p-0.5"
+                      style={{
+                        background: streamer.isLive
+                          ? 'linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)'
+                          : 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                      }}
+                    >
+                      {streamer.avatar ? (
+                        <Image
+                          source={{ uri: streamer.avatar }}
+                          style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 28,
+                            borderWidth: 3,
+                            borderColor: '#0A0A0F',
+                          }}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <View className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 items-center justify-center">
+                          <Text className="text-white font-bold text-xl">{streamer.name[0]}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Name and Gamertag */}
+                    <View className="ml-4 flex-1">
+                      <View className="flex-row items-center">
+                        <Text className="text-white font-bold text-lg">{streamer.name}</Text>
+                        {streamer.isVerified && (
+                          <View className="ml-2 bg-blue-500 rounded-full w-5 h-5 items-center justify-center">
+                            <Ionicons name="checkmark" size={14} color="white" />
+                          </View>
+                        )}
                       </View>
-                    )}
-                    <View className="ml-3 flex-1">
-                      <Text className="text-white font-bold">{streamer.name}</Text>
-                      <Text className="text-gray-400 text-sm">@{streamer.gamertag}</Text>
+                      <Text className="text-gray-400 text-sm mt-0.5">@{streamer.gamertag}</Text>
+                      {/* Follower count with icon */}
+                      <View className="flex-row items-center mt-1">
+                        <Ionicons name="people" size={12} color="#9CA3AF" />
+                        <Text className="text-gray-500 text-xs ml-1">
+                          {streamer.followerCount.toLocaleString()} followers
+                        </Text>
+                      </View>
                     </View>
                   </View>
+
+                  {/* LIVE Badge with animation-ready styling */}
                   {streamer.isLive && (
-                    <View className="bg-red-500 px-2 py-1 rounded">
-                      <Text className="text-white text-xs font-bold">LIVE</Text>
+                    <View
+                      className="bg-gradient-to-r from-red-600 to-pink-600 px-3 py-1.5 rounded-full flex-row items-center"
+                      style={{
+                        shadowColor: "#EF4444",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      }}
+                    >
+                      <View className="w-2 h-2 rounded-full bg-white mr-1.5" />
+                      <Text className="text-white text-xs font-extrabold tracking-wider">LIVE</Text>
                     </View>
                   )}
                 </View>
 
-                <Text className="text-gray-300 text-sm mb-3" numberOfLines={2}>
+                {/* Bio */}
+                <Text className="text-gray-300 text-sm mb-3 leading-5" numberOfLines={2}>
                   {streamer.bio}
                 </Text>
 
-                {/* Hero Images Preview */}
+                {/* Hero Images Preview with better styling */}
                 {streamer.headerImages && streamer.headerImages.length > 0 && (
-                  <View className="mb-3">
-                    <Text className="text-gray-500 text-xs mb-2">
-                      {streamer.headerImages.length} Hero Slide{streamer.headerImages.length > 1 ? "s" : ""}
-                    </Text>
+                  <View className="mb-4">
+                    <View className="flex-row items-center mb-2">
+                      <Ionicons name="images" size={14} color="#8B5CF6" />
+                      <Text className="text-purple-400 text-xs font-semibold ml-1">
+                        {streamer.headerImages.length} Header {streamer.headerImages.length > 1 ? "Images" : "Image"}
+                      </Text>
+                    </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       {streamer.headerImages.map((img: string, idx: number) => (
-                        <Image
+                        <View
                           key={`hero-${idx}`}
-                          source={{ uri: img }}
-                          style={{ width: 80, height: 45, borderRadius: 6, marginRight: 8 }}
-                          contentFit="cover"
-                        />
+                          className="mr-2 rounded-lg overflow-hidden border border-purple-500/30"
+                          style={{
+                            shadowColor: "#8B5CF6",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 4,
+                            elevation: 3,
+                          }}
+                        >
+                          <Image
+                            source={{ uri: img }}
+                            style={{ width: 100, height: 56, borderRadius: 8 }}
+                            contentFit="cover"
+                          />
+                        </View>
                       ))}
                     </ScrollView>
                   </View>
                 )}
 
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-gray-500 text-xs">
-                    {streamer.followerCount.toLocaleString()} followers
-                  </Text>
-                </View>
+                {/* Divider */}
+                <View className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent mb-3" />
 
-                {/* Action Buttons - Row 1 */}
-                <View className="flex-row mt-3 mb-2">
+                {/* Action Buttons - Row 1 with better design */}
+                <View className="flex-row mb-2 gap-2">
                   <Pressable
                     onPress={() => {
                       const tabNav = navigation.getParent();
@@ -1519,11 +1592,19 @@ return (
                         rootNav.navigate("StreamerProfile", { streamerId: streamer.id });
                       }
                     }}
-                    className="flex-1 bg-purple-600/20 py-2.5 rounded-lg mr-2 flex-row items-center justify-center"
+                    className="flex-1 bg-purple-600/20 py-3 rounded-xl flex-row items-center justify-center border border-purple-500/30"
+                    style={{
+                      shadowColor: "#8B5CF6",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
                   >
-                    <Ionicons name="eye-outline" size={16} color="#8B5CF6" />
-                    <Text className="text-purple-400 text-xs font-bold ml-1">View Profile</Text>
+                    <Ionicons name="eye-outline" size={18} color="#A78BFA" />
+                    <Text className="text-purple-300 text-sm font-bold ml-2">View</Text>
                   </Pressable>
+
                   <Pressable
                     onPress={() => {
                       const tabNav = navigation.getParent();
@@ -1532,37 +1613,69 @@ return (
                         rootNav.navigate("EditStreamerProfile", { streamerId: streamer.id });
                       }
                     }}
-                    className="flex-1 bg-blue-600/20 py-2.5 rounded-lg flex-row items-center justify-center"
+                    className="flex-1 bg-blue-600/20 py-3 rounded-xl flex-row items-center justify-center border border-blue-500/30"
+                    style={{
+                      shadowColor: "#3B82F6",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
                   >
-                    <Ionicons name="create-outline" size={16} color="#3B82F6" />
-                    <Text className="text-blue-400 text-xs font-bold ml-1">Edit Profile</Text>
+                    <Ionicons name="create-outline" size={18} color="#60A5FA" />
+                    <Text className="text-blue-300 text-sm font-bold ml-2">Edit</Text>
                   </Pressable>
                 </View>
 
                 {/* Action Buttons - Row 2 */}
-                <View className="flex-row">
+                <View className="flex-row gap-2">
                   <Pressable
                     onPress={() => handleToggleLive(streamer)}
-                    className={`flex-1 py-2.5 rounded-lg mr-2 flex-row items-center justify-center ${streamer.isLive ? "bg-red-600" : "bg-green-600"
+                    className={`flex-1 py-3 rounded-xl flex-row items-center justify-center border ${streamer.isLive
+                      ? "bg-red-600 border-red-500"
+                      : "bg-green-600 border-green-500"
                       }`}
+                    style={{
+                      shadowColor: streamer.isLive ? "#EF4444" : "#22C55E",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 6,
+                      elevation: 3,
+                    }}
                   >
-                    <Ionicons name={streamer.isLive ? "stop-circle" : "radio"} size={16} color="white" />
-                    <Text className="text-white text-xs font-bold ml-1">
+                    <Ionicons name={streamer.isLive ? "stop-circle" : "radio"} size={18} color="white" />
+                    <Text className="text-white text-sm font-bold ml-2">
                       {streamer.isLive ? "End Stream" : "Go Live"}
                     </Text>
                   </Pressable>
+
                   <Pressable
                     onPress={() => openSetStreamerPassword(streamer)}
-                    className="flex-1 bg-cyan-600/20 py-2.5 rounded-lg mr-2 flex-row items-center justify-center"
+                    className="flex-1 bg-cyan-600/20 py-3 rounded-xl flex-row items-center justify-center border border-cyan-500/30"
+                    style={{
+                      shadowColor: "#06B6D4",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
                   >
-                    <Ionicons name="key-outline" size={16} color="#06B6D4" />
-                    <Text className="text-cyan-400 text-xs font-bold ml-1">Login</Text>
+                    <Ionicons name="key-outline" size={18} color="#22D3EE" />
+                    <Text className="text-cyan-300 text-sm font-bold ml-2">Login</Text>
                   </Pressable>
+
                   <Pressable
-                    onPress={() => handleDeleteStreamer(streamer.id)}
-                    className="bg-red-600/20 py-2.5 px-4 rounded-lg flex-row items-center justify-center"
+                    onPress={() => handleDeleteStreamer(streamer.id, streamer.name)}
+                    className="bg-red-600/20 py-3 px-4 rounded-xl items-center justify-center border border-red-500/30"
+                    style={{
+                      shadowColor: "#EF4444",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
                   >
-                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    <Ionicons name="trash-outline" size={18} color="#F87171" />
                   </Pressable>
                 </View>
               </View>
