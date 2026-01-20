@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SignInScreen } from "./src/screens/SignInScreen";
@@ -50,6 +50,9 @@ import type { RootStackParamList } from "./src/navigation/RootNavigator";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// Create navigation ref for programmatic navigation
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 // Deep linking configuration for web URLs
 const linking = {
   prefixes: ['https://www.daydeamersnightstreamers.com', 'http://localhost:8081', 'ddns://'],
@@ -93,6 +96,31 @@ export default function App() {
     (!user.followingUsers || user.followingUsers.length === 0);
 
   const needsOnboarding = isAuthenticated && user && (!user.hasCompletedOnboarding || hasNoSocialConnections);
+
+  // Handle automatic navigation on auth state change
+  useEffect(() => {
+    if (!navigationRef.isReady()) return;
+
+    const currentRoute = navigationRef.getCurrentRoute()?.name;
+    console.log("[Navigation] Auth state changed - isAuthenticated:", isAuthenticated, "currentRoute:", currentRoute);
+
+    if (isAuthenticated) {
+      // User logged in - navigate to appropriate screen
+      if (needsOnboarding && currentRoute !== 'DiscoverPeople') {
+        console.log("[Navigation] Navigating to DiscoverPeople for onboarding");
+        navigationRef.navigate('DiscoverPeople');
+      } else if (!needsOnboarding && currentRoute !== 'MainTabs') {
+        console.log("[Navigation] Navigating to MainTabs");
+        navigationRef.navigate('MainTabs');
+      }
+    } else {
+      // User logged out - navigate to sign in
+      if (currentRoute !== 'SignIn' && currentRoute !== 'SignUp' && currentRoute !== 'ForgotPassword' && currentRoute !== 'ResetPassword') {
+        console.log("[Navigation] Navigating to SignIn");
+        navigationRef.navigate('SignIn');
+      }
+    }
+  }, [isAuthenticated, needsOnboarding]);
 
   // Check session and set up auth state listener on mount
   useEffect(() => {
@@ -173,7 +201,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer linking={linking}>
+        <NavigationContainer ref={navigationRef} linking={linking}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             {/* Auth flow screens - Moved outside to ensure consistent availability */}
             <Stack.Screen name="SignIn" component={SignInScreen} />
