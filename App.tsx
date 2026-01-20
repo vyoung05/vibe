@@ -50,6 +50,29 @@ import type { RootStackParamList } from "./src/navigation/RootNavigator";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// Deep linking configuration for web URLs
+const linking = {
+  prefixes: ['https://www.daydeamersnightstreamers.com', 'http://localhost:8081', 'ddns://'],
+  config: {
+    screens: {
+      SignIn: '',
+      SignUp: 'signup',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: 'reset-password',
+      MainTabs: {
+        path: 'app',
+        screens: {
+          Home: 'home',
+          Streamers: 'streamers',
+          Artists: 'artists',
+          Music: 'music',
+          Merch: 'merch',
+        },
+      },
+    },
+  },
+};
+
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -143,7 +166,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             {/* Auth flow screens - Moved outside to ensure consistent availability */}
             <Stack.Screen name="SignIn" component={SignInScreen} />
