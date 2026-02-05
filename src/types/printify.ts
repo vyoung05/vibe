@@ -62,11 +62,20 @@ export interface PrintfulSyncVariant {
 // STREAMER MERCH TYPES
 // ===================
 
+export type PODProvider = "printify" | "printful" | "gelato";
+
 export interface StreamerPrintifyConnection {
   streamerId: string;
-  printfulApiToken: string; // OAuth token (stored securely)
+  provider: PODProvider; // Which POD service is connected
+  // Printify fields
+  printifyApiToken?: string;
+  printifyShopId?: string;
+  printifyShopName?: string;
+  // Printful fields (legacy support)
+  printfulApiToken?: string;
   storeId?: string;
   storeName?: string;
+  // Common fields
   isConnected: boolean;
   lastSyncAt: string | null;
   createdAt: string;

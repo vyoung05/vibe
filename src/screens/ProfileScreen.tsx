@@ -16,10 +16,7 @@ import { GuestPrompt } from "../components/GuestPrompt";
 import { PageContainer } from "../components/PageContainer";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { CompositeNavigationProp } from "@react-navigation/native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { RootStackParamList } from "../navigation/RootNavigator";
-import { MainTabsParamList } from "../navigation/MainTabs";
 import { achievements } from "../data/achievements";
 import type { VerificationRequest } from "../types";
 
@@ -27,10 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const INFLUENCER_THRESHOLD = 10;
 
-type NavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<MainTabsParamList, "Profile">,
-  NativeStackNavigationProp<RootStackParamList>
->;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -270,13 +264,7 @@ export const ProfileScreen: React.FC = () => {
             </View>
             <View className="flex-row items-center gap-4">
               <Pressable
-                onPress={() => {
-                  const tabNav = navigation.getParent();
-                  const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                  if (rootNav) {
-                    rootNav.navigate("CreatePost");
-                  }
-                }}
+                onPress={() => navigation.navigate("CreatePost")}
                 className="p-1"
               >
                 <Ionicons name="add-circle-outline" size={26} color="#FFFFFF" />
@@ -451,13 +439,7 @@ export const ProfileScreen: React.FC = () => {
           {selectedTab === "posts" ? (
             <ProfileGallery
               posts={userPosts}
-              onPostPress={(postId) => {
-                const tabNav = navigation.getParent();
-                const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                if (rootNav) {
-                  rootNav.navigate("PostDetail", { postId });
-                }
-              }}
+              onPostPress={(postId) => navigation.navigate("PostDetail", { postId })}
               isOwnProfile={true}
             />
           ) : (
@@ -469,13 +451,7 @@ export const ProfileScreen: React.FC = () => {
 
                   {isAdmin && (
                     <Pressable
-                      onPress={() => {
-                        const tabNav = navigation.getParent();
-                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                        if (rootNav) {
-                          rootNav.navigate("AdminDashboard");
-                        }
-                      }}
+                      onPress={() => navigation.navigate("AdminDashboard")}
                       className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
                     >
                       <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
@@ -492,13 +468,7 @@ export const ProfileScreen: React.FC = () => {
                   {isStreamer && (
                     <>
                       <Pressable
-                        onPress={() => {
-                          const tabNav = navigation.getParent();
-                          const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                          if (rootNav) {
-                            rootNav.navigate("Streaming");
-                          }
-                        }}
+                        onPress={() => navigation.navigate("Streaming")}
                         className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
                       >
                         <View className="w-10 h-10 rounded-full bg-red-500/20 items-center justify-center">
@@ -512,13 +482,7 @@ export const ProfileScreen: React.FC = () => {
                       </Pressable>
 
                       <Pressable
-                        onPress={() => {
-                          const tabNav = navigation.getParent();
-                          const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                          if (rootNav) {
-                            rootNav.navigate("StreamerAnalytics", { streamerId: user.id });
-                          }
-                        }}
+                        onPress={() => navigation.navigate("StreamerAnalytics", { streamerId: user.id })}
                         className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl mb-3"
                       >
                         <View className="w-10 h-10 rounded-full bg-cyan-500/20 items-center justify-center">
@@ -535,13 +499,7 @@ export const ProfileScreen: React.FC = () => {
 
                   {isAdmin && (
                     <Pressable
-                      onPress={() => {
-                        const tabNav = navigation.getParent();
-                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                        if (rootNav) {
-                          rootNav.navigate("AdminAnalytics");
-                        }
-                      }}
+                      onPress={() => navigation.navigate("AdminAnalytics")}
                       className="flex-row items-center bg-[#1C1C24] p-4 rounded-2xl"
                     >
                       <View className="w-10 h-10 rounded-full bg-orange-500/20 items-center justify-center">
@@ -646,13 +604,7 @@ export const ProfileScreen: React.FC = () => {
 
                 {/* Influencer Status */}
                 <Pressable
-                  onPress={() => {
-                    const tabNav = navigation.getParent();
-                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                    if (rootNav) {
-                      rootNav.navigate("InviteFriends");
-                    }
-                  }}
+                  onPress={() => navigation.navigate("InviteFriends")}
                   className="bg-[#1C1C24] p-4 rounded-2xl"
                 >
                   <View className="flex-row items-center justify-between">
@@ -711,13 +663,7 @@ export const ProfileScreen: React.FC = () => {
               <View className="mb-6">
                 <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Invite Friends</Text>
                 <Pressable
-                  onPress={() => {
-                    const tabNav = navigation.getParent();
-                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                    if (rootNav) {
-                      rootNav.navigate("InviteFriends");
-                    }
-                  }}
+                  onPress={() => navigation.navigate("InviteFriends")}
                   className="bg-[#1C1C24] p-4 rounded-2xl"
                 >
                   <View className="flex-row items-center justify-between">
@@ -747,13 +693,7 @@ export const ProfileScreen: React.FC = () => {
                 <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Settings</Text>
 
                 <Pressable
-                  onPress={() => {
-                    const tabNav = navigation.getParent();
-                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                    if (rootNav) {
-                      rootNav.navigate("Notifications");
-                    }
-                  }}
+                  onPress={() => navigation.navigate("Notifications")}
                   className="flex-row items-center bg-[#1C1C24] p-4 rounded-t-2xl border-b border-gray-800/50"
                 >
                   <Ionicons name="notifications-outline" size={22} color="#9CA3AF" />
@@ -762,13 +702,7 @@ export const ProfileScreen: React.FC = () => {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => {
-                    const tabNav = navigation.getParent();
-                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                    if (rootNav) {
-                      rootNav.navigate("Billing");
-                    }
-                  }}
+                  onPress={() => navigation.navigate("Billing")}
                   className="flex-row items-center bg-[#1C1C24] p-4 border-b border-gray-800/50"
                 >
                   <Ionicons name="card-outline" size={22} color="#9CA3AF" />
@@ -777,13 +711,7 @@ export const ProfileScreen: React.FC = () => {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => {
-                    const tabNav = navigation.getParent();
-                    const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                    if (rootNav) {
-                      rootNav.navigate("HelpSupport");
-                    }
-                  }}
+                  onPress={() => navigation.navigate("HelpSupport")}
                   className="flex-row items-center bg-[#1C1C24] p-4 rounded-b-2xl"
                 >
                   <Ionicons name="help-circle-outline" size={22} color="#9CA3AF" />
@@ -1155,14 +1083,7 @@ export const ProfileScreen: React.FC = () => {
                         className="flex-row items-center bg-[#0A0A0F] p-4 rounded-2xl mb-3"
                       >
                         <Pressable
-                          onPress={() => {
-                            setShowFollowingModal(false);
-                            const tabNav = navigation.getParent();
-                            const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                            if (rootNav) {
-                              rootNav.navigate("StreamerProfile", { streamerId: streamer.id });
-                            }
-                          }}
+                          onPress={() => { setShowFollowingModal(false); navigation.navigate("StreamerProfile", { streamerId: streamer.id }); }}
                           className="flex-row items-center flex-1"
                         >
                           <Image
@@ -1289,14 +1210,7 @@ export const ProfileScreen: React.FC = () => {
                       Follow streamers and people to see their updates and content in your feed
                     </Text>
                     <Pressable
-                      onPress={() => {
-                        setShowFollowingModal(false);
-                        const tabNav = navigation.getParent();
-                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                        if (rootNav) {
-                          rootNav.navigate("DiscoverPeople");
-                        }
-                      }}
+                      onPress={() => { setShowFollowingModal(false); navigation.navigate("DiscoverPeople"); }}
                       className="mt-6 bg-purple-500 px-6 py-3 rounded-xl"
                     >
                       <Text className="text-white font-semibold">Discover People</Text>

@@ -7,6 +7,12 @@ import {
   confirmPrintfulOrder,
   validatePrintfulConnection,
 } from "../utils/printfulSync";
+import {
+  syncProductsFromPrintify,
+  createPrintifyOrder,
+  validatePrintifyConnection,
+  getPrintifyShops,
+} from "../utils/printifySync";
 import type {
   MerchProduct,
   MerchVariant,
@@ -139,14 +145,20 @@ interface MerchStoreState {
   initializeSuperfanFee: (userId: string, streamerId: string) => void;
   isSuperfanFeeWaived: (userId: string, streamerId: string) => boolean;
 
-  // Printify Connection Actions
+  // POD Connection Actions (Printify/Printful)
   addPrintifyConnection: (connection: Omit<StreamerPrintifyConnection, "createdAt">) => void;
   updatePrintifyConnection: (streamerId: string, data: Partial<StreamerPrintifyConnection>) => void;
   getPrintifyConnection: (streamerId: string) => StreamerPrintifyConnection | undefined;
   disconnectPrintify: (streamerId: string) => void;
+  // Printful methods (legacy)
   validateAndConnectPrintful: (streamerId: string, apiToken: string, storeId?: string) => Promise<{ success: boolean; error?: string }>;
   syncPrintfulProducts: (streamerId: string, streamerName: string) => Promise<{ success: boolean; syncedCount: number; error?: string }>;
   sendOrderToPrintful: (orderId: string) => Promise<{ success: boolean; error?: string }>;
+  // Printify methods (new)
+  validateAndConnectPrintify: (streamerId: string, apiToken: string) => Promise<{ success: boolean; shops?: Array<{ id: number; title: string }>; error?: string }>;
+  selectPrintifyShop: (streamerId: string, shopId: number, shopName: string) => void;
+  syncPrintifyProducts: (streamerId: string, streamerName: string, streamerAvatar?: string) => Promise<{ success: boolean; syncedCount: number; error?: string }>;
+  sendOrderToPrintify: (orderId: string) => Promise<{ success: boolean; error?: string }>;
 
   // Provider Routing Rules
   addProviderRoutingRule: (rule: Omit<ProviderRoutingRule, "id" | "createdAt" | "updatedAt">) => string;
@@ -912,6 +924,7 @@ export const useMerchStore = create<MerchStoreState>()(
           // Save connection
           get().addPrintifyConnection({
             streamerId,
+            provider: "printful",
             printfulApiToken: apiToken,
             storeId,
             storeName: "Printful Store",
@@ -1060,6 +1073,210 @@ export const useMerchStore = create<MerchStoreState>()(
           return { success: true };
         } catch (error) {
           console.error("[MerchStore] Failed to send order to Printful:", error);
+          return {
+            success: false,
+            error: String(error),
+          };
+        }
+      },
+
+      // ==================
+      // PRINTIFY METHODS
+      // ==================
+
+      validateAndConnectPrintify: async (streamerId, apiToken) => {
+        try {
+          console.log("[MerchStore] Validating Printify connection...");
+
+          // Validate the API token and get shops
+          const validation = await validatePrintifyConnection(apiToken);
+
+          if (!validation.valid) {
+            return {
+              success: false,
+              error: validation.error || "Invalid API token",
+            };
+          }
+
+          // Save connection with token (shop selection comes next)
+          get().addPrintifyConnection({
+            streamerId,
+            provider: "printify",
+            printifyApiToken: apiToken,
+            isConnected: false, // Not fully connected until shop is selected
+            lastSyncAt: null,
+          });
+
+          console.log("[MerchStore] Printify token validated, shops available:", validation.shops?.length);
+
+          return { 
+            success: true,
+            shops: validation.shops,
+          };
+        } catch (error) {
+          console.error("[MerchStore] Printify connection failed:", error);
+          return {
+            success: false,
+            error: String(error),
+          };
+        }
+      },
+
+      selectPrintifyShop: (streamerId, shopId, shopName) => {
+        console.log(`[MerchStore] Selecting Printify shop: ${shopName} (${shopId})`);
+        
+        get().updatePrintifyConnection(streamerId, {
+          printifyShopId: shopId.toString(),
+          printifyShopName: shopName,
+          isConnected: true,
+        });
+      },
+
+      syncPrintifyProducts: async (streamerId, streamerName, streamerAvatar) => {
+        try {
+          console.log("[MerchStore] Starting Printify product sync...");
+
+          const connection = get().getPrintifyConnection(streamerId);
+
+          if (!connection || !connection.isConnected) {
+            return {
+              success: false,
+              syncedCount: 0,
+              error: "No Printify connection found. Please connect your Printify account first.",
+            };
+          }
+
+          if (!connection.printifyShopId) {
+            return {
+              success: false,
+              syncedCount: 0,
+              error: "No Printify shop selected. Please select a shop first.",
+            };
+          }
+
+          // Sync products from Printify
+          const result = await syncProductsFromPrintify(connection, streamerId, streamerName, streamerAvatar);
+
+          if (!result.success) {
+            return {
+              success: false,
+              syncedCount: 0,
+              error: result.error,
+            };
+          }
+
+          // Add synced products to store
+          let syncedCount = 0;
+          for (const productData of result.products) {
+            try {
+              // Check if product already exists (by printifyProductId)
+              const existingProducts = get().products.filter(
+                p => p.printifyProductId === productData.printifyProductId && p.streamerId === streamerId
+              );
+
+              if (existingProducts.length > 0) {
+                // Update existing product
+                get().updateProduct(existingProducts[0].id, productData);
+              } else {
+                // Add new product
+                get().addProduct({
+                  streamerId,
+                  streamerName,
+                  streamerAvatar,
+                  ...productData,
+                } as any);
+              }
+              syncedCount++;
+            } catch (error) {
+              console.error("[MerchStore] Error adding synced product:", error);
+            }
+          }
+
+          // Update last sync time
+          get().updatePrintifyConnection(streamerId, {
+            lastSyncAt: new Date().toISOString(),
+          });
+
+          console.log(`[MerchStore] Synced ${syncedCount} products from Printify`);
+
+          return {
+            success: true,
+            syncedCount,
+          };
+        } catch (error) {
+          console.error("[MerchStore] Printify product sync failed:", error);
+          return {
+            success: false,
+            syncedCount: 0,
+            error: String(error),
+          };
+        }
+      },
+
+      sendOrderToPrintify: async (orderId) => {
+        try {
+          console.log(`[MerchStore] Sending order ${orderId} to Printify...`);
+
+          const order = get().getOrder(orderId);
+
+          if (!order) {
+            return {
+              success: false,
+              error: "Order not found",
+            };
+          }
+
+          // Get streamer connection (use first item's streamer)
+          const streamerId = order.items[0]?.streamerId;
+          if (!streamerId) {
+            return {
+              success: false,
+              error: "No streamer found for order",
+            };
+          }
+
+          const connection = get().getPrintifyConnection(streamerId);
+
+          if (!connection || !connection.isConnected || connection.provider !== "printify") {
+            return {
+              success: false,
+              error: "No Printify connection found for this streamer",
+            };
+          }
+
+          // Create order in Printify
+          const result = await createPrintifyOrder(connection, order);
+
+          if (!result.success) {
+            return {
+              success: false,
+              error: result.error,
+            };
+          }
+
+          // Update order with Printify order ID and status
+          get().updateOrderStatus(orderId, "sent_to_printify");
+
+          // Store Printify order ID in the order
+          set((state) => ({
+            orders: state.orders.map((o) =>
+              o.id === orderId
+                ? {
+                    ...o,
+                    printifyOrderId: result.printifyOrderId,
+                    sentToPrintifyAt: new Date().toISOString(),
+                  }
+                : o
+            ),
+          }));
+
+          get().updateOrderStatus(orderId, "in_production");
+
+          console.log("[MerchStore] Order sent to Printify successfully");
+
+          return { success: true };
+        } catch (error) {
+          console.error("[MerchStore] Failed to send order to Printify:", error);
           return {
             success: false,
             error: String(error),

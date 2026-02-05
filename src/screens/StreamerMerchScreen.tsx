@@ -66,6 +66,9 @@ export const StreamerMerchScreen: React.FC = () => {
   const addPrintifyConnection = useMerchStore((s) => s.addPrintifyConnection);
   const validateAndConnectPrintful = useMerchStore((s) => s.validateAndConnectPrintful);
   const syncPrintfulProducts = useMerchStore((s) => s.syncPrintfulProducts);
+  const validateAndConnectPrintify = useMerchStore((s) => s.validateAndConnectPrintify);
+  const selectPrintifyShop = useMerchStore((s) => s.selectPrintifyShop);
+  const syncPrintifyProducts = useMerchStore((s) => s.syncPrintifyProducts);
   const initializeStreamerFee = useMerchStore((s) => s.initializeStreamerFee);
   const seedSampleMerchData = useMerchStore((s) => s.seedSampleMerchData);
   const addProduct = useMerchStore((s) => s.addProduct);
@@ -81,6 +84,9 @@ export const StreamerMerchScreen: React.FC = () => {
   const [printifyShopId, setPrintifyShopId] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [availableShops, setAvailableShops] = useState<Array<{ id: number; title: string }>>([]);
+  const [showShopSelector, setShowShopSelector] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<"printify" | "printful">("printify");
 
   // Product modals
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -131,43 +137,91 @@ export const StreamerMerchScreen: React.FC = () => {
 
   const handleConnectPrintify = async () => {
     if (!printifyApiKey) {
-      Alert.alert("Error", "Please enter your Printful API token");
+      Alert.alert("Error", "Please enter your API token");
       return;
     }
 
     setIsConnecting(true);
 
     try {
-      const result = await validateAndConnectPrintful(streamerId, printifyApiKey, printifyShopId || undefined);
+      if (selectedProvider === "printify") {
+        // Validate Printify token and get shops
+        const result = await validateAndConnectPrintify(streamerId, printifyApiKey);
 
-      if (result.success) {
-        Alert.alert("Success", "Printful connected successfully! You can now sync your products.");
-        setShowConnectPrintify(false);
-        setPrintifyApiKey("");
-        setPrintifyShopId("");
+        if (result.success && result.shops && result.shops.length > 0) {
+          setAvailableShops(result.shops);
+          if (result.shops.length === 1) {
+            // Auto-select if only one shop
+            selectPrintifyShop(streamerId, result.shops[0].id, result.shops[0].title);
+            Alert.alert("Success", `Connected to Printify shop: ${result.shops[0].title}`);
+            setShowConnectPrintify(false);
+            setPrintifyApiKey("");
+          } else {
+            // Show shop selector
+            setShowShopSelector(true);
+          }
+        } else {
+          Alert.alert("Connection Failed", result.error || "Failed to connect to Printify. Please check your API token.");
+        }
       } else {
-        Alert.alert("Connection Failed", result.error || "Failed to connect to Printful. Please check your API token.");
+        // Legacy Printful connection
+        const result = await validateAndConnectPrintful(streamerId, printifyApiKey, printifyShopId || undefined);
+
+        if (result.success) {
+          Alert.alert("Success", "Printful connected successfully! You can now sync your products.");
+          setShowConnectPrintify(false);
+          setPrintifyApiKey("");
+          setPrintifyShopId("");
+        } else {
+          Alert.alert("Connection Failed", result.error || "Failed to connect to Printful. Please check your API token.");
+        }
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred while connecting to Printful");
+      Alert.alert("Error", "An unexpected error occurred while connecting");
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  const handleSelectShop = (shopId: number, shopName: string) => {
+    selectPrintifyShop(streamerId, shopId, shopName);
+    setShowShopSelector(false);
+    setShowConnectPrintify(false);
+    setPrintifyApiKey("");
+    setAvailableShops([]);
+    Alert.alert("Success", `Connected to Printify shop: ${shopName}`);
   };
 
   const handleSyncProducts = async () => {
     setIsSyncing(true);
 
     try {
-      const result = await syncPrintfulProducts(streamerId, streamerName);
+      const connection = printifyConnection;
+      
+      if (connection?.provider === "printify" || connection?.printifyApiToken) {
+        // Sync from Printify
+        const result = await syncPrintifyProducts(streamerId, streamerName, user?.avatar);
 
-      if (result.success) {
-        Alert.alert(
-          "Sync Complete",
-          `Successfully synced ${result.syncedCount} product${result.syncedCount === 1 ? "" : "s"} from Printful!`
-        );
+        if (result.success) {
+          Alert.alert(
+            "Sync Complete",
+            `Successfully synced ${result.syncedCount} product${result.syncedCount === 1 ? "" : "s"} from Printify!`
+          );
+        } else {
+          Alert.alert("Sync Failed", result.error || "Failed to sync products from Printify");
+        }
       } else {
-        Alert.alert("Sync Failed", result.error || "Failed to sync products from Printful");
+        // Legacy Printful sync
+        const result = await syncPrintfulProducts(streamerId, streamerName);
+
+        if (result.success) {
+          Alert.alert(
+            "Sync Complete",
+            `Successfully synced ${result.syncedCount} product${result.syncedCount === 1 ? "" : "s"} from Printful!`
+          );
+        } else {
+          Alert.alert("Sync Failed", result.error || "Failed to sync products from Printful");
+        }
       }
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred while syncing products");
@@ -424,15 +478,15 @@ export const StreamerMerchScreen: React.FC = () => {
             {!printifyConnection?.isConnected ? (
               <View className="bg-[#151520] p-6 rounded-xl border border-gray-800 mb-6 items-center">
                 <Ionicons name="cloud-upload-outline" size={48} color="#6B7280" />
-                <Text className="text-white font-bold mt-4">Connect Your Printful Account</Text>
+                <Text className="text-white font-bold mt-4">Connect Print-on-Demand Provider</Text>
                 <Text className="text-gray-400 text-center mt-2 mb-4">
-                  Link your Printful account to automatically sync products and fulfill orders
+                  Connect Printify or Printful to automatically sync products and fulfill orders
                 </Text>
                 <Pressable
                   onPress={() => setShowConnectPrintify(true)}
                   className="bg-purple-600 px-6 py-3 rounded-xl"
                 >
-                  <Text className="text-white font-bold">Connect Printful</Text>
+                  <Text className="text-white font-bold">Connect Provider</Text>
                 </Pressable>
               </View>
             ) : (
@@ -441,7 +495,9 @@ export const StreamerMerchScreen: React.FC = () => {
                   <View className="flex-row items-center flex-1">
                     <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                     <View className="ml-3 flex-1">
-                      <Text className="text-white font-bold">Printful Connected</Text>
+                      <Text className="text-white font-bold">
+                        {printifyConnection?.provider === "printify" ? "Printify" : "Printful"} Connected
+                      </Text>
                       <Text className="text-gray-400 text-sm">
                         {printifyConnection.lastSyncAt
                           ? `Last synced: ${new Date(printifyConnection.lastSyncAt).toLocaleDateString()}`
@@ -685,7 +741,7 @@ export const StreamerMerchScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Connect Printful Modal */}
+      {/* Connect Print Provider Modal */}
       <Modal visible={showConnectPrintify} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -693,53 +749,135 @@ export const StreamerMerchScreen: React.FC = () => {
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View className="flex-1 bg-black/50 justify-end">
-              <View className="bg-[#151520] rounded-t-3xl p-6">
-                <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-white text-xl font-bold">Connect Printful</Text>
-                  <Pressable onPress={() => setShowConnectPrintify(false)}>
+              <View className="bg-[#151520] rounded-t-3xl p-6 max-h-[90%]">
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-white text-xl font-bold">Connect Print Provider</Text>
+                  <Pressable onPress={() => { setShowConnectPrintify(false); setAvailableShops([]); }}>
                     <Ionicons name="close" size={28} color="white" />
                   </Pressable>
                 </View>
 
-                <View className="bg-blue-900/20 p-4 rounded-xl border border-blue-500/20 mb-6">
-                  <Text className="text-blue-400 font-bold mb-2">How to get your API Token:</Text>
-                  <Text className="text-blue-300/70 text-sm">
-                    1. Log in to printful.com{"\n"}
-                    2. Go to Settings → Stores → Add Store{"\n"}
-                    3. Create a &quot;Manual order / API&quot; store{"\n"}
-                    4. Go to Settings → API to generate your OAuth token{"\n"}
-                    5. Paste your token below
-                  </Text>
-                </View>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {/* Provider Selection */}
+                  <Text className="text-gray-400 text-sm mb-2">Choose your print provider:</Text>
+                  <View className="flex-row mb-4">
+                    <Pressable
+                      onPress={() => setSelectedProvider("printify")}
+                      className={`flex-1 p-4 rounded-xl mr-2 border-2 ${
+                        selectedProvider === "printify" 
+                          ? "bg-green-900/30 border-green-500" 
+                          : "bg-[#0A0A0F] border-gray-700"
+                      }`}
+                    >
+                      <Text className={`font-bold text-center ${selectedProvider === "printify" ? "text-green-400" : "text-white"}`}>
+                        Printify
+                      </Text>
+                      <Text className="text-gray-400 text-xs text-center mt-1">Lower cost</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setSelectedProvider("printful")}
+                      className={`flex-1 p-4 rounded-xl ml-2 border-2 ${
+                        selectedProvider === "printful" 
+                          ? "bg-red-900/30 border-red-500" 
+                          : "bg-[#0A0A0F] border-gray-700"
+                      }`}
+                    >
+                      <Text className={`font-bold text-center ${selectedProvider === "printful" ? "text-red-400" : "text-white"}`}>
+                        Printful
+                      </Text>
+                      <Text className="text-gray-400 text-xs text-center mt-1">Premium quality</Text>
+                    </Pressable>
+                  </View>
 
-                <TextInput
-                  placeholder="Printful API Token"
-                  placeholderTextColor="#6B7280"
-                  value={printifyApiKey}
-                  onChangeText={setPrintifyApiKey}
-                  secureTextEntry
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
-                />
-
-                <TextInput
-                  placeholder="Store ID (optional)"
-                  placeholderTextColor="#6B7280"
-                  value={printifyShopId}
-                  onChangeText={setPrintifyShopId}
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-6"
-                />
-
-                <Pressable
-                  onPress={handleConnectPrintify}
-                  disabled={isConnecting}
-                  className="bg-purple-600 py-4 rounded-xl"
-                >
-                  {isConnecting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  {/* Instructions based on selected provider */}
+                  {selectedProvider === "printify" ? (
+                    <View className="bg-green-900/20 p-4 rounded-xl border border-green-500/20 mb-4">
+                      <Text className="text-green-400 font-bold mb-2">📋 How to get your Printify API Token:</Text>
+                      <Text className="text-green-300/70 text-sm">
+                        1. Go to printify.com and log in{"\n"}
+                        2. Click your profile → Connections{"\n"}
+                        3. Scroll to "Personal Access Tokens"{"\n"}
+                        4. Click "Generate new token"{"\n"}
+                        5. Name it (e.g., "DDNS App"){"\n"}
+                        6. Copy the token and paste below
+                      </Text>
+                    </View>
                   ) : (
-                    <Text className="text-white text-center font-bold">Connect Account</Text>
+                    <View className="bg-red-900/20 p-4 rounded-xl border border-red-500/20 mb-4">
+                      <Text className="text-red-400 font-bold mb-2">📋 How to get your Printful API Token:</Text>
+                      <Text className="text-red-300/70 text-sm">
+                        1. Go to printful.com and log in{"\n"}
+                        2. Go to Settings → Stores{"\n"}
+                        3. Create a "Manual order / API" store{"\n"}
+                        4. Go to Settings → API{"\n"}
+                        5. Generate an OAuth token{"\n"}
+                        6. Copy the token and paste below
+                      </Text>
+                    </View>
                   )}
-                </Pressable>
+
+                  <TextInput
+                    placeholder={`${selectedProvider === "printify" ? "Printify" : "Printful"} API Token`}
+                    placeholderTextColor="#6B7280"
+                    value={printifyApiKey}
+                    onChangeText={setPrintifyApiKey}
+                    secureTextEntry
+                    className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                  />
+
+                  {selectedProvider === "printful" && (
+                    <TextInput
+                      placeholder="Store ID (optional)"
+                      placeholderTextColor="#6B7280"
+                      value={printifyShopId}
+                      onChangeText={setPrintifyShopId}
+                      className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                    />
+                  )}
+
+                  {/* Shop selector for Printify */}
+                  {availableShops.length > 0 && (
+                    <View className="mb-4">
+                      <Text className="text-white font-bold mb-2">Select your shop:</Text>
+                      {availableShops.map((shop) => (
+                        <Pressable
+                          key={shop.id}
+                          onPress={() => handleSelectShop(shop.id, shop.title)}
+                          className="bg-[#0A0A0F] p-4 rounded-xl mb-2 flex-row items-center justify-between border border-gray-700"
+                        >
+                          <View className="flex-row items-center">
+                            <Ionicons name="storefront" size={20} color="#A855F7" />
+                            <Text className="text-white font-semibold ml-3">{shop.title}</Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+
+                  <Pressable
+                    onPress={handleConnectPrintify}
+                    disabled={isConnecting || !printifyApiKey}
+                    className={`py-4 rounded-xl mb-4 ${
+                      isConnecting || !printifyApiKey ? "bg-gray-700" : "bg-purple-600"
+                    }`}
+                  >
+                    {isConnecting ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text className="text-white text-center font-bold">
+                        {availableShops.length > 0 ? "Select a Shop Above" : "Connect Account"}
+                      </Text>
+                    )}
+                  </Pressable>
+
+                  {/* Help link */}
+                  <View className="items-center pb-4">
+                    <Text className="text-gray-500 text-xs text-center">
+                      Need help? Visit {selectedProvider === "printify" ? "printify.com" : "printful.com"} for detailed setup guides
+                    </Text>
+                  </View>
+                </ScrollView>
               </View>
             </View>
           </TouchableWithoutFeedback>

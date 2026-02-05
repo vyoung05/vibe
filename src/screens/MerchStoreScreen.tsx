@@ -13,20 +13,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
-import { useNavigation, CompositeNavigationProp } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootStackParamList } from "../navigation/RootNavigator";
-import type { MainTabsParamList } from "../navigation/MainTabs";
 import { PageContainer } from "../components/PageContainer";
 import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
 import type { MerchProduct, MerchCategory, Promotion } from "../types/printify";
 
-type NavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<MainTabsParamList, 'Merch'>,
-  NativeStackNavigationProp<RootStackParamList>
->;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -112,22 +107,7 @@ export const MerchStoreScreen: React.FC = () => {
 
   const renderProductCard = ({ item }: { item: MerchProduct }) => (
     <Pressable
-      onPress={() => {
-        // Use direct navigation - the screen is in RootStackParamList
-        try {
-          const tabNav = navigation?.getParent();
-          const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-          if (rootNav) {
-            rootNav.navigate("MerchProductDetail", { productId: item.id });
-          } else {
-            // Fallback: try navigating directly
-            (navigation as any).navigate("MerchProductDetail", { productId: item.id });
-          }
-        } catch {
-          // Fallback navigation
-          (navigation as any).navigate("MerchProductDetail", { productId: item.id });
-        }
-      }}
+      onPress={() => navigation.navigate("MerchProductDetail", { productId: item.id })}
       className="bg-[#1C1C26] rounded-2xl border border-white/5 overflow-hidden mb-5 shadow-lg shadow-black/40"
       style={{ width: Platform.OS === 'web' ? 280 : (SCREEN_WIDTH - 48) / 2 - 8 }}
     >
@@ -327,19 +307,7 @@ export const MerchStoreScreen: React.FC = () => {
                 {featuredProducts.map((product) => (
                   <Pressable
                     key={product.id}
-                    onPress={() => {
-                      try {
-                        const tabNav = navigation?.getParent();
-                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                        if (rootNav) {
-                          rootNav.navigate("MerchProductDetail", { productId: product.id });
-                        } else {
-                          (navigation as any).navigate("MerchProductDetail", { productId: product.id });
-                        }
-                      } catch {
-                        (navigation as any).navigate("MerchProductDetail", { productId: product.id });
-                      }
-                    }}
+                    onPress={() => navigation.navigate("MerchProductDetail", { productId: product.id })}
                     className="bg-[#151520] rounded-xl border border-gray-800 overflow-hidden mr-4"
                     style={{ width: 180 }}
                   >

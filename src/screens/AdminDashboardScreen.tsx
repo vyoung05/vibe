@@ -18,11 +18,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { useNavigation, CommonActions, CompositeNavigationProp } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootStackParamList } from "../navigation/RootNavigator";
-import type { MainTabsParamList } from "../navigation/MainTabs";
 import { useAuthStore } from "../state/authStore";
 import { useAppStore } from "../state/appStore";
 import { supabase } from "../lib/supabase";
@@ -30,10 +28,7 @@ import type { Streamer, User, Announcement, VerificationRequest, Report, Artist,
 import { hasPermission, isSuperAdmin } from "../utils/permissions";
 import { cleanupAllFakeData } from "../utils/cleanupDatabase";
 
-type NavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<MainTabsParamList, 'Admin'>,
-  NativeStackNavigationProp<RootStackParamList>
->;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const AdminDashboardScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -43,6 +38,11 @@ export const AdminDashboardScreen: React.FC = () => {
   const [dbStreamers, setDbStreamers] = useState<Streamer[]>([]);
   const [isLoadingStreamers, setIsLoadingStreamers] = useState(true);
   const [streamersError, setStreamersError] = useState<string | null>(null);
+
+  // Database state for users
+  const [dbUsers, setDbUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
 
   // Keep using appStore for artists and other features (will migrate later)
   const artists = useAppStore((s) => s.artists);
@@ -84,6 +84,7 @@ export const AdminDashboardScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"streamers" | "users" | "verify" | "reports" | "artists" | "announcements">("streamers");
   const [showCreateStreamer, setShowCreateStreamer] = useState(false);
   const [showEditStreamer, setShowEditStreamer] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
   const [showEditUser, setShowEditUser] = useState(false);
   const [showSetStreamerPassword, setShowSetStreamerPassword] = useState(false);
   const [showCreateAnnouncement, setShowCreateAnnouncement] = useState(false);
@@ -115,6 +116,20 @@ export const AdminDashboardScreen: React.FC = () => {
     youtubeUrl: "",
     tiktokUrl: "",
     instagramUrl: "",
+  });
+
+  // User form state
+  const [userForm, setUserForm] = useState({
+    email: "",
+    username: "",
+    password: "",
+    avatar: "",
+    bio: "",
+    tier: "free" as "free" | "superfan",
+    role: "user" as "user" | "admin" | "moderator" | "support",
+    referralCode: "",
+    isVerified: false,
+    isInfluencer: false,
   });
 
   // Artist form state
@@ -169,9 +184,6 @@ export const AdminDashboardScreen: React.FC = () => {
     soundCloudUrl: "",
     instagramUrl: "",
   });
-
-  // User password form
-  const [newPassword, setNewPassword] = useState("");
 
   // Streamer login setup form
   const [streamerEmail, setStreamerEmail] = useState("");
@@ -319,6 +331,331 @@ export const AdminDashboardScreen: React.FC = () => {
   useEffect(() => {
     fetchStreamers();
   }, []);
+
+  // Fetch users from Supabase
+  const fetchUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      setUsersError(null);
+
+      console.log('[AdminDashboard] Fetching users from Supabase...');
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[AdminDashboard] Error fetching users:', error);
+        setUsersError(error.message);
+        return;
+      }
+
+      // Transform database users to app User type
+      const transformedUsers: User[] = (data || []).map((dbUser) => ({
+        id: dbUser.id,
+        email: dbUser.email,
+        username: dbUser.username,
+        avatar: dbUser.avatar,
+        bio: dbUser.bio,
+        tier: dbUser.tier || 'free',
+        role: dbUser.role || 'user',
+        permissions: dbUser.permissions ? (typeof dbUser.permissions === 'string' ? JSON.parse(dbUser.permissions) : dbUser.permissions) : undefined,
+        accountStatus: dbUser.account_status || 'active',
+        referralCode: dbUser.referral_code || '',
+        followedStreamers: dbUser.followed_streamers || [],
+        followedArtists: dbUser.followed_artists || [],
+        followingUsers: dbUser.following_users || [],
+        followers: dbUser.followers || [],
+        hasCompletedOnboarding: dbUser.has_completed_onboarding,
+        isVerified: dbUser.is_verified,
+        verificationStatus: dbUser.verification_status || 'none',
+        isInfluencer: dbUser.is_influencer,
+        createdAt: dbUser.created_at,
+      }));
+
+      console.log('[AdminDashboard] Loaded', transformedUsers.length, 'users');
+      setDbUsers(transformedUsers);
+    } catch (err) {
+      console.error('[AdminDashboard] Exception fetching users:', err);
+      setUsersError(String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Load users on mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Create user in Supabase Auth + users table
+  const handleCreateUser = async () => {
+    if (!userForm.email || !userForm.username || !userForm.password) {
+      Alert.alert('Error', 'Please fill in email, username, and password');
+      return;
+    }
+
+    try {
+      setIsLoadingUsers(true);
+      console.log('[AdminDashboard] Creating user:', userForm.email);
+
+      // First, create the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userForm.email,
+        password: userForm.password,
+        options: {
+          data: {
+            username: userForm.username,
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('[AdminDashboard] Auth error creating user:', authError);
+        Alert.alert('Error', authError.message);
+        return;
+      }
+
+      if (!authData.user) {
+        Alert.alert('Error', 'Failed to create user account');
+        return;
+      }
+
+      const referralCode = userForm.referralCode || "USER" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const avatar = userForm.avatar || `https://i.pravatar.cc/150?u=${authData.user.id}`;
+
+      // Create user profile in users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: userForm.email,
+          username: userForm.username,
+          avatar: avatar,
+          bio: userForm.bio || null,
+          tier: userForm.tier,
+          role: userForm.role,
+          referral_code: referralCode,
+          is_verified: userForm.isVerified,
+          is_influencer: userForm.isInfluencer,
+          has_completed_onboarding: false,
+          account_status: 'active',
+          followed_streamers: [],
+          followed_artists: [],
+          following_users: [],
+          followers: [],
+        });
+
+      if (profileError) {
+        console.error('[AdminDashboard] Error creating user profile:', profileError);
+        Alert.alert('Error', profileError.message);
+        return;
+      }
+
+      Alert.alert('Success', `User ${userForm.username} created successfully!`);
+      setShowCreateUser(false);
+      setUserForm({
+        email: "",
+        username: "",
+        password: "",
+        avatar: "",
+        bio: "",
+        tier: "free",
+        role: "user",
+        referralCode: "",
+        isVerified: false,
+        isInfluencer: false,
+      });
+
+      // Refresh users list
+      fetchUsers();
+    } catch (err) {
+      console.error('[AdminDashboard] Exception creating user:', err);
+      Alert.alert('Error', String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Edit user in Supabase
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setIsLoadingUsers(true);
+      console.log('[AdminDashboard] Updating user:', selectedUser.id);
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          username: userForm.username,
+          avatar: userForm.avatar || selectedUser.avatar,
+          bio: userForm.bio,
+          tier: userForm.tier,
+          role: userForm.role,
+          is_verified: userForm.isVerified,
+          is_influencer: userForm.isInfluencer,
+        })
+        .eq('id', selectedUser.id);
+
+      if (updateError) {
+        console.error('[AdminDashboard] Error updating user:', updateError);
+        Alert.alert('Error', updateError.message);
+        return;
+      }
+
+      Alert.alert('Success', `User ${userForm.username} updated successfully!`);
+      setShowEditUser(false);
+      setSelectedUser(null);
+      setUserForm({
+        email: "",
+        username: "",
+        password: "",
+        avatar: "",
+        bio: "",
+        tier: "free",
+        role: "user",
+        referralCode: "",
+        isVerified: false,
+        isInfluencer: false,
+      });
+
+      // Refresh users list
+      fetchUsers();
+    } catch (err) {
+      console.error('[AdminDashboard] Exception updating user:', err);
+      Alert.alert('Error', String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Delete user from Supabase
+  const handleDeleteUserFromDb = async (userId: string, username: string) => {
+    // Prevent deleting self
+    if (userId === user?.id) {
+      Alert.alert('Error', 'Cannot delete your own account');
+      return;
+    }
+
+    Alert.alert(
+      'Confirm Delete',
+      `Are you sure you want to delete user "${username}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoadingUsers(true);
+              console.log('[AdminDashboard] Deleting user:', userId);
+
+              const { error: deleteError } = await supabase
+                .from('users')
+                .delete()
+                .eq('id', userId);
+
+              if (deleteError) {
+                console.error('[AdminDashboard] Error deleting user:', deleteError);
+                Alert.alert('Error', deleteError.message);
+                return;
+              }
+
+              Alert.alert('Success', `User ${username} deleted successfully`);
+              fetchUsers();
+            } catch (err) {
+              console.error('[AdminDashboard] Exception deleting user:', err);
+              Alert.alert('Error', String(err));
+            } finally {
+              setIsLoadingUsers(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Suspend/Unsuspend user in Supabase
+  const handleToggleSuspendUser = async (targetUser: User) => {
+    const newStatus = targetUser.accountStatus === 'suspended' ? 'active' : 'suspended';
+    const action = newStatus === 'suspended' ? 'suspend' : 'unsuspend';
+
+    try {
+      setIsLoadingUsers(true);
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          account_status: newStatus,
+          suspended_at: newStatus === 'suspended' ? new Date().toISOString() : null,
+          suspended_by: newStatus === 'suspended' ? user?.id : null,
+        })
+        .eq('id', targetUser.id);
+
+      if (updateError) {
+        console.error('[AdminDashboard] Error updating user status:', updateError);
+        Alert.alert('Error', updateError.message);
+        return;
+      }
+
+      Alert.alert('Success', `User ${targetUser.username} has been ${action}ed`);
+      fetchUsers();
+    } catch (err) {
+      console.error('[AdminDashboard] Exception updating user status:', err);
+      Alert.alert('Error', String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Verify user directly in Supabase
+  const handleVerifyUserInDb = async (targetUser: User) => {
+    try {
+      setIsLoadingUsers(true);
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          is_verified: true,
+          verification_status: 'verified',
+        })
+        .eq('id', targetUser.id);
+
+      if (updateError) {
+        console.error('[AdminDashboard] Error verifying user:', updateError);
+        Alert.alert('Error', updateError.message);
+        return;
+      }
+
+      Alert.alert('Success', `${targetUser.username} has been verified!`);
+      fetchUsers();
+    } catch (err) {
+      console.error('[AdminDashboard] Exception verifying user:', err);
+      Alert.alert('Error', String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Open edit user modal
+  const openEditUserModal = (targetUser: User) => {
+    setSelectedUser(targetUser);
+    setUserForm({
+      email: targetUser.email,
+      username: targetUser.username,
+      password: "",
+      avatar: targetUser.avatar || "",
+      bio: targetUser.bio || "",
+      tier: targetUser.tier || "free",
+      role: targetUser.role || "user",
+      referralCode: targetUser.referralCode || "",
+      isVerified: targetUser.isVerified || false,
+      isInfluencer: targetUser.isInfluencer || false,
+    });
+    setShowEditUser(true);
+  };
 
   // Reset admin track form
   const resetAdminTrackForm = () => {
@@ -760,19 +1097,6 @@ export const AdminDashboardScreen: React.FC = () => {
     }
   };
 
-  const handleChangePassword = () => {
-    if (!selectedUser || !newPassword) return;
-
-    updateUserAccount(selectedUser.id, { password: newPassword });
-    setShowEditUser(false);
-    setSelectedUser(null);
-    setNewPassword("");
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    deleteUserAccount(userId);
-  };
-
   const openSetStreamerPassword = (streamer: Streamer) => {
     setSelectedStreamer(streamer);
     setStreamerEmail(streamer.email || "");
@@ -829,12 +1153,6 @@ export const AdminDashboardScreen: React.FC = () => {
       instagramUrl: streamer.streamPlatforms?.instagram || "",
     });
     setShowEditStreamer(true);
-  };
-
-  const openEditUser = (userToEdit: User) => {
-    setSelectedUser(userToEdit);
-    setNewPassword("");
-    setShowEditUser(true);
   };
 
   // Artist handlers
@@ -1164,14 +1482,6 @@ export const AdminDashboardScreen: React.FC = () => {
     deleteAnnouncement(id);
   };
 
-  const users = getAllUsers();
-
-  // Combine regular users and streamer accounts for display
-  const allAccounts = [
-    ...users.map(u => ({ type: 'user' as const, user: u, streamer: null })),
-    ...streamerAccounts.map(sa => ({ type: 'streamer' as const, user: null, streamer: sa.streamer }))
-  ];
-
   // Get pending verification requests
   const pendingRequests = verificationRequests.filter((r) => r.status === "pending");
 
@@ -1319,13 +1629,7 @@ return (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {isSuperAdmin(user) && (
             <Pressable
-              onPress={() => {
-                const tabNav = navigation.getParent();
-                const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                if (rootNav) {
-                  rootNav.navigate("AdminManagement");
-                }
-              }}
+              onPress={() => navigation.navigate("AdminManagement")}
               className="bg-red-600/20 border border-red-500/30 rounded-lg p-3 mr-2"
               style={{ width: 100 }}
             >
@@ -1344,13 +1648,7 @@ return (
             </Pressable>
           )}
           <Pressable
-            onPress={() => {
-              const tabNav = navigation.getParent();
-              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (rootNav) {
-                rootNav.navigate("AdminMerchStore");
-              }
-            }}
+            onPress={() => navigation.navigate("AdminMerchStore")}
             className="bg-purple-600/20 border border-purple-500/30 rounded-lg p-3 mr-2"
             style={{ width: 100 }}
           >
@@ -1358,13 +1656,7 @@ return (
             <Text className="text-white font-bold text-xs mt-1.5">Merch</Text>
           </Pressable>
           <Pressable
-            onPress={() => {
-              const tabNav = navigation.getParent();
-              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (rootNav) {
-                rootNav.navigate("AdminMerchants");
-              }
-            }}
+            onPress={() => navigation.navigate("AdminMerchants")}
             className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-3 mr-2"
             style={{ width: 100 }}
           >
@@ -1372,13 +1664,7 @@ return (
             <Text className="text-white font-bold text-xs mt-1.5">Merchants</Text>
           </Pressable>
           <Pressable
-            onPress={() => {
-              const tabNav = navigation.getParent();
-              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (rootNav) {
-                rootNav.navigate("AdminItems");
-              }
-            }}
+            onPress={() => navigation.navigate("AdminItems")}
             className="bg-green-600/20 border border-green-500/30 rounded-lg p-3 mr-2"
             style={{ width: 100 }}
           >
@@ -1386,13 +1672,7 @@ return (
             <Text className="text-white font-bold text-xs mt-1.5">Items</Text>
           </Pressable>
           <Pressable
-            onPress={() => {
-              const tabNav = navigation.getParent();
-              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (rootNav) {
-                rootNav.navigate("AdminOrders");
-              }
-            }}
+            onPress={() => navigation.navigate("AdminOrders")}
             className="bg-orange-600/20 border border-orange-500/30 rounded-lg p-3 mr-2"
             style={{ width: 100 }}
           >
@@ -1400,13 +1680,7 @@ return (
             <Text className="text-white font-bold text-xs mt-1.5">Orders</Text>
           </Pressable>
           <Pressable
-            onPress={() => {
-              const tabNav = navigation.getParent();
-              const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (rootNav) {
-                rootNav.navigate("AdminAnalytics");
-              }
-            }}
+            onPress={() => navigation.navigate("AdminAnalytics")}
             className="bg-cyan-600/20 border border-cyan-500/30 rounded-lg p-3 mr-2"
             style={{ width: 100 }}
           >
@@ -1581,13 +1855,7 @@ return (
                 {/* Action Buttons - Row 1 with better design */}
                 <View className="flex-row mb-2 gap-2">
                   <Pressable
-                    onPress={() => {
-                      const tabNav = navigation.getParent();
-                      const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                      if (rootNav) {
-                        rootNav.navigate("StreamerProfile", { streamerId: streamer.id });
-                      }
-                    }}
+                    onPress={() => navigation.navigate("StreamerProfile", { streamerId: streamer.id })}
                     className="flex-1 bg-purple-600/20 py-3 rounded-xl flex-row items-center justify-center border border-purple-500/30"
                     style={{
                       shadowColor: "#8B5CF6",
@@ -1602,13 +1870,7 @@ return (
                   </Pressable>
 
                   <Pressable
-                    onPress={() => {
-                      const tabNav = navigation.getParent();
-                      const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                      if (rootNav) {
-                        rootNav.navigate("EditStreamerProfile", { streamerId: streamer.id });
-                      }
-                    }}
+                    onPress={() => navigation.navigate("EditStreamerProfile", { streamerId: streamer.id })}
                     className="flex-1 bg-blue-600/20 py-3 rounded-xl flex-row items-center justify-center border border-blue-500/30"
                     style={{
                       shadowColor: "#3B82F6",
@@ -1682,104 +1944,217 @@ return (
 
       {activeTab === "users" && (
         <View className="px-4 pb-4">
-          {/* Users List */}
-          {allAccounts.map((account) => {
-            const isUser = account.type === 'user';
-            const displayName = isUser ? account.user!.username : account.streamer!.name;
-            const displayEmail = isUser ? account.user!.email : account.streamer!.email || 'No email';
-            const accountId = isUser ? account.user!.id : account.streamer!.id;
-            const accountType = isUser ? account.user!.tier || 'user' : 'streamer';
-            const isAdmin = isUser && account.user!.role === 'admin';
-            const hasLoginAccess = isUser ? true : !!getStreamerAccount(account.streamer!.id);
-
-            return (
-              <View
-                key={accountId}
-                className="bg-[#151520] p-3 rounded-xl mb-3 border border-gray-800"
-              >
-                <View className="flex-row items-center justify-between mb-3">
-                  <View className="flex-1">
-                    <Text className="text-white font-bold">{displayName}</Text>
-                    <Text className="text-gray-400 text-sm">{displayEmail}</Text>
-                  </View>
-                  <View className={`px-2 py-1 rounded ${accountType === "superfan" ? "bg-pink-600" :
-                    accountType === "streamer" ? "bg-purple-600" :
-                      "bg-gray-700"
-                    }`}>
-                    <Text className="text-white text-xs font-bold uppercase">{accountType}</Text>
-                  </View>
-                </View>
-
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-1">
-                    {isUser ? (
-                      <>
-                        <Text className="text-gray-500 text-xs">
-                          Referral: {account.user!.referralCode}
-                        </Text>
-                        <Text className="text-gray-500 text-xs">
-                          Following: {account.user!.followedStreamers.length} streamers
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Text className="text-gray-500 text-xs">
-                          @{account.streamer!.gamertag}
-                        </Text>
-                        <Text className="text-gray-500 text-xs">
-                          Followers: {account.streamer!.followerCount}
-                        </Text>
-                        <View className="flex-row items-center mt-1">
-                          <Ionicons
-                            name={hasLoginAccess ? "checkmark-circle" : "alert-circle"}
-                            size={14}
-                            color={hasLoginAccess ? "#10B981" : "#EF4444"}
-                          />
-                          <Text className={`text-xs ml-1 ${hasLoginAccess ? "text-green-500" : "text-red-500"}`}>
-                            {hasLoginAccess ? "Login enabled" : "No login access"}
-                          </Text>
-                        </View>
-                      </>
-                    )}
-                  </View>
-                  <View className="flex-row space-x-2">
-                    {isUser && (
-                      <Pressable
-                        onPress={() => openEditUser(account.user!)}
-                        className="bg-blue-600 px-4 py-2 rounded-lg mr-2"
-                      >
-                        <Text className="text-white text-xs font-bold">Change Password</Text>
-                      </Pressable>
-                    )}
-                    {!isUser && (
-                      <Pressable
-                        onPress={() => openSetStreamerPassword(account.streamer!)}
-                        className="bg-green-600 px-4 py-2 rounded-lg mr-2"
-                      >
-                        <Text className="text-white text-xs font-bold">
-                          {hasLoginAccess ? "Change Password" : "Set Password"}
-                        </Text>
-                      </Pressable>
-                    )}
-                    {!isAdmin && (
-                      <Pressable
-                        onPress={() => isUser ? handleDeleteUser(accountId) : handleDeleteStreamer(accountId, account.streamer!.name)}
-                        className="bg-red-600 px-4 py-2 rounded-lg"
-                      >
-                        <Text className="text-white text-xs font-bold">Delete</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-
-          {allAccounts.length === 0 && (
-            <View className="items-center py-12">
-              <Ionicons name="person-outline" size={64} color="#4B5563" />
-              <Text className="text-gray-400 mt-4">No users yet</Text>
+          {/* Create User Button */}
+          <Pressable
+            onPress={() => setShowCreateUser(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 py-3.5 rounded-2xl mb-4 flex-row items-center justify-center border border-blue-400/30"
+            style={{
+              shadowColor: "#3B82F6",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 6,
+            }}
+          >
+            <View className="bg-white/20 rounded-full p-1 mr-2">
+              <Ionicons name="person-add" size={22} color="white" />
             </View>
+            <Text className="text-white font-extrabold text-base tracking-wide">Create User</Text>
+          </Pressable>
+
+          {/* Users List */}
+          {isLoadingUsers ? (
+            <View className="items-center py-12">
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text className="text-gray-400 mt-4">Loading users...</Text>
+            </View>
+          ) : usersError ? (
+            <View className="items-center py-12">
+              <Ionicons name="alert-circle" size={64} color="#EF4444" />
+              <Text className="text-red-400 mt-4">{usersError}</Text>
+              <Pressable onPress={fetchUsers} className="mt-4 bg-blue-600 px-6 py-3 rounded-xl">
+                <Text className="text-white font-semibold">Retry</Text>
+              </Pressable>
+            </View>
+          ) : dbUsers.length === 0 ? (
+            <View className="items-center py-12">
+              <Ionicons name="people-outline" size={64} color="#4B5563" />
+              <Text className="text-gray-400 mt-4">No users yet</Text>
+              <Text className="text-gray-500 text-sm mt-2">Create your first user!</Text>
+            </View>
+          ) : (
+            dbUsers.map((dbUser) => {
+              const isCurrentUser = dbUser.id === user?.id;
+              const isSuspended = dbUser.accountStatus === 'suspended';
+
+              return (
+                <View
+                  key={dbUser.id}
+                  className={`bg-gradient-to-br from-[#1a1a2e] to-[#16162a] p-4 rounded-2xl mb-4 border ${
+                    isSuspended ? 'border-red-500/30' : 'border-blue-500/20'
+                  }`}
+                  style={{
+                    shadowColor: isSuspended ? "#EF4444" : "#3B82F6",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }}
+                >
+                  {/* Header with Avatar and Info */}
+                  <View className="flex-row items-start justify-between mb-3">
+                    <View className="flex-row items-center flex-1">
+                      {/* Avatar */}
+                      <View className="rounded-full p-0.5" style={{ backgroundColor: dbUser.isVerified ? '#8B5CF6' : '#3B82F6' }}>
+                        {dbUser.avatar ? (
+                          <Image
+                            source={{ uri: dbUser.avatar }}
+                            style={{
+                              width: 56,
+                              height: 56,
+                              borderRadius: 28,
+                              borderWidth: 3,
+                              borderColor: '#0A0A0F',
+                            }}
+                            contentFit="cover"
+                          />
+                        ) : (
+                          <View className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 items-center justify-center">
+                            <Text className="text-white font-bold text-xl">{dbUser.username[0]?.toUpperCase()}</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Name and Email */}
+                      <View className="ml-4 flex-1">
+                        <View className="flex-row items-center flex-wrap">
+                          <Text className="text-white font-bold text-lg">{dbUser.username}</Text>
+                          {dbUser.isVerified && (
+                            <View className="ml-2 bg-purple-500 rounded-full w-5 h-5 items-center justify-center">
+                              <Ionicons name="checkmark" size={14} color="white" />
+                            </View>
+                          )}
+                          {dbUser.isInfluencer && (
+                            <View className="ml-1 bg-pink-500 rounded-full w-5 h-5 items-center justify-center">
+                              <Ionicons name="star" size={12} color="white" />
+                            </View>
+                          )}
+                        </View>
+                        <Text className="text-gray-400 text-sm mt-0.5">{dbUser.email}</Text>
+                        <View className="flex-row items-center mt-1">
+                          <Text className="text-gray-500 text-xs">Code: {dbUser.referralCode}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Badges */}
+                    <View className="items-end">
+                      <View className={`px-2 py-1 rounded-full mb-1 ${
+                        dbUser.role === 'admin' ? 'bg-red-500/20' :
+                        dbUser.role === 'moderator' ? 'bg-blue-500/20' :
+                        dbUser.role === 'support' ? 'bg-green-500/20' :
+                        'bg-gray-700/50'
+                      }`}>
+                        <Text className={`text-[10px] font-bold uppercase ${
+                          dbUser.role === 'admin' ? 'text-red-400' :
+                          dbUser.role === 'moderator' ? 'text-blue-400' :
+                          dbUser.role === 'support' ? 'text-green-400' :
+                          'text-gray-400'
+                        }`}>{dbUser.role}</Text>
+                      </View>
+                      <View className={`px-2 py-1 rounded-full ${
+                        dbUser.tier === 'superfan' ? 'bg-pink-500/20' : 'bg-gray-700/50'
+                      }`}>
+                        <Text className={`text-[10px] font-bold uppercase ${
+                          dbUser.tier === 'superfan' ? 'text-pink-400' : 'text-gray-400'
+                        }`}>{dbUser.tier}</Text>
+                      </View>
+                      {isSuspended && (
+                        <View className="px-2 py-1 rounded-full bg-red-500/20 mt-1">
+                          <Text className="text-red-400 text-[10px] font-bold">SUSPENDED</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Bio if exists */}
+                  {dbUser.bio && (
+                    <Text className="text-gray-300 text-sm mb-3" numberOfLines={2}>
+                      {dbUser.bio}
+                    </Text>
+                  )}
+
+                  {/* Stats Row */}
+                  <View className="flex-row mb-3">
+                    <View className="flex-1 items-center">
+                      <Text className="text-white font-bold">{dbUser.followedStreamers?.length || 0}</Text>
+                      <Text className="text-gray-500 text-xs">Following</Text>
+                    </View>
+                    <View className="flex-1 items-center">
+                      <Text className="text-white font-bold">{dbUser.followers?.length || 0}</Text>
+                      <Text className="text-gray-500 text-xs">Followers</Text>
+                    </View>
+                    <View className="flex-1 items-center">
+                      <Text className="text-white font-bold">{new Date(dbUser.createdAt).toLocaleDateString()}</Text>
+                      <Text className="text-gray-500 text-xs">Joined</Text>
+                    </View>
+                  </View>
+
+                  {/* Divider */}
+                  <View className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent mb-3" />
+
+                  {/* Action Buttons */}
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => openEditUserModal(dbUser)}
+                      className="flex-1 bg-blue-600/20 py-2.5 rounded-xl flex-row items-center justify-center border border-blue-500/30"
+                    >
+                      <Ionicons name="create-outline" size={16} color="#60A5FA" />
+                      <Text className="text-blue-300 text-xs font-bold ml-1">Edit</Text>
+                    </Pressable>
+
+                    {!dbUser.isVerified && (
+                      <Pressable
+                        onPress={() => handleVerifyUserInDb(dbUser)}
+                        className="flex-1 bg-purple-600/20 py-2.5 rounded-xl flex-row items-center justify-center border border-purple-500/30"
+                      >
+                        <Ionicons name="checkmark-circle-outline" size={16} color="#A78BFA" />
+                        <Text className="text-purple-300 text-xs font-bold ml-1">Verify</Text>
+                      </Pressable>
+                    )}
+
+                    {!isCurrentUser && (
+                      <Pressable
+                        onPress={() => handleToggleSuspendUser(dbUser)}
+                        className={`flex-1 py-2.5 rounded-xl flex-row items-center justify-center border ${
+                          isSuspended 
+                            ? 'bg-green-600/20 border-green-500/30' 
+                            : 'bg-amber-600/20 border-amber-500/30'
+                        }`}
+                      >
+                        <Ionicons 
+                          name={isSuspended ? "play-circle-outline" : "pause-circle-outline"} 
+                          size={16} 
+                          color={isSuspended ? "#4ADE80" : "#FBBF24"} 
+                        />
+                        <Text className={`text-xs font-bold ml-1 ${isSuspended ? 'text-green-300' : 'text-amber-300'}`}>
+                          {isSuspended ? 'Unsuspend' : 'Suspend'}
+                        </Text>
+                      </Pressable>
+                    )}
+
+                    {!isCurrentUser && (
+                      <Pressable
+                        onPress={() => handleDeleteUserFromDb(dbUser.id, dbUser.username)}
+                        className="bg-red-600/20 py-2.5 px-3 rounded-xl items-center justify-center border border-red-500/30"
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#F87171" />
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
+              );
+            })
           )}
         </View>
       )}
@@ -2647,52 +3022,6 @@ return (
                   <Text className="text-white text-center font-bold">Save Changes</Text>
                 </Pressable>
               </ScrollView>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </Modal>
-
-    {/* Edit User Password Modal */}
-    <Modal visible={showEditUser} animationType="slide" transparent>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-        keyboardVerticalOffset={10}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 bg-black/50 justify-end">
-            <View className="bg-[#151520] rounded-t-3xl p-6">
-              <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-white text-xl font-bold">Change Password</Text>
-                <Pressable onPress={() => setShowEditUser(false)}>
-                  <Ionicons name="close" size={28} color="white" />
-                </Pressable>
-              </View>
-
-              {selectedUser && (
-                <View className="mb-6">
-                  <Text className="text-gray-400 text-sm">User</Text>
-                  <Text className="text-white font-bold">{selectedUser.username}</Text>
-                  <Text className="text-gray-400">{selectedUser.email}</Text>
-                </View>
-              )}
-
-              <TextInput
-                placeholder="New Password"
-                placeholderTextColor="#6B7280"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-                className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
-              />
-
-              <Pressable
-                onPress={handleChangePassword}
-                className="bg-purple-600 py-4 rounded-xl"
-              >
-                <Text className="text-white text-center font-bold">Update Password</Text>
-              </Pressable>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -4116,6 +4445,335 @@ return (
                   className="bg-purple-600 py-4 rounded-xl mt-2 mb-4"
                 >
                   <Text className="text-white text-center font-bold">Save Profile</Text>
+                </Pressable>
+              </ScrollView>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </Modal>
+
+    {/* Create User Modal */}
+    <Modal visible={showCreateUser} animationType="slide" transparent>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+        keyboardVerticalOffset={10}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View className="flex-1 bg-black/50 justify-end">
+            <View className="bg-[#151520] rounded-t-3xl p-6 max-h-[90%]">
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-white text-xl font-bold">Create New User</Text>
+                <Pressable onPress={() => setShowCreateUser(false)}>
+                  <Ionicons name="close" size={28} color="white" />
+                </Pressable>
+              </View>
+
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+                {/* Required Fields */}
+                <Text className="text-gray-400 text-xs mb-2 font-semibold">REQUIRED FIELDS</Text>
+                
+                <TextInput
+                  placeholder="Email *"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.email}
+                  onChangeText={(text) => setUserForm({ ...userForm, email: text })}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                />
+
+                <TextInput
+                  placeholder="Username *"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.username}
+                  onChangeText={(text) => setUserForm({ ...userForm, username: text })}
+                  autoCapitalize="none"
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                />
+
+                <TextInput
+                  placeholder="Password *"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.password}
+                  onChangeText={(text) => setUserForm({ ...userForm, password: text })}
+                  secureTextEntry
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                />
+
+                {/* Optional Fields */}
+                <Text className="text-gray-400 text-xs mb-2 font-semibold mt-2">PROFILE INFO</Text>
+
+                <TextInput
+                  placeholder="Avatar URL (optional)"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.avatar}
+                  onChangeText={(text) => setUserForm({ ...userForm, avatar: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                />
+
+                <TextInput
+                  placeholder="Bio (optional)"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.bio}
+                  onChangeText={(text) => setUserForm({ ...userForm, bio: text })}
+                  multiline
+                  numberOfLines={3}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                  style={{ textAlignVertical: "top", minHeight: 80 }}
+                />
+
+                <TextInput
+                  placeholder="Referral Code (auto-generated if empty)"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.referralCode}
+                  onChangeText={(text) => setUserForm({ ...userForm, referralCode: text })}
+                  autoCapitalize="characters"
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                />
+
+                {/* Account Settings */}
+                <Text className="text-gray-400 text-xs mb-2 font-semibold">ACCOUNT SETTINGS</Text>
+
+                {/* Tier Selection */}
+                <View className="mb-3">
+                  <Text className="text-gray-500 text-xs mb-2">Subscription Tier</Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => setUserForm({ ...userForm, tier: "free" })}
+                      className={`flex-1 py-3 rounded-xl ${userForm.tier === "free" ? "bg-gray-600" : "bg-[#0A0A0F] border border-gray-700"}`}
+                    >
+                      <Text className={`text-center font-semibold ${userForm.tier === "free" ? "text-white" : "text-gray-400"}`}>Free</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setUserForm({ ...userForm, tier: "superfan" })}
+                      className={`flex-1 py-3 rounded-xl ${userForm.tier === "superfan" ? "bg-pink-600" : "bg-[#0A0A0F] border border-gray-700"}`}
+                    >
+                      <Text className={`text-center font-semibold ${userForm.tier === "superfan" ? "text-white" : "text-gray-400"}`}>Superfan</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Role Selection */}
+                <View className="mb-4">
+                  <Text className="text-gray-500 text-xs mb-2">Account Role</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {(["user", "support", "moderator", "admin"] as const).map((role) => (
+                      <Pressable
+                        key={role}
+                        onPress={() => setUserForm({ ...userForm, role })}
+                        className={`px-4 py-2 rounded-xl ${
+                          userForm.role === role 
+                            ? role === "admin" ? "bg-red-600" :
+                              role === "moderator" ? "bg-blue-600" :
+                              role === "support" ? "bg-green-600" : "bg-gray-600"
+                            : "bg-[#0A0A0F] border border-gray-700"
+                        }`}
+                      >
+                        <Text className={`font-semibold capitalize ${userForm.role === role ? "text-white" : "text-gray-400"}`}>{role}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Badges */}
+                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-3">
+                  <View className="flex-row items-center">
+                    <Ionicons name="checkmark-circle" size={20} color="#8B5CF6" />
+                    <Text className="text-white ml-2">Verified Badge</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setUserForm({ ...userForm, isVerified: !userForm.isVerified })}
+                    className={`w-12 h-6 rounded-full ${userForm.isVerified ? "bg-purple-600" : "bg-gray-600"} justify-center`}
+                  >
+                    <View className={`w-5 h-5 rounded-full bg-white ${userForm.isVerified ? "ml-6" : "ml-0.5"}`} />
+                  </Pressable>
+                </View>
+
+                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-4">
+                  <View className="flex-row items-center">
+                    <Ionicons name="star" size={20} color="#EC4899" />
+                    <Text className="text-white ml-2">Influencer Badge</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setUserForm({ ...userForm, isInfluencer: !userForm.isInfluencer })}
+                    className={`w-12 h-6 rounded-full ${userForm.isInfluencer ? "bg-pink-600" : "bg-gray-600"} justify-center`}
+                  >
+                    <View className={`w-5 h-5 rounded-full bg-white ${userForm.isInfluencer ? "ml-6" : "ml-0.5"}`} />
+                  </Pressable>
+                </View>
+
+                {/* Create Button */}
+                <Pressable
+                  onPress={handleCreateUser}
+                  disabled={isLoadingUsers}
+                  className={`py-4 rounded-xl mt-2 mb-4 ${isLoadingUsers ? "bg-blue-600/50" : "bg-blue-600"}`}
+                >
+                  {isLoadingUsers ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text className="text-white text-center font-bold">Create User</Text>
+                  )}
+                </Pressable>
+              </ScrollView>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </Modal>
+
+    {/* Edit User Modal */}
+    <Modal visible={showEditUser} animationType="slide" transparent>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+        keyboardVerticalOffset={10}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View className="flex-1 bg-black/50 justify-end">
+            <View className="bg-[#151520] rounded-t-3xl p-6 max-h-[90%]">
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-white text-xl font-bold">Edit User</Text>
+                <Pressable onPress={() => { setShowEditUser(false); setSelectedUser(null); }}>
+                  <Ionicons name="close" size={28} color="white" />
+                </Pressable>
+              </View>
+
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+                {/* User Info Header */}
+                {selectedUser && (
+                  <View className="flex-row items-center mb-4 bg-[#0A0A0F] p-3 rounded-xl">
+                    {selectedUser.avatar ? (
+                      <Image
+                        source={{ uri: selectedUser.avatar }}
+                        style={{ width: 48, height: 48, borderRadius: 24 }}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View className="w-12 h-12 rounded-full bg-blue-600 items-center justify-center">
+                        <Text className="text-white font-bold text-lg">{selectedUser.username[0]?.toUpperCase()}</Text>
+                      </View>
+                    )}
+                    <View className="ml-3 flex-1">
+                      <Text className="text-white font-bold">{selectedUser.email}</Text>
+                      <Text className="text-gray-400 text-sm">ID: {selectedUser.id.slice(0, 8)}...</Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Editable Fields */}
+                <Text className="text-gray-400 text-xs mb-2 font-semibold">PROFILE INFO</Text>
+
+                <TextInput
+                  placeholder="Username"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.username}
+                  onChangeText={(text) => setUserForm({ ...userForm, username: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                />
+
+                <TextInput
+                  placeholder="Avatar URL"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.avatar}
+                  onChangeText={(text) => setUserForm({ ...userForm, avatar: text })}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                />
+
+                <TextInput
+                  placeholder="Bio"
+                  placeholderTextColor="#6B7280"
+                  value={userForm.bio}
+                  onChangeText={(text) => setUserForm({ ...userForm, bio: text })}
+                  multiline
+                  numberOfLines={3}
+                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                  style={{ textAlignVertical: "top", minHeight: 80 }}
+                />
+
+                {/* Account Settings */}
+                <Text className="text-gray-400 text-xs mb-2 font-semibold">ACCOUNT SETTINGS</Text>
+
+                {/* Tier Selection */}
+                <View className="mb-3">
+                  <Text className="text-gray-500 text-xs mb-2">Subscription Tier</Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => setUserForm({ ...userForm, tier: "free" })}
+                      className={`flex-1 py-3 rounded-xl ${userForm.tier === "free" ? "bg-gray-600" : "bg-[#0A0A0F] border border-gray-700"}`}
+                    >
+                      <Text className={`text-center font-semibold ${userForm.tier === "free" ? "text-white" : "text-gray-400"}`}>Free</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setUserForm({ ...userForm, tier: "superfan" })}
+                      className={`flex-1 py-3 rounded-xl ${userForm.tier === "superfan" ? "bg-pink-600" : "bg-[#0A0A0F] border border-gray-700"}`}
+                    >
+                      <Text className={`text-center font-semibold ${userForm.tier === "superfan" ? "text-white" : "text-gray-400"}`}>Superfan</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Role Selection */}
+                <View className="mb-4">
+                  <Text className="text-gray-500 text-xs mb-2">Account Role</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {(["user", "support", "moderator", "admin"] as const).map((role) => (
+                      <Pressable
+                        key={role}
+                        onPress={() => setUserForm({ ...userForm, role })}
+                        className={`px-4 py-2 rounded-xl ${
+                          userForm.role === role 
+                            ? role === "admin" ? "bg-red-600" :
+                              role === "moderator" ? "bg-blue-600" :
+                              role === "support" ? "bg-green-600" : "bg-gray-600"
+                            : "bg-[#0A0A0F] border border-gray-700"
+                        }`}
+                      >
+                        <Text className={`font-semibold capitalize ${userForm.role === role ? "text-white" : "text-gray-400"}`}>{role}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Badges */}
+                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-3">
+                  <View className="flex-row items-center">
+                    <Ionicons name="checkmark-circle" size={20} color="#8B5CF6" />
+                    <Text className="text-white ml-2">Verified Badge</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setUserForm({ ...userForm, isVerified: !userForm.isVerified })}
+                    className={`w-12 h-6 rounded-full ${userForm.isVerified ? "bg-purple-600" : "bg-gray-600"} justify-center`}
+                  >
+                    <View className={`w-5 h-5 rounded-full bg-white ${userForm.isVerified ? "ml-6" : "ml-0.5"}`} />
+                  </Pressable>
+                </View>
+
+                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-4">
+                  <View className="flex-row items-center">
+                    <Ionicons name="star" size={20} color="#EC4899" />
+                    <Text className="text-white ml-2">Influencer Badge</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setUserForm({ ...userForm, isInfluencer: !userForm.isInfluencer })}
+                    className={`w-12 h-6 rounded-full ${userForm.isInfluencer ? "bg-pink-600" : "bg-gray-600"} justify-center`}
+                  >
+                    <View className={`w-5 h-5 rounded-full bg-white ${userForm.isInfluencer ? "ml-6" : "ml-0.5"}`} />
+                  </Pressable>
+                </View>
+
+                {/* Save Button */}
+                <Pressable
+                  onPress={handleUpdateUser}
+                  disabled={isLoadingUsers}
+                  className={`py-4 rounded-xl mt-2 mb-4 ${isLoadingUsers ? "bg-blue-600/50" : "bg-blue-600"}`}
+                >
+                  {isLoadingUsers ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text className="text-white text-center font-bold">Save Changes</Text>
+                  )}
                 </Pressable>
               </ScrollView>
             </View>
