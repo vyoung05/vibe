@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, Platform } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Badge } from "./Badge";
@@ -11,9 +11,35 @@ interface StreamerCardProps {
 }
 
 export const StreamerCard: React.FC<StreamerCardProps> = ({ streamer, onPress }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Web hover handlers
+  const hoverProps = Platform.OS === "web" ? {
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+  } : {};
+
   return (
-    <Pressable onPress={onPress} className="mb-4">
-      <View className="bg-white/5 rounded-[32px] overflow-hidden border border-white/10">
+    <Pressable 
+      onPress={onPress} 
+      className="mb-4"
+      style={Platform.OS === "web" ? {
+        transform: isHovered ? [{ scale: 1.02 }, { translateY: -4 }] : [{ scale: 1 }, { translateY: 0 }],
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      } : {}}
+      {...hoverProps}
+    >
+      <View 
+        className="bg-white/5 rounded-[32px] overflow-hidden"
+        style={{
+          borderWidth: 1,
+          borderColor: isHovered && Platform.OS === "web" ? "rgba(168, 85, 247, 0.4)" : "rgba(255, 255, 255, 0.1)",
+          shadowColor: isHovered && Platform.OS === "web" ? "#A855F7" : "#000",
+          shadowOffset: { width: 0, height: isHovered ? 12 : 4 },
+          shadowOpacity: isHovered && Platform.OS === "web" ? 0.3 : 0.1,
+          shadowRadius: isHovered && Platform.OS === "web" ? 24 : 8,
+        }}
+      >
         {/* Header Image */}
         <View className="relative h-40">
           <Image

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HomeScreen } from "../screens/HomeScreen";
@@ -92,16 +92,22 @@ export const MainTabs: React.FC = () => {
               <Pressable
                 key={tab.name}
                 onPress={() => setActiveTab(tab.name)}
-                style={{
+                style={({ hovered }: any) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderRadius: 12,
-                  backgroundColor: isFocused ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                  backgroundColor: isFocused 
+                    ? 'rgba(139, 92, 246, 0.15)' 
+                    : (Platform.OS === 'web' && hovered ? 'rgba(139, 92, 246, 0.08)' : 'transparent'),
                   borderWidth: 1,
-                  borderColor: isFocused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
-                }}
+                  borderColor: isFocused 
+                    ? 'rgba(139, 92, 246, 0.3)' 
+                    : (Platform.OS === 'web' && hovered ? 'rgba(139, 92, 246, 0.15)' : 'transparent'),
+                  transform: Platform.OS === 'web' && hovered && !isFocused ? [{ scale: 1.02 }] : [{ scale: 1 }],
+                  transition: 'all 0.2s ease',
+                })}
               >
                 <Ionicons 
                   name={tab.icon as any} 

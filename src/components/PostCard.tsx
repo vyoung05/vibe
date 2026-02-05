@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, Pressable, Modal, Share } from "react-native";
+import { View, Text, Image, Pressable, Modal, Share, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { Audio } from "expo-av";
@@ -407,7 +407,14 @@ export function PostCard({
 
       {/* Action Buttons */}
       <View className="flex-row items-center px-4 py-3">
-        <Pressable onPress={() => onLike(post.id)} className="mr-4">
+        <Pressable 
+          onPress={() => onLike(post.id)} 
+          className="mr-4"
+          style={({ hovered }: any) => Platform.OS === "web" && hovered ? {
+            transform: [{ scale: 1.2 }],
+            transition: "transform 0.15s ease",
+          } : {}}
+        >
           <Ionicons
             name={post.isLiked ? "heart" : "heart-outline"}
             size={28}
@@ -417,13 +424,30 @@ export function PostCard({
         <Pressable
           onPress={() => onCommentPress(post.id)}
           className="mr-4"
+          style={({ hovered }: any) => Platform.OS === "web" && hovered ? {
+            transform: [{ scale: 1.2 }],
+            transition: "transform 0.15s ease",
+          } : {}}
         >
           <Ionicons name="chatbubble-outline" size={28} color="#FFFFFF" />
         </Pressable>
-        <Pressable onPress={handleShare} className="mr-auto">
+        <Pressable 
+          onPress={handleShare} 
+          className="mr-auto"
+          style={({ hovered }: any) => Platform.OS === "web" && hovered ? {
+            transform: [{ scale: 1.2 }],
+            transition: "transform 0.15s ease",
+          } : {}}
+        >
           <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
         </Pressable>
-        <Pressable onPress={() => onSave(post.id)}>
+        <Pressable 
+          onPress={() => onSave(post.id)}
+          style={({ hovered }: any) => Platform.OS === "web" && hovered ? {
+            transform: [{ scale: 1.2 }],
+            transition: "transform 0.15s ease",
+          } : {}}
+        >
           <Ionicons
             name={post.isSaved ? "bookmark" : "bookmark-outline"}
             size={26}
