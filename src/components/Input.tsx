@@ -10,6 +10,7 @@ interface InputProps {
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  autoComplete?: string;
   className?: string;
   error?: string;
 }
@@ -22,6 +23,7 @@ export const Input: React.FC<InputProps> = ({
   secureTextEntry,
   keyboardType = "default",
   autoCapitalize = "none",
+  autoComplete = "off",
   className,
   error,
 }) => {
@@ -38,6 +40,7 @@ export const Input: React.FC<InputProps> = ({
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
+        autoComplete={autoComplete as any}
         className={cn(
           "bg-[#0F0F17] border border-white/10 rounded-2xl px-5 py-4 text-white text-base transition-all duration-200",
           "focus:border-purple-500/50 focus:bg-[#151520]",
