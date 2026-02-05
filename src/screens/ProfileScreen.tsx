@@ -75,10 +75,10 @@ export const ProfileScreen: React.FC = () => {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : [];
 
-  // Sync local state with user updates
+  // Sync local state with user data ONLY when modal opens (not on every user change)
+  // This prevents losing edits when user data updates mid-edit
   useEffect(() => {
-    if (user) {
-      setAvatarUrl(user.avatar || "");
+    if (showEditProfile && user) {
       setEditUsername(user.username);
       setEditBio(user.bio || "");
       setEditSocialLinks({
@@ -89,7 +89,14 @@ export const ProfileScreen: React.FC = () => {
         tiktok: user.socialLinks?.tiktok || "",
       });
     }
-  }, [user]);
+  }, [showEditProfile]);
+
+  // Sync avatar URL when avatar modal opens
+  useEffect(() => {
+    if (showAvatarModal && user) {
+      setAvatarUrl(user.avatar || "");
+    }
+  }, [showAvatarModal]);
 
   if (!user) {
     return (
