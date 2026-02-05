@@ -22,6 +22,7 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
 import type { MerchProduct, Promotion, MerchCategory, PromotionDuration } from "../types/printify";
+import { PrintifySetupWizard } from "../components/PrintifySetupWizard";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -80,6 +81,7 @@ export const StreamerMerchScreen: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<"products" | "promotions" | "earnings">("products");
   const [showConnectPrintify, setShowConnectPrintify] = useState(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [printifyApiKey, setPrintifyApiKey] = useState("");
   const [printifyShopId, setPrintifyShopId] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
@@ -386,10 +388,10 @@ export const StreamerMerchScreen: React.FC = () => {
             </View>
           ) : (
             <Pressable
-              onPress={() => setShowConnectPrintify(true)}
+              onPress={() => setShowSetupWizard(true)}
               className="bg-purple-600 px-3 py-1 rounded-full"
             >
-              <Text className="text-white text-xs font-bold">CONNECT</Text>
+              <Text className="text-white text-xs font-bold">SETUP</Text>
             </Pressable>
           )}
         </View>
@@ -485,10 +487,11 @@ export const StreamerMerchScreen: React.FC = () => {
                   Connect Printify or Printful to automatically sync products and fulfill orders
                 </Text>
                 <Pressable
-                  onPress={() => setShowConnectPrintify(true)}
-                  className="bg-purple-600 px-6 py-3 rounded-xl"
+                  onPress={() => setShowSetupWizard(true)}
+                  className="bg-purple-600 px-6 py-3 rounded-xl flex-row items-center"
                 >
-                  <Text className="text-white font-bold">Connect Provider</Text>
+                  <Ionicons name="rocket" size={20} color="white" />
+                  <Text className="text-white font-bold ml-2">Start Setup Wizard</Text>
                 </Pressable>
               </View>
             ) : (
@@ -1221,6 +1224,21 @@ export const StreamerMerchScreen: React.FC = () => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Setup Wizard */}
+      <PrintifySetupWizard
+        visible={showSetupWizard}
+        onClose={() => setShowSetupWizard(false)}
+        streamerId={streamerId}
+        streamerName={streamerName}
+        streamerAvatar={user?.avatar}
+        isAdmin={false}
+        validateAndConnectPrintify={validateAndConnectPrintify}
+        selectPrintifyShop={selectPrintifyShop}
+        syncPrintifyProducts={syncPrintifyProducts}
+        validateAndConnectPrintful={validateAndConnectPrintful}
+        syncPrintfulProducts={syncPrintfulProducts}
+      />
     </SafeAreaView>
   );
 };

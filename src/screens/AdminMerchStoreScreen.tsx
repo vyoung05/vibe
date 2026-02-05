@@ -21,6 +21,7 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
 import type { Promotion, PromotionDuration, MerchProduct, MerchCategory } from "../types/printify";
+import { PrintifySetupWizard } from "../components/PrintifySetupWizard";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -78,7 +79,16 @@ export const AdminMerchStoreScreen: React.FC = () => {
   const addProduct = useMerchStore((s) => s.addProduct);
   const deleteProduct = useMerchStore((s) => s.deleteProduct);
 
+  // Printify/Printful actions for admin setup
+  const getPrintifyConnection = useMerchStore((s) => s.getPrintifyConnection);
+  const validateAndConnectPrintify = useMerchStore((s) => s.validateAndConnectPrintify);
+  const selectPrintifyShop = useMerchStore((s) => s.selectPrintifyShop);
+  const syncPrintifyProducts = useMerchStore((s) => s.syncPrintifyProducts);
+  const validateAndConnectPrintful = useMerchStore((s) => s.validateAndConnectPrintful);
+  const syncPrintfulProducts = useMerchStore((s) => s.syncPrintfulProducts);
+
   const [activeTab, setActiveTab] = useState<"overview" | "products" | "promotions" | "fees" | "providers">("overview");
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [showCreatePromotion, setShowCreatePromotion] = useState(false);
   const [showQuickPromotion, setShowQuickPromotion] = useState(false);
   const [showEditFees, setShowEditFees] = useState(false);
@@ -894,6 +904,47 @@ export const AdminMerchStoreScreen: React.FC = () => {
         {/* Providers Tab */}
         {activeTab === "providers" && (
           <View className="p-6">
+            {/* DDNS Store Setup Card */}
+            {!getPrintifyConnection(user?.id || "admin")?.isConnected ? (
+              <View className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 p-6 rounded-xl border border-purple-500/30 mb-6">
+                <View className="flex-row items-center mb-3">
+                  <View className="w-14 h-14 rounded-full bg-purple-600/30 items-center justify-center mr-4">
+                    <Ionicons name="storefront" size={28} color="#A855F7" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white text-lg font-bold">DDNS Official Store</Text>
+                    <Text className="text-gray-300 text-sm">Set up your platform merch store</Text>
+                  </View>
+                </View>
+                <Text className="text-gray-400 text-sm mb-4">
+                  Connect Printify to sell DDNS branded merchandise. This is separate from streamer stores.
+                </Text>
+                <Pressable
+                  onPress={() => setShowSetupWizard(true)}
+                  className="bg-purple-600 py-4 rounded-xl flex-row items-center justify-center"
+                >
+                  <Ionicons name="rocket" size={20} color="white" />
+                  <Text className="text-white font-bold ml-2">Start Setup Wizard</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View className="bg-green-900/20 p-4 rounded-xl border border-green-500/30 mb-6">
+                <View className="flex-row items-center">
+                  <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                  <View className="ml-3 flex-1">
+                    <Text className="text-green-400 font-bold">DDNS Store Connected</Text>
+                    <Text className="text-gray-400 text-sm">Printify integration active</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setShowSetupWizard(true)}
+                    className="bg-gray-700 px-3 py-2 rounded-lg"
+                  >
+                    <Text className="text-white text-sm font-bold">Reconnect</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
             {/* Info Banner */}
             <View className="bg-purple-900/20 p-4 rounded-xl border border-purple-500/30 mb-6">
               <View className="flex-row items-center mb-2">
@@ -1610,6 +1661,21 @@ export const AdminMerchStoreScreen: React.FC = () => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Setup Wizard for Admin */}
+      <PrintifySetupWizard
+        visible={showSetupWizard}
+        onClose={() => setShowSetupWizard(false)}
+        streamerId={user?.id || "admin"}
+        streamerName="DDNS Official"
+        streamerAvatar={user?.avatar}
+        isAdmin={true}
+        validateAndConnectPrintify={validateAndConnectPrintify}
+        selectPrintifyShop={selectPrintifyShop}
+        syncPrintifyProducts={syncPrintifyProducts}
+        validateAndConnectPrintful={validateAndConnectPrintful}
+        syncPrintfulProducts={syncPrintfulProducts}
+      />
     </SafeAreaView>
   );
 };
