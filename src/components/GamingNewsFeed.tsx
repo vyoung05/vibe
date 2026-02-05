@@ -6,10 +6,15 @@ import {
   Pressable,
   Linking,
   Modal,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useNewsStore, NewsItem, GamingEvent } from "../state/newsStore";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+// Responsive card width: 75% of screen width, min 240, max 320
+const NEWS_CARD_WIDTH = Math.min(Math.max(SCREEN_WIDTH * 0.75, 240), 320);
 
 interface GamingNewsFeedProps {
   maxNews?: number;
@@ -151,7 +156,7 @@ export const GamingNewsFeed: React.FC<GamingNewsFeedProps> = ({
                 key={news.id}
                 onPress={() => handleOpenNews(news)}
                 className="bg-[#151520] rounded-xl mr-3 overflow-hidden"
-                style={{ width: 280 }}
+                style={{ width: NEWS_CARD_WIDTH }}
               >
                 {news.imageUrl && (
                   <Image

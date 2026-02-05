@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "../state/authStore";
 import { Input } from "../components/Input";
@@ -13,9 +13,24 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const [signInSuccess, setSignInSuccess] = useState(false);
+  const [welcomeUsername, setWelcomeUsername] = useState("");
+  const [fadeAnim] = useState(() => new Animated.Value(0));
   const signIn = useAuthStore((s) => s.signIn);
+  const user = useAuthStore((s) => s.user);
   const authError = useAuthStore((s) => s.error);
   const isLoading = useAuthStore((s) => s.isLoading);
+
+  // Animate success screen
+  useEffect(() => {
+    if (signInSuccess) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [signInSuccess]);
 
   const handleSignIn = async () => {
     // Reset errors
@@ -32,11 +47,47 @@ export const SignInScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     const success = await signIn(email, password);
-    if (!success) {
+    if (success) {
+      // Show success screen briefly
+      setWelcomeUsername(useAuthStore.getState().user?.username || "");
+      setSignInSuccess(true);
+    } else {
       setErrors((prev) => ({ ...prev, password: authError || "Invalid email or password" }));
     }
-    // Navigation will happen automatically via auth state change
   };
+
+  // Success screen
+  if (signInSuccess) {
+    return (
+      <View className="flex-1 bg-[#050508]">
+        <LinearGradient
+          colors={["#0A0A15", "#050508"]}
+          className="flex-1 items-center justify-center px-6"
+        >
+          <Animated.View 
+            className="items-center"
+            style={{ opacity: fadeAnim }}
+          >
+            {/* Welcome icon */}
+            <View className="w-24 h-24 rounded-full bg-purple-500/20 items-center justify-center mb-8">
+              <View className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 items-center justify-center">
+                <Text className="text-white text-3xl">👋</Text>
+              </View>
+            </View>
+            
+            <Text className="text-white text-3xl font-bold mb-3 text-center">Welcome back!</Text>
+            {welcomeUsername && (
+              <Text className="text-purple-400 text-lg text-center">@{welcomeUsername}</Text>
+            )}
+            
+            <View className="mt-8 px-6 py-3 rounded-full bg-white/5 border border-white/10">
+              <Text className="text-gray-400 text-sm">Loading your content...</Text>
+            </View>
+          </Animated.View>
+        </LinearGradient>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#050508]">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -65,19 +66,22 @@ export const AdminNewsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const user = useAuthStore((s) => s.user);
 
-  // News store
+  // News store - Use Supabase sync functions
   const news = useNewsStore((s) => s.news);
   const events = useNewsStore((s) => s.events);
-  const addNews = useNewsStore((s) => s.addNews);
-  const updateNews = useNewsStore((s) => s.updateNews);
-  const deleteNews = useNewsStore((s) => s.deleteNews);
-  const toggleNewsActive = useNewsStore((s) => s.toggleNewsActive);
-  const toggleNewsPinned = useNewsStore((s) => s.toggleNewsPinned);
-  const addEvent = useNewsStore((s) => s.addEvent);
-  const updateEvent = useNewsStore((s) => s.updateEvent);
-  const deleteEvent = useNewsStore((s) => s.deleteEvent);
-  const toggleEventActive = useNewsStore((s) => s.toggleEventActive);
-  const toggleEventFeatured = useNewsStore((s) => s.toggleEventFeatured);
+  const isLoading = useNewsStore((s) => s.isLoading);
+  const syncFromSupabase = useNewsStore((s) => s.syncFromSupabase);
+  const syncNewsToSupabase = useNewsStore((s) => s.syncNewsToSupabase);
+  const syncEventToSupabase = useNewsStore((s) => s.syncEventToSupabase);
+  const updateNewsInSupabase = useNewsStore((s) => s.updateNewsInSupabase);
+  const updateEventInSupabase = useNewsStore((s) => s.updateEventInSupabase);
+  const deleteNewsFromSupabase = useNewsStore((s) => s.deleteNewsFromSupabase);
+  const deleteEventFromSupabase = useNewsStore((s) => s.deleteEventFromSupabase);
+  
+  // Sync from Supabase on mount
+  useEffect(() => {
+    syncFromSupabase();
+  }, []);
 
   const [activeTab, setActiveTab] = useState<"news" | "events">("news");
   const [showAddNews, setShowAddNews] = useState(false);
@@ -168,89 +172,86 @@ export const AdminNewsScreen: React.FC = () => {
     setEditingEvent(null);
   };
 
-  const handleSaveNews = () => {
+  const handleSaveNews = async () => {
     if (!newsForm.title || !newsForm.summary) {
       Alert.alert("Error", "Title and summary are required");
       return;
     }
 
+    const newsData = {
+      title: newsForm.title,
+      summary: newsForm.summary,
+      content: newsForm.content || undefined,
+      imageUrl: newsForm.imageUrl || undefined,
+      category: newsForm.category,
+      source: newsForm.source || undefined,
+      sourceUrl: newsForm.sourceUrl || undefined,
+      tags: newsForm.tags.split(",").map((t) => t.trim()).filter((t) => t),
+      isActive: newsForm.isActive,
+      isPinned: newsForm.isPinned,
+    };
+
     if (editingNews) {
-      updateNews(editingNews.id, {
-        title: newsForm.title,
-        summary: newsForm.summary,
-        content: newsForm.content || undefined,
-        imageUrl: newsForm.imageUrl || undefined,
-        category: newsForm.category,
-        source: newsForm.source || undefined,
-        sourceUrl: newsForm.sourceUrl || undefined,
-        tags: newsForm.tags.split(",").map((t) => t.trim()).filter((t) => t),
-        isActive: newsForm.isActive,
-        isPinned: newsForm.isPinned,
-      });
+      const success = await updateNewsInSupabase(editingNews.id, newsData);
+      if (!success) {
+        Alert.alert("Error", "Failed to update news article");
+        return;
+      }
     } else {
-      addNews({
-        title: newsForm.title,
-        summary: newsForm.summary,
-        content: newsForm.content || undefined,
-        imageUrl: newsForm.imageUrl || undefined,
-        category: newsForm.category,
-        source: newsForm.source || undefined,
-        sourceUrl: newsForm.sourceUrl || undefined,
+      const result = await syncNewsToSupabase({
+        ...newsData,
         publishedAt: new Date().toISOString(),
         createdBy: user?.id || "admin",
-        isActive: newsForm.isActive,
-        isPinned: newsForm.isPinned,
-        tags: newsForm.tags.split(",").map((t) => t.trim()).filter((t) => t),
       });
+      if (!result) {
+        Alert.alert("Error", "Failed to create news article");
+        return;
+      }
     }
 
     setShowAddNews(false);
     resetNewsForm();
   };
 
-  const handleSaveEvent = () => {
+  const handleSaveEvent = async () => {
     if (!eventForm.title || !eventForm.description || !eventForm.startDate) {
       Alert.alert("Error", "Title, description, and start date are required");
       return;
     }
 
+    const eventData = {
+      title: eventForm.title,
+      description: eventForm.description,
+      imageUrl: eventForm.imageUrl || undefined,
+      eventType: eventForm.eventType,
+      startDate: eventForm.startDate,
+      endDate: eventForm.endDate || undefined,
+      location: eventForm.location || undefined,
+      isOnline: eventForm.isOnline,
+      streamUrl: eventForm.streamUrl || undefined,
+      registrationUrl: eventForm.registrationUrl || undefined,
+      game: eventForm.game || undefined,
+      prizePool: eventForm.prizePool || undefined,
+      tags: eventForm.tags.split(",").map((t) => t.trim()).filter((t) => t),
+      isActive: eventForm.isActive,
+      isFeatured: eventForm.isFeatured,
+    };
+
     if (editingEvent) {
-      updateEvent(editingEvent.id, {
-        title: eventForm.title,
-        description: eventForm.description,
-        imageUrl: eventForm.imageUrl || undefined,
-        eventType: eventForm.eventType,
-        startDate: eventForm.startDate,
-        endDate: eventForm.endDate || undefined,
-        location: eventForm.location || undefined,
-        isOnline: eventForm.isOnline,
-        streamUrl: eventForm.streamUrl || undefined,
-        registrationUrl: eventForm.registrationUrl || undefined,
-        game: eventForm.game || undefined,
-        prizePool: eventForm.prizePool || undefined,
-        tags: eventForm.tags.split(",").map((t) => t.trim()).filter((t) => t),
-        isActive: eventForm.isActive,
-        isFeatured: eventForm.isFeatured,
-      });
+      const success = await updateEventInSupabase(editingEvent.id, eventData);
+      if (!success) {
+        Alert.alert("Error", "Failed to update event");
+        return;
+      }
     } else {
-      addEvent({
-        title: eventForm.title,
-        description: eventForm.description,
-        imageUrl: eventForm.imageUrl || undefined,
-        eventType: eventForm.eventType,
-        startDate: eventForm.startDate,
-        endDate: eventForm.endDate || undefined,
-        location: eventForm.location || undefined,
-        isOnline: eventForm.isOnline,
-        streamUrl: eventForm.streamUrl || undefined,
-        registrationUrl: eventForm.registrationUrl || undefined,
+      const result = await syncEventToSupabase({
+        ...eventData,
         createdBy: user?.id || "admin",
-        isActive: eventForm.isActive,
-        isFeatured: eventForm.isFeatured,
-        game: eventForm.game || undefined,
-        prizePool: eventForm.prizePool || undefined,
-        tags: eventForm.tags.split(",").map((t) => t.trim()).filter((t) => t),
       });
+      if (!result) {
+        Alert.alert("Error", "Failed to create event");
+        return;
+      }
     }
 
     setShowAddEvent(false);
@@ -299,15 +300,62 @@ export const AdminNewsScreen: React.FC = () => {
   const handleDeleteNews = (id: string) => {
     Alert.alert("Delete News", "Are you sure you want to delete this news item?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => deleteNews(id) },
+      { 
+        text: "Delete", 
+        style: "destructive", 
+        onPress: async () => {
+          const success = await deleteNewsFromSupabase(id);
+          if (!success) {
+            Alert.alert("Error", "Failed to delete news article");
+          }
+        } 
+      },
     ]);
   };
 
   const handleDeleteEvent = (id: string) => {
     Alert.alert("Delete Event", "Are you sure you want to delete this event?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => deleteEvent(id) },
+      { 
+        text: "Delete", 
+        style: "destructive", 
+        onPress: async () => {
+          const success = await deleteEventFromSupabase(id);
+          if (!success) {
+            Alert.alert("Error", "Failed to delete event");
+          }
+        } 
+      },
     ]);
+  };
+  
+  // Toggle functions using Supabase
+  const handleToggleNewsActive = async (id: string) => {
+    const item = news.find(n => n.id === id);
+    if (item) {
+      await updateNewsInSupabase(id, { isActive: !item.isActive });
+    }
+  };
+
+  const handleToggleNewsPinned = async (id: string) => {
+    const item = news.find(n => n.id === id);
+    if (item) {
+      await updateNewsInSupabase(id, { isPinned: !item.isPinned });
+    }
+  };
+
+  const handleToggleEventActive = async (id: string) => {
+    const item = events.find(e => e.id === id);
+    if (item) {
+      await updateEventInSupabase(id, { isActive: !item.isActive });
+    }
+  };
+
+  const handleToggleEventFeatured = async (id: string) => {
+    const item = events.find(e => e.id === id);
+    if (item) {
+      await updateEventInSupabase(id, { isFeatured: !item.isFeatured });
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -358,6 +406,14 @@ export const AdminNewsScreen: React.FC = () => {
           </Text>
         </Pressable>
       </View>
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <View className="absolute inset-0 bg-black/50 z-50 items-center justify-center">
+          <ActivityIndicator size="large" color="#A855F7" />
+          <Text className="text-white mt-2">Loading...</Text>
+        </View>
+      )}
 
       <ScrollView className="flex-1 p-6">
         {/* News Tab */}
@@ -439,7 +495,7 @@ export const AdminNewsScreen: React.FC = () => {
                   {/* Actions */}
                   <View className="flex-row border-t border-gray-800">
                     <Pressable
-                      onPress={() => toggleNewsActive(item.id)}
+                      onPress={() => handleToggleNewsActive(item.id)}
                       className="flex-1 py-3 flex-row items-center justify-center"
                     >
                       <Ionicons
@@ -456,7 +512,7 @@ export const AdminNewsScreen: React.FC = () => {
                       </Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => toggleNewsPinned(item.id)}
+                      onPress={() => handleToggleNewsPinned(item.id)}
                       className="flex-1 py-3 flex-row items-center justify-center border-l border-gray-800"
                     >
                       <Ionicons
@@ -583,7 +639,7 @@ export const AdminNewsScreen: React.FC = () => {
                   {/* Actions */}
                   <View className="flex-row border-t border-gray-800">
                     <Pressable
-                      onPress={() => toggleEventActive(item.id)}
+                      onPress={() => handleToggleEventActive(item.id)}
                       className="flex-1 py-3 flex-row items-center justify-center"
                     >
                       <Ionicons
@@ -600,7 +656,7 @@ export const AdminNewsScreen: React.FC = () => {
                       </Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => toggleEventFeatured(item.id)}
+                      onPress={() => handleToggleEventFeatured(item.id)}
                       className="flex-1 py-3 flex-row items-center justify-center border-l border-gray-800"
                     >
                       <Ionicons

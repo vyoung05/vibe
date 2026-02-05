@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "../state/authStore";
 import { Input } from "../components/Input";
@@ -18,9 +18,22 @@ export const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const [referralCode, setReferralCode] = useState("");
   const [selectedTier, setSelectedTier] = useState<"free" | "superfan">("free");
   const [errors, setErrors] = useState({ email: "", username: "", password: "", confirmPassword: "", referralCode: "" });
+  const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const [fadeAnim] = useState(() => new Animated.Value(0));
   const signUp = useAuthStore((s) => s.signUp);
   const authError = useAuthStore((s) => s.error);
   const isLoading = useAuthStore((s) => s.isLoading);
+
+  // Animate success screen
+  useEffect(() => {
+    if (signUpSuccess) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [signUpSuccess]);
 
   const handleSignUp = async () => {
     // Reset errors
@@ -49,11 +62,45 @@ export const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     const success = await signUp(email, password, username, selectedTier);
-    if (!success) {
+    if (success) {
+      // Show success screen - navigation happens automatically via auth state
+      setSignUpSuccess(true);
+    } else {
       setErrors((prev) => ({ ...prev, email: authError || "Sign up failed. Please try again." }));
     }
-    // Navigation will happen automatically via auth state change
   };
+
+  // Success screen
+  if (signUpSuccess) {
+    return (
+      <View className="flex-1 bg-[#050508]">
+        <LinearGradient
+          colors={["#0A0A15", "#050508"]}
+          className="flex-1 items-center justify-center px-6"
+        >
+          <Animated.View 
+            className="items-center"
+            style={{ opacity: fadeAnim }}
+          >
+            {/* Success checkmark */}
+            <View className="w-24 h-24 rounded-full bg-green-500/20 items-center justify-center mb-8">
+              <View className="w-16 h-16 rounded-full bg-green-500 items-center justify-center">
+                <Text className="text-white text-4xl">✓</Text>
+              </View>
+            </View>
+            
+            <Text className="text-white text-3xl font-bold mb-3 text-center">Welcome to DDNS! 🎉</Text>
+            <Text className="text-gray-400 text-lg text-center mb-2">Account created successfully</Text>
+            <Text className="text-purple-400 text-base text-center">@{username}</Text>
+            
+            <View className="mt-8 px-6 py-3 rounded-full bg-white/5 border border-white/10">
+              <Text className="text-gray-400 text-sm">Taking you to the app...</Text>
+            </View>
+          </Animated.View>
+        </LinearGradient>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#050508]">
