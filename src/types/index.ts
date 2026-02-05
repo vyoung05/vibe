@@ -249,6 +249,7 @@ export interface Streamer {
   headerImages: string[]; // Carousel images
   bio: string;
   isLive: boolean;
+  isVerified?: boolean; // Purple checkmark verification status
   liveStreamUrl?: string;
   liveTitle?: string;
   lastLiveDate?: string;

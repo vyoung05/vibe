@@ -1164,52 +1164,50 @@ export const AdminDashboardScreen: React.FC = () => {
     deleteAnnouncement(id);
   };
 
-};
+  const users = getAllUsers();
 
-const users = getAllUsers();
+  // Combine regular users and streamer accounts for display
+  const allAccounts = [
+    ...users.map(u => ({ type: 'user' as const, user: u, streamer: null })),
+    ...streamerAccounts.map(sa => ({ type: 'streamer' as const, user: null, streamer: sa.streamer }))
+  ];
 
-// Combine regular users and streamer accounts for display
-const allAccounts = [
-  ...users.map(u => ({ type: 'user' as const, user: u, streamer: null })),
-  ...streamerAccounts.map(sa => ({ type: 'streamer' as const, user: null, streamer: sa.streamer }))
-];
+  // Get pending verification requests
+  const pendingRequests = verificationRequests.filter((r) => r.status === "pending");
 
-// Get pending verification requests
-const pendingRequests = verificationRequests.filter((r) => r.status === "pending");
+  // Handlers for verification
+  const handleApproveVerification = (requestId: string) => {
+    if (!user) return;
+    approveVerification(requestId, user.id);
+    Alert.alert("Success", "User has been verified!");
+  };
 
-// Handlers for verification
-const handleApproveVerification = (requestId: string) => {
-  if (!user) return;
-  approveVerification(requestId, user.id);
-  Alert.alert("Success", "User has been verified!");
-};
+  const handleOpenRejectModal = (request: VerificationRequest) => {
+    setSelectedRequest(request);
+    setRejectionReason("");
+    setShowRejectModal(true);
+  };
 
-const handleOpenRejectModal = (request: VerificationRequest) => {
-  setSelectedRequest(request);
-  setRejectionReason("");
-  setShowRejectModal(true);
-};
+  const handleRejectVerification = () => {
+    if (!user || !selectedRequest || !rejectionReason.trim()) {
+      Alert.alert("Error", "Please provide a reason for rejection");
+      return;
+    }
+    rejectVerification(selectedRequest.id, user.id, rejectionReason.trim());
+    setShowRejectModal(false);
+    setSelectedRequest(null);
+    setRejectionReason("");
+    Alert.alert("Done", "Verification request rejected");
+  };
 
-const handleRejectVerification = () => {
-  if (!user || !selectedRequest || !rejectionReason.trim()) {
-    Alert.alert("Error", "Please provide a reason for rejection");
-    return;
-  }
-  rejectVerification(selectedRequest.id, user.id, rejectionReason.trim());
-  setShowRejectModal(false);
-  setSelectedRequest(null);
-  setRejectionReason("");
-  Alert.alert("Done", "Verification request rejected");
-};
-
-// Direct verify a user from users tab
-const handleDirectVerify = (targetUser: User) => {
-  if (!user) return;
-  updateUserAccount(targetUser.id, {
-    user: { ...targetUser, isVerified: true, verificationStatus: "verified" }
-  });
-  Alert.alert("Success", `${targetUser.username} has been verified!`);
-};
+  // Direct verify a user from users tab
+  const handleDirectVerify = (targetUser: User) => {
+    if (!user) return;
+    updateUserAccount(targetUser.id, {
+      user: { ...targetUser, isVerified: true, verificationStatus: "verified" }
+    });
+    Alert.alert("Success", `${targetUser.username} has been verified!`);
+  };
 
 return (
   <SafeAreaView className="flex-1 bg-[#0A0A0F]" edges={["top"]}>
@@ -1478,9 +1476,7 @@ return (
                     <View
                       className="rounded-full p-0.5"
                       style={{
-                        background: streamer.isLive
-                          ? 'linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)'
-                          : 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                        backgroundColor: streamer.isLive ? '#EC4899' : '#8B5CF6',
                       }}
                     >
                       {streamer.avatar ? (
@@ -1767,7 +1763,7 @@ return (
                     )}
                     {!isAdmin && (
                       <Pressable
-                        onPress={() => isUser ? handleDeleteUser(accountId) : handleDeleteStreamer(accountId)}
+                        onPress={() => isUser ? handleDeleteUser(accountId) : handleDeleteStreamer(accountId, account.streamer!.name)}
                         className="bg-red-600 px-4 py-2 rounded-lg"
                       >
                         <Text className="text-white text-xs font-bold">Delete</Text>

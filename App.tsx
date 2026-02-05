@@ -45,7 +45,7 @@ import { MainTabs } from "./src/navigation/MainTabs";
 import { useAuthStore } from "./src/state/authStore";
 import { useAppStore } from "./src/state/appStore";
 import { supabase } from "./src/lib/supabase";
-import { sampleStreamers, sampleVideoContent } from "./src/data/sampleData";
+import { sampleStreamers, sampleVideoContent, sampleUserAccounts } from "./src/data/sampleData";
 import type { RootStackParamList } from "./src/navigation/RootNavigator";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -53,25 +53,28 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 // Create navigation ref for programmatic navigation
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
-// Deep linking configuration for web URLs
+// Deep linking configuration for web URLs - Guest-first (MainTabs is root)
 const linking = {
   prefixes: ['https://www.daydeamersnightstreamers.com', 'http://localhost:8081', 'ddns://'],
   config: {
     screens: {
-      SignIn: '',
+      MainTabs: {
+        path: '',
+        screens: {
+          Home: '',
+          Feed: 'feed',
+          Search: 'search',
+          Music: 'music',
+          Merch: 'merch',
+          Bookings: 'bookings',
+          Admin: 'admin',
+          Profile: 'profile',
+        },
+      },
+      SignIn: 'signin',
       SignUp: 'signup',
       ForgotPassword: 'forgot-password',
       ResetPassword: 'reset-password',
-      MainTabs: {
-        path: 'app',
-        screens: {
-          Home: 'home',
-          Streamers: 'streamers',
-          Artists: 'artists',
-          Music: 'music',
-          Merch: 'merch',
-        },
-      },
     },
   },
 };
@@ -88,16 +91,14 @@ export default function App() {
   const addVideoContent = useAppStore((s) => s.addVideoContent);
   const addUserAccount = useAppStore((s) => s.addUserAccount);
   const getUserAccount = useAppStore((s) => s.getUserAccount);
+  const userAccounts = useAppStore((s) => s.userAccounts);
 
-  // Check if user needs onboarding (new users who haven't completed it OR users with no social connections)
-  const hasNoSocialConnections = user &&
-    (!user.followers || user.followers.length === 0) &&
-    (!user.followedStreamers || user.followedStreamers.length === 0) &&
-    (!user.followingUsers || user.followingUsers.length === 0);
-
-  const needsOnboarding = isAuthenticated && user && (!user.hasCompletedOnboarding || hasNoSocialConnections);
+  // Check if user needs onboarding (only based on explicit flag, not social connections)
+  // Social connections should NOT affect this - user stays on DiscoverPeople until they click Continue/Skip
+  const needsOnboarding = isAuthenticated && user && !user.hasCompletedOnboarding;
 
   // Handle automatic navigation on auth state change
+  // Guest-first: users start on MainTabs, only navigate on explicit auth actions
   useEffect(() => {
     if (!navigationRef.isReady()) return;
 
@@ -105,21 +106,17 @@ export default function App() {
     console.log("[Navigation] Auth state changed - isAuthenticated:", isAuthenticated, "currentRoute:", currentRoute);
 
     if (isAuthenticated) {
-      // User logged in - navigate to appropriate screen
-      if (needsOnboarding && currentRoute !== 'DiscoverPeople') {
+      // User just logged in - check if they need onboarding
+      if (needsOnboarding && currentRoute === 'SignIn') {
         console.log("[Navigation] Navigating to DiscoverPeople for onboarding");
         navigationRef.navigate('DiscoverPeople');
-      } else if (!needsOnboarding && currentRoute !== 'MainTabs') {
+      } else if (!needsOnboarding && (currentRoute === 'SignIn' || currentRoute === 'SignUp' || currentRoute === 'DiscoverPeople')) {
+        // Only navigate to MainTabs if coming from auth screens
         console.log("[Navigation] Navigating to MainTabs");
         navigationRef.navigate('MainTabs');
       }
-    } else {
-      // User logged out - navigate to sign in
-      if (currentRoute !== 'SignIn' && currentRoute !== 'SignUp' && currentRoute !== 'ForgotPassword' && currentRoute !== 'ResetPassword') {
-        console.log("[Navigation] Navigating to SignIn");
-        navigationRef.navigate('SignIn');
-      }
     }
+    // Don't force navigation to SignIn when logged out - guests can browse
   }, [isAuthenticated, needsOnboarding]);
 
   // Check session and set up auth state listener on mount
@@ -196,21 +193,31 @@ export default function App() {
         password: "test123",
       });
     }
-  }, [streamers.length, setStreamers, updateStreamer, addVideoContent, videoContent.length, addUserAccount, getUserAccount]);
+
+    // Initialize sample users for Discover People feature
+    if (userAccounts.length <= 1) { // Only the test account exists or empty
+      sampleUserAccounts.forEach((account) => {
+        const existingAccount = getUserAccount(account.user.email);
+        if (!existingAccount) {
+          addUserAccount(account);
+        }
+      });
+    }
+  }, [streamers.length, setStreamers, updateStreamer, addVideoContent, videoContent.length, addUserAccount, getUserAccount, userAccounts.length]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer ref={navigationRef} linking={linking}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {/* Auth flow screens - Moved outside to ensure consistent availability */}
+            {/* Main application entry point - Guest-first experience */}
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+
+            {/* Auth flow screens */}
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-
-            {/* Main application entry point */}
-            <Stack.Screen name="MainTabs" component={MainTabs} />
 
             {/* Shared and protected screens */}
             <Stack.Screen name="StreamerProfile" component={StreamerProfileScreen} />

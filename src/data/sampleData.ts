@@ -1,4 +1,9 @@
-import type { Streamer, VideoContent } from "../types";
+import type { Streamer, VideoContent, User } from "../types";
+
+interface UserAccount {
+  user: User;
+  password: string;
+}
 
 export const sampleVideoContent: VideoContent[] = [
   {
@@ -241,3 +246,109 @@ export const sampleStreamers: Streamer[] = [
     referralCode: "TESTSTREAM",
   },
 ];
+
+// Sample users for Discover People
+export const sampleUsers: User[] = [
+  {
+    id: "sample-user-1",
+    email: "alex.gaming@example.com",
+    username: "AlexGamer",
+    avatar: "https://i.pravatar.cc/300?img=11",
+    bio: "Competitive gamer | FPS enthusiast | Content creator",
+    tier: "superfan",
+    role: "user",
+    followedStreamers: ["streamer-1", "streamer-2"],
+    followers: ["sample-user-2", "sample-user-3"],
+    followingUsers: [],
+    referralCode: "ALEXG2026",
+    hasCompletedOnboarding: true,
+    isVerified: true,
+    isInfluencer: false,
+    verificationStatus: "verified",
+    accountStatus: "active",
+    createdAt: "2025-12-01T10:00:00.000Z",
+  },
+  {
+    id: "sample-user-2",
+    email: "maya.streams@example.com",
+    username: "MayaVibes",
+    avatar: "https://i.pravatar.cc/300?img=23",
+    bio: "Just here for good vibes ✨ | Art & Gaming",
+    tier: "free",
+    role: "user",
+    followedStreamers: ["streamer-3"],
+    followers: [],
+    followingUsers: ["sample-user-1"],
+    referralCode: "MAYA2026",
+    hasCompletedOnboarding: true,
+    isVerified: false,
+    isInfluencer: false,
+    verificationStatus: "none",
+    accountStatus: "active",
+    createdAt: "2025-12-15T14:30:00.000Z",
+  },
+  {
+    id: "sample-user-3",
+    email: "jordan.pro@example.com",
+    username: "JordanPro",
+    avatar: "https://i.pravatar.cc/300?img=33",
+    bio: "Esports professional | Coach | 10+ years gaming",
+    tier: "superfan",
+    role: "user",
+    followedStreamers: ["streamer-1", "streamer-2", "streamer-3"],
+    followers: ["sample-user-4", "sample-user-5"],
+    followingUsers: ["sample-user-1"],
+    referralCode: "JPRO2026",
+    hasCompletedOnboarding: true,
+    isVerified: true,
+    isInfluencer: true,
+    invitedFriends: ["sample-user-4", "sample-user-5", "sample-user-6", "sample-user-7", "sample-user-8"],
+    verificationStatus: "verified",
+    accountStatus: "active",
+    createdAt: "2025-11-20T08:00:00.000Z",
+  },
+  {
+    id: "sample-user-4",
+    email: "sam.casual@example.com",
+    username: "SamCasual",
+    avatar: "https://i.pravatar.cc/300?img=44",
+    bio: "Casual gamer | Love chill streams",
+    tier: "free",
+    role: "user",
+    followedStreamers: ["streamer-4"],
+    followers: [],
+    followingUsers: [],
+    referralCode: "SAMC2026",
+    hasCompletedOnboarding: true,
+    isVerified: false,
+    isInfluencer: false,
+    verificationStatus: "none",
+    accountStatus: "active",
+    createdAt: "2026-01-05T16:45:00.000Z",
+  },
+  {
+    id: "sample-user-5",
+    email: "taylor.art@example.com",
+    username: "TaylorCreates",
+    avatar: "https://i.pravatar.cc/300?img=55",
+    bio: "Digital artist | Fan art creator | Commission open",
+    tier: "superfan",
+    role: "user",
+    followedStreamers: ["streamer-4", "streamer-5"],
+    followers: ["sample-user-1"],
+    followingUsers: [],
+    referralCode: "TAYC2026",
+    hasCompletedOnboarding: true,
+    isVerified: true,
+    isInfluencer: false,
+    verificationStatus: "verified",
+    accountStatus: "active",
+    createdAt: "2025-12-28T12:00:00.000Z",
+  },
+];
+
+// Sample user accounts (with passwords for testing)
+export const sampleUserAccounts: UserAccount[] = sampleUsers.map((user) => ({
+  user,
+  password: "test123", // All sample users have the same test password
+}));

@@ -34,7 +34,7 @@ export const DiscoverPeopleScreen: React.FC = () => {
 
   if (!user) return null;
 
-  const suggestedUsers = getSuggestedUsers(user.id);
+  const suggestedUsers = getSuggestedUsers(user.id, user.followingUsers || []);
 
   // Filter streamers not already followed
   const suggestedStreamers = streamers.filter(

@@ -119,7 +119,7 @@ interface AppState {
   checkInfluencerStatus: (userId: string) => void;
 
   // Discovery
-  getSuggestedUsers: (currentUserId: string) => User[];
+  getSuggestedUsers: (currentUserId: string, followingUsers?: string[]) => User[];
 
   // Report management
   submitReport: (report: Report) => void;
@@ -831,16 +831,18 @@ export const useAppStore = create<AppState>()(
         }),
 
       // Discovery - get suggested users to follow
-      getSuggestedUsers: (currentUserId) => {
+      getSuggestedUsers: (currentUserId, followingUsers?: string[]) => {
         const state = get();
+        
+        // Try to find current user in userAccounts, but don't require it
         const currentUser = state.userAccounts.find((acc) => acc.user.id === currentUserId)?.user;
-        if (!currentUser) return [];
-
-        const followingUsers = currentUser.followingUsers || [];
+        
+        // Use provided followingUsers or get from currentUser if found
+        const alreadyFollowing = followingUsers || currentUser?.followingUsers || [];
 
         // Get all users except current user and already following
         return state.userAccounts
-          .filter((acc) => acc.user.id !== currentUserId && !followingUsers.includes(acc.user.id))
+          .filter((acc) => acc.user.id !== currentUserId && !alreadyFollowing.includes(acc.user.id))
           .map((acc) => acc.user)
           .sort((a, b) => {
             // Prioritize verified users and influencers
