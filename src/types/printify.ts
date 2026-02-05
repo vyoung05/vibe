@@ -296,6 +296,11 @@ export interface MerchOrder {
   status: MerchOrderStatus;
   printifyOrderId?: string;
 
+  // Multi-vendor order grouping
+  vendorGroupId?: string; // Links related orders from same checkout
+  vendorIndex?: number; // 1, 2, 3... for "Package 1 of 3"
+  totalVendors?: number; // Total packages in this checkout
+
   // Timestamps
   createdAt: string;
   updatedAt: string;

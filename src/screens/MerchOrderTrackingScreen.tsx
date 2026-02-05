@@ -34,7 +34,13 @@ export const MerchOrderTrackingScreen: React.FC = () => {
   const orderId = route.params?.orderId;
 
   const getOrder = useMerchStore((s) => s.getOrder);
+  const orders = useMerchStore((s) => s.orders);
   const order = getOrder(orderId || "");
+
+  // Get related orders from same checkout (multi-vendor)
+  const relatedOrders = order?.vendorGroupId
+    ? orders.filter((o) => o.vendorGroupId === order.vendorGroupId && o.id !== order.id)
+    : [];
 
   if (!order) {
     return (
@@ -131,9 +137,74 @@ export const MerchOrderTrackingScreen: React.FC = () => {
                 </View>
                 <Text className="text-white text-2xl font-black mb-2 italic">ORDER CONFIRMED!</Text>
                 <Text className="text-green-100 text-center font-bold text-sm tracking-wide opacity-80">
-                  We've received your order and we're getting it ready for production.
+                  {order.totalVendors && order.totalVendors > 1
+                    ? `Your order will ship in ${order.totalVendors} packages. Each seller will fulfill their items separately.`
+                    : "We've received your order and we're getting it ready for production."
+                  }
                 </Text>
               </LinearGradient>
+            </View>
+          )}
+
+          {/* Multi-Package Notice */}
+          {order.totalVendors && order.totalVendors > 1 && (
+            <View className="mx-6 mt-6">
+              <View className="bg-purple-500/10 rounded-3xl border border-purple-500/30 p-5">
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="flex-row items-center">
+                    <Ionicons name="cube-outline" size={20} color="#A78BFA" />
+                    <Text className="text-purple-300 font-black uppercase tracking-widest text-xs ml-2">
+                      Package {order.vendorIndex} of {order.totalVendors}
+                    </Text>
+                  </View>
+                  <View className="bg-purple-500/20 px-2 py-1 rounded-lg">
+                    <Text className="text-purple-300 font-bold text-xs">
+                      {order.items[0]?.streamerName || "Seller"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Links to other packages */}
+                {relatedOrders.length > 0 && (
+                  <View className="border-t border-purple-500/20 pt-4">
+                    <Text className="text-gray-400 text-xs mb-3">Other packages in this order:</Text>
+                    {relatedOrders.map((relatedOrder) => (
+                      <Pressable
+                        key={relatedOrder.id}
+                        onPress={() => navigation.navigate("MerchOrderTracking", { orderId: relatedOrder.id })}
+                        className="flex-row items-center justify-between bg-white/5 rounded-xl p-3 mb-2"
+                      >
+                        <View className="flex-row items-center">
+                          <View className="bg-purple-500/20 px-2 py-0.5 rounded mr-2">
+                            <Text className="text-purple-300 font-black text-[10px]">
+                              PKG {relatedOrder.vendorIndex}
+                            </Text>
+                          </View>
+                          <Text className="text-white font-bold text-sm">
+                            {relatedOrder.items[0]?.streamerName || "Seller"}
+                          </Text>
+                        </View>
+                        <View className="flex-row items-center">
+                          <View className={`px-2 py-0.5 rounded mr-2 ${
+                            relatedOrder.status === "delivered" ? "bg-green-500/20" :
+                            relatedOrder.status === "shipped" ? "bg-blue-500/20" :
+                            "bg-gray-500/20"
+                          }`}>
+                            <Text className={`text-[10px] font-bold ${
+                              relatedOrder.status === "delivered" ? "text-green-400" :
+                              relatedOrder.status === "shipped" ? "text-blue-400" :
+                              "text-gray-400"
+                            }`}>
+                              {relatedOrder.status.replace(/_/g, " ").toUpperCase()}
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+                        </View>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
             </View>
           )}
 

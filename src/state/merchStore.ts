@@ -96,6 +96,7 @@ interface MerchStoreState {
   removeFromCart: (cartItemId: string) => void;
   clearCart: () => void;
   getCartTotal: () => { subtotal: number; itemCount: number };
+  getCartGroupedByVendor: () => { streamerId: string; streamerName: string; items: MerchCartItem[]; subtotal: number }[];
 
   // Order Actions
   createOrder: (
@@ -106,6 +107,14 @@ interface MerchStoreState {
     shippingMethod: string,
     promotionCode?: string
   ) => MerchOrder | null;
+  createMultiVendorOrders: (
+    userId: string,
+    userName: string,
+    userEmail: string,
+    shippingAddress: MerchShippingAddress,
+    shippingMethod: string,
+    promotionCode?: string
+  ) => MerchOrder[];
   updateOrderStatus: (orderId: string, status: MerchOrderStatus) => void;
   getOrder: (id: string) => MerchOrder | undefined;
   getOrders: (filter?: MerchOrderFilter) => MerchOrder[];
@@ -416,6 +425,27 @@ export const useMerchStore = create<MerchStoreState>()(
         return { subtotal, itemCount };
       },
 
+      getCartGroupedByVendor: () => {
+        const cart = get().cart;
+        const grouped: Record<string, { streamerId: string; streamerName: string; items: MerchCartItem[]; subtotal: number }> = {};
+
+        for (const item of cart) {
+          const key = item.streamerId;
+          if (!grouped[key]) {
+            grouped[key] = {
+              streamerId: item.streamerId,
+              streamerName: item.streamerName,
+              items: [],
+              subtotal: 0,
+            };
+          }
+          grouped[key].items.push(item);
+          grouped[key].subtotal += item.unitPrice * item.quantity;
+        }
+
+        return Object.values(grouped);
+      },
+
       // ==================
       // ORDER ACTIONS
       // ==================
@@ -505,6 +535,135 @@ export const useMerchStore = create<MerchStoreState>()(
         });
 
         return order;
+      },
+
+      createMultiVendorOrders: (userId, userName, userEmail, shippingAddress, shippingMethod, promotionCode) => {
+        const state = get();
+        const cart = state.cart;
+
+        if (cart.length === 0) return [];
+
+        // Group cart items by vendor (streamerId)
+        const vendorGroups = state.getCartGroupedByVendor();
+
+        // If only one vendor, use single order creation
+        if (vendorGroups.length === 1) {
+          const singleOrder = state.createOrder(userId, userName, userEmail, shippingAddress, shippingMethod, promotionCode);
+          return singleOrder ? [singleOrder] : [];
+        }
+
+        // Calculate grand totals for promo distribution
+        const grandSubtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+
+        // Apply promotion to get total discount (will be distributed proportionally)
+        let totalPromotionDiscount = 0;
+        let appliedPromotionId: string | undefined;
+        if (promotionCode) {
+          const promoResult = state.applyPromotion(promotionCode, grandSubtotal, userId, "user");
+          if (promoResult.valid) {
+            totalPromotionDiscount = promoResult.discount;
+            appliedPromotionId = promoResult.promotionId;
+          }
+        }
+
+        const createdOrders: MerchOrder[] = [];
+        const allUpdatedProducts = [...state.products];
+
+        // Create separate order for each vendor
+        for (let i = 0; i < vendorGroups.length; i++) {
+          const group = vendorGroups[i];
+          const isFirstOrder = i === 0;
+
+          // Calculate this vendor's portion
+          const vendorSubtotal = group.subtotal;
+          const vendorRatio = vendorSubtotal / grandSubtotal;
+
+          // Distribute promotion discount proportionally
+          const vendorPromotionDiscount = totalPromotionDiscount * vendorRatio;
+
+          // Platform fee per vendor
+          const vendorPlatformFee = (vendorSubtotal - vendorPromotionDiscount) * 0.15;
+
+          // Shipping: first vendor pays, others are $0 (ships together conceptually)
+          // Or split evenly - let's split evenly for fairness
+          const baseShippingCost = shippingMethod === "express" ? 9.99 : 4.99;
+          const vendorShippingCost = baseShippingCost / vendorGroups.length;
+
+          // Tax per vendor
+          const vendorTax = (vendorSubtotal - vendorPromotionDiscount) * 0.0875;
+
+          // Total for this vendor
+          const vendorTotal = vendorSubtotal - vendorPromotionDiscount + vendorPlatformFee + vendorShippingCost + vendorTax;
+
+          const orderId = generateId();
+          const orderItems: MerchOrderItem[] = group.items.map((item) => ({
+            id: generateId(),
+            orderId,
+            productId: item.productId,
+            productTitle: item.productTitle,
+            productImage: item.productImage,
+            variantId: item.variantId,
+            variantTitle: item.variantTitle,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            basePrice: item.unitPrice,
+            finalPrice: item.unitPrice * item.quantity,
+            streamerId: item.streamerId,
+            streamerName: item.streamerName,
+          }));
+
+          const order: MerchOrder = {
+            id: orderId,
+            orderNumber: generateOrderNumber(),
+            userId,
+            userName,
+            userEmail,
+            items: orderItems,
+            subtotal: vendorSubtotal,
+            promotionDiscount: vendorPromotionDiscount,
+            promotionId: appliedPromotionId,
+            promotionCode: isFirstOrder ? promotionCode : undefined, // Only show code on first order
+            platformFee: vendorPlatformFee,
+            shippingCost: vendorShippingCost,
+            tax: vendorTax,
+            total: vendorTotal,
+            shippingAddress,
+            shippingMethod,
+            status: "pending",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            // Add vendor info for tracking
+            vendorGroupId: `group-${Date.now()}`, // Links related orders
+            vendorIndex: i + 1,
+            totalVendors: vendorGroups.length,
+          };
+
+          createdOrders.push(order);
+
+          // Update product sales stats
+          for (const orderItem of orderItems) {
+            const productIndex = allUpdatedProducts.findIndex((p) => p.id === orderItem.productId);
+            if (productIndex !== -1) {
+              allUpdatedProducts[productIndex] = {
+                ...allUpdatedProducts[productIndex],
+                unitsSold: allUpdatedProducts[productIndex].unitsSold + orderItem.quantity,
+                revenue: allUpdatedProducts[productIndex].revenue + orderItem.finalPrice,
+              };
+            }
+          }
+        }
+
+        // Update state with all orders and clear cart
+        set({
+          orders: [...state.orders, ...createdOrders],
+          cart: [],
+          products: allUpdatedProducts,
+        });
+
+        console.log(`[MerchStore] Created ${createdOrders.length} orders for ${vendorGroups.length} vendors`);
+
+        return createdOrders;
       },
 
       updateOrderStatus: (orderId, status) => {

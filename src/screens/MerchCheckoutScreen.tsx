@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
@@ -27,10 +28,13 @@ export const MerchCheckoutScreen: React.FC = () => {
 
   const cart = useMerchStore((s) => s.cart);
   const getCartTotal = useMerchStore((s) => s.getCartTotal);
-  const createOrder = useMerchStore((s) => s.createOrder);
+  const getCartGroupedByVendor = useMerchStore((s) => s.getCartGroupedByVendor);
+  const createMultiVendorOrders = useMerchStore((s) => s.createMultiVendorOrders);
   const applyPromotion = useMerchStore((s) => s.applyPromotion);
 
   const { subtotal, itemCount } = getCartTotal();
+  const vendorGroups = getCartGroupedByVendor();
+  const hasMultipleVendors = vendorGroups.length > 1;
 
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
   const [promoCode, setPromoCode] = useState("");
@@ -84,7 +88,8 @@ export const MerchCheckoutScreen: React.FC = () => {
       phone: shippingForm.phone || undefined,
     };
 
-    const order = createOrder(
+    // Use multi-vendor order creation (handles single vendor too)
+    const orders = createMultiVendorOrders(
       user?.id || "guest",
       `${shippingForm.firstName} ${shippingForm.lastName}`,
       user?.email || "",
@@ -95,8 +100,9 @@ export const MerchCheckoutScreen: React.FC = () => {
 
     setIsProcessing(false);
 
-    if (order) {
-      navigation.navigate("MerchOrderTracking", { orderId: order.id });
+    if (orders.length > 0) {
+      // Navigate to first order's tracking (can show all related orders there)
+      navigation.navigate("MerchOrderTracking", { orderId: orders[0].id });
     }
   };
 
@@ -328,6 +334,75 @@ export const MerchCheckoutScreen: React.FC = () => {
                   </View>
                 )}
               </View>
+
+              {/* Multi-Vendor Notice */}
+              {hasMultipleVendors && (
+                <View className="bg-purple-500/10 rounded-3xl border border-purple-500/30 p-5 mb-8">
+                  <View className="flex-row items-center mb-3">
+                    <Ionicons name="cube-outline" size={20} color="#A78BFA" />
+                    <Text className="text-purple-300 font-black uppercase tracking-widest text-xs ml-2">
+                      Ships in {vendorGroups.length} Packages
+                    </Text>
+                  </View>
+                  <Text className="text-gray-400 text-sm">
+                    Your order contains items from {vendorGroups.length} different sellers. Each will ship separately with its own tracking number.
+                  </Text>
+                </View>
+              )}
+
+              {/* Order Items by Vendor */}
+              <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Your Items</Text>
+              {vendorGroups.map((group, groupIndex) => (
+                <View 
+                  key={group.streamerId} 
+                  className="bg-white/5 rounded-3xl border border-white/10 p-5 mb-4"
+                >
+                  {/* Vendor Header */}
+                  <View className="flex-row items-center justify-between mb-4 pb-3 border-b border-white/10">
+                    <View className="flex-row items-center">
+                      {hasMultipleVendors && (
+                        <View className="bg-purple-500/20 px-2 py-1 rounded-lg mr-3">
+                          <Text className="text-purple-300 font-black text-[10px]">
+                            PACKAGE {groupIndex + 1}
+                          </Text>
+                        </View>
+                      )}
+                      <Text className="text-white font-bold">{group.streamerName}</Text>
+                    </View>
+                    <Text className="text-gray-400 font-bold text-sm">
+                      {group.items.length} item{group.items.length > 1 ? "s" : ""}
+                    </Text>
+                  </View>
+
+                  {/* Items in this vendor group */}
+                  {group.items.map((item, itemIndex) => (
+                    <View 
+                      key={item.id} 
+                      className={`flex-row items-center ${itemIndex < group.items.length - 1 ? "mb-4 pb-4 border-b border-white/5" : ""}`}
+                    >
+                      <Image
+                        source={{ uri: item.productImage }}
+                        style={{ width: 56, height: 56, borderRadius: 12 }}
+                        contentFit="cover"
+                      />
+                      <View className="flex-1 ml-4">
+                        <Text className="text-white font-bold" numberOfLines={1}>{item.productTitle}</Text>
+                        <Text className="text-gray-500 text-xs">
+                          {item.variantTitle} {item.size ? `• ${item.size}` : ""} {item.color ? `• ${item.color}` : ""}
+                        </Text>
+                        <Text className="text-gray-400 text-xs mt-1">Qty: {item.quantity}</Text>
+                      </View>
+                      <Text className="text-white font-black">${(item.unitPrice * item.quantity).toFixed(2)}</Text>
+                    </View>
+                  ))}
+
+                  {/* Vendor Subtotal */}
+                  <View className="flex-row justify-between mt-4 pt-3 border-t border-white/10">
+                    <Text className="text-gray-500 font-bold text-sm">Package Subtotal</Text>
+                    <Text className="text-white font-black">${group.subtotal.toFixed(2)}</Text>
+                  </View>
+                </View>
+              ))}
 
               {/* Order Summary */}
               <Text className="text-white font-black uppercase tracking-widest text-xs mb-4">Grand Total</Text>
