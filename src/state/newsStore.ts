@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as newsService from "../services/newsService";
 
 export type NewsCategory = "gaming" | "esports" | "streaming" | "tech" | "announcement";
 export type EventType = "tournament" | "livestream" | "release" | "community" | "sale";
@@ -51,6 +52,16 @@ interface NewsState {
   news: NewsItem[];
   events: GamingEvent[];
   lastFetch: number | null;
+  isLoading: boolean;
+  
+  // Supabase sync
+  syncFromSupabase: () => Promise<void>;
+  syncNewsToSupabase: (news: Omit<NewsItem, "id" | "createdAt" | "updatedAt" | "viewCount">) => Promise<NewsItem | null>;
+  syncEventToSupabase: (event: Omit<GamingEvent, "id" | "createdAt" | "updatedAt" | "attendeeCount">) => Promise<GamingEvent | null>;
+  updateNewsInSupabase: (id: string, updates: Partial<NewsItem>) => Promise<boolean>;
+  updateEventInSupabase: (id: string, updates: Partial<GamingEvent>) => Promise<boolean>;
+  deleteNewsFromSupabase: (id: string) => Promise<boolean>;
+  deleteEventFromSupabase: (id: string) => Promise<boolean>;
 
   // News actions
   addNews: (news: Omit<NewsItem, "id" | "createdAt" | "updatedAt" | "viewCount">) => void;
@@ -87,8 +98,97 @@ export const useNewsStore = create<NewsState>()(
       news: [],
       events: [],
       lastFetch: null,
+      isLoading: false,
 
-      // News actions
+      // Supabase sync functions
+      syncFromSupabase: async () => {
+        set({ isLoading: true });
+        try {
+          const [newsData, eventsData] = await Promise.all([
+            newsService.fetchAllNews(),
+            newsService.fetchAllEvents(),
+          ]);
+          set({
+            news: newsData,
+            events: eventsData,
+            lastFetch: Date.now(),
+            isLoading: false,
+          });
+        } catch (error) {
+          console.error("Failed to sync from Supabase:", error);
+          set({ isLoading: false });
+        }
+      },
+
+      syncNewsToSupabase: async (newsData) => {
+        const result = await newsService.createNews(newsData);
+        if (result) {
+          set((state) => ({
+            news: [result, ...state.news],
+          }));
+        }
+        return result;
+      },
+
+      syncEventToSupabase: async (eventData) => {
+        const result = await newsService.createEvent(eventData);
+        if (result) {
+          set((state) => ({
+            events: [result, ...state.events],
+          }));
+        }
+        return result;
+      },
+
+      updateNewsInSupabase: async (id, updates) => {
+        const success = await newsService.updateNews(id, updates);
+        if (success) {
+          set((state) => ({
+            news: state.news.map((item) =>
+              item.id === id
+                ? { ...item, ...updates, updatedAt: new Date().toISOString() }
+                : item
+            ),
+          }));
+        }
+        return success;
+      },
+
+      updateEventInSupabase: async (id, updates) => {
+        const success = await newsService.updateEvent(id, updates);
+        if (success) {
+          set((state) => ({
+            events: state.events.map((item) =>
+              item.id === id
+                ? { ...item, ...updates, updatedAt: new Date().toISOString() }
+                : item
+            ),
+          }));
+        }
+        return success;
+      },
+
+      deleteNewsFromSupabase: async (id) => {
+        const success = await newsService.deleteNews(id);
+        if (success) {
+          set((state) => ({
+            news: state.news.filter((item) => item.id !== id),
+          }));
+        }
+        return success;
+      },
+
+      deleteEventFromSupabase: async (id) => {
+        const success = await newsService.deleteEvent(id);
+        if (success) {
+          set((state) => ({
+            events: state.events.filter((item) => item.id !== id),
+          }));
+        }
+        return success;
+      },
+
+      // Local News actions (fallback)
       addNews: (newsData) => {
         const now = new Date().toISOString();
         const newNews: NewsItem = {
