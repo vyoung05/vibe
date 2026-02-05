@@ -46,3 +46,7 @@ coverage/
 .expo-shared/
 .vercel
 .env*.local
+
+# Supabase CLI binary
+supabase.exe
+supabase
