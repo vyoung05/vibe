@@ -176,13 +176,20 @@ export const MerchProductDetailScreen: React.FC = () => {
           <View className="px-6 pt-8 pb-32">
             {/* Streamer & Title */}
             <Pressable
-              onPress={() => navigation.navigate("StreamerProfile", { streamerId: product.streamerId })}
+              onPress={() => {
+                // Only navigate if it's a real streamer ID (not admin or direct-sell)
+                if (product.streamerId && !product.streamerId.startsWith("admin") && !product.printifyProductId?.startsWith("direct-")) {
+                  navigation.navigate("StreamerProfile", { streamerId: product.streamerId });
+                }
+              }}
               className="flex-row items-center mb-3 bg-purple-500/10 self-start px-3 py-1.5 rounded-full border border-purple-500/20"
             >
               <Text className="text-purple-400 text-xs font-black tracking-widest uppercase">
                 {product.streamerName}
               </Text>
-              <Ionicons name="chevron-forward" size={12} color="#A855F7" style={{ marginLeft: 4 }} />
+              {product.streamerId && !product.streamerId.startsWith("admin") && !product.printifyProductId?.startsWith("direct-") && (
+                <Ionicons name="chevron-forward" size={12} color="#A855F7" style={{ marginLeft: 4 }} />
+              )}
             </Pressable>
 
             <Text className="text-white text-3xl font-black mb-3 italic tracking-tight">{product.title}</Text>

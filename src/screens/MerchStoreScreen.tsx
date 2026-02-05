@@ -58,10 +58,12 @@ export const MerchStoreScreen: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [countdown, setCountdown] = useState<Record<string, string>>({});
 
-  // Initialize data
+  // Initialize data only if no products exist
   useEffect(() => {
-    seedSampleMerchData();
-  }, []);
+    if (products.length === 0) {
+      seedSampleMerchData();
+    }
+  }, [products.length]);
 
   // Update countdown timers
   useEffect(() => {
@@ -111,10 +113,19 @@ export const MerchStoreScreen: React.FC = () => {
   const renderProductCard = ({ item }: { item: MerchProduct }) => (
     <Pressable
       onPress={() => {
-        const tabNav = navigation?.getParent();
-        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-        if (rootNav) {
-          rootNav.navigate("MerchProductDetail", { productId: item.id });
+        // Use direct navigation - the screen is in RootStackParamList
+        try {
+          const tabNav = navigation?.getParent();
+          const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+          if (rootNav) {
+            rootNav.navigate("MerchProductDetail", { productId: item.id });
+          } else {
+            // Fallback: try navigating directly
+            (navigation as any).navigate("MerchProductDetail", { productId: item.id });
+          }
+        } catch {
+          // Fallback navigation
+          (navigation as any).navigate("MerchProductDetail", { productId: item.id });
         }
       }}
       className="bg-[#1C1C26] rounded-2xl border border-white/5 overflow-hidden mb-5 shadow-lg shadow-black/40"
@@ -317,10 +328,16 @@ export const MerchStoreScreen: React.FC = () => {
                   <Pressable
                     key={product.id}
                     onPress={() => {
-                      const tabNav = navigation?.getParent();
-                      const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-                      if (rootNav) {
-                        rootNav.navigate("MerchProductDetail", { productId: product.id });
+                      try {
+                        const tabNav = navigation?.getParent();
+                        const rootNav = tabNav?.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                        if (rootNav) {
+                          rootNav.navigate("MerchProductDetail", { productId: product.id });
+                        } else {
+                          (navigation as any).navigate("MerchProductDetail", { productId: product.id });
+                        }
+                      } catch {
+                        (navigation as any).navigate("MerchProductDetail", { productId: product.id });
                       }
                     }}
                     className="bg-[#151520] rounded-xl border border-gray-800 overflow-hidden mr-4"

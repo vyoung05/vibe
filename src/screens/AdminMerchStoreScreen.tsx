@@ -86,13 +86,17 @@ export const AdminMerchStoreScreen: React.FC = () => {
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  // Initialize data
+  // Initialize data only once
   useEffect(() => {
     initializeDefaultFeeStructure();
+  }, []);
+
+  // Seed sample data only if no products exist
+  useEffect(() => {
     if (products.length === 0) {
       seedSampleMerchData();
     }
-  }, []);
+  }, [products.length]);
 
   // Promotion form state
   const [promotionForm, setPromotionForm] = useState({

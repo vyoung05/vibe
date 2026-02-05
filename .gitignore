@@ -45,3 +45,4 @@ coverage/
 .expo/
 .expo-shared/
 .vercel
+.env*.local
