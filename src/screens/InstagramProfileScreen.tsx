@@ -1,23 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { mockPosts } from "../data/mockPosts";
+import { useAuthStore } from "../state/authStore";
+import { postsService, PostWithUser } from "../services/postsService";
 
 export function InstagramProfileScreen() {
-  // Mock user data - in real app, get from auth store
+  // Get real user data from auth store
+  const authUser = useAuthStore((s) => s.user);
+  const [userPosts, setUserPosts] = useState<PostWithUser[]>([]);
+
   const user = {
-    id: "user1",
-    username: "alexgaming",
-    avatarUrl: "https://i.pravatar.cc/150?img=11",
-    bio: "Pro gamer | Content creator\n🎮 Diamond rank | 🏆 Tournament winner",
-    postsCount: 15,
-    followersCount: 3420,
-    followingCount: 567,
+    id: authUser?.id || "guest",
+    username: authUser?.username || authUser?.email?.split("@")[0] || "User",
+    avatarUrl: authUser?.avatar || "https://i.pravatar.cc/150?img=11",
+    bio: authUser?.bio || "No bio yet",
+    postsCount: userPosts.length,
+    followersCount: 0,
+    followingCount: 0,
   };
 
-  // Get user's posts
-  const userPosts = mockPosts.filter((post) => post.user.id === user.id);
+  useEffect(() => {
+    const loadUserPosts = async () => {
+      if (authUser?.id) {
+        const { posts } = await postsService.getUserPosts(authUser.id);
+        setUserPosts(posts || []);
+      }
+    };
+    loadUserPosts();
+  }, [authUser?.id]);
 
   const StatItem = ({ label, value }: { label: string; value: number }) => (
     <View className="items-center">

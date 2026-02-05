@@ -330,4 +330,44 @@ export const postsService = {
       return { error: String(error) };
     }
   },
+
+  // Fetch posts by a specific user
+  async getUserPosts(userId: string): Promise<{ posts: PostWithUser[]; error: string | null }> {
+    try {
+      const { data: postsData, error: postsError } = await supabase
+        .from("posts")
+        .select(`
+          *,
+          users:user_id (id, username, avatar_url)
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (postsError) {
+        return { posts: [], error: postsError.message };
+      }
+
+      const posts: PostWithUser[] = (postsData || []).map((post: any) => ({
+        id: post.id,
+        userId: post.user_id,
+        user: {
+          id: post.users?.id || userId,
+          username: post.users?.username || "User",
+          avatarUrl: post.users?.avatar_url || "",
+        },
+        imageUrl: post.image_url || "",
+        caption: post.caption || "",
+        createdAt: post.created_at,
+        likeCount: post.like_count || 0,
+        commentCount: post.comment_count || 0,
+        isLiked: false,
+        isSaved: false,
+        comments: [],
+      }));
+
+      return { posts, error: null };
+    } catch (error) {
+      return { posts: [], error: String(error) };
+    }
+  },
 };

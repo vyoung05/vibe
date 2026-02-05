@@ -45,20 +45,12 @@ export const MerchStoreScreen: React.FC = () => {
   const getProducts = useMerchStore((s) => s.getProducts);
   const getActivePromotions = useMerchStore((s) => s.getActivePromotions);
   const getCartTotal = useMerchStore((s) => s.getCartTotal);
-  const seedSampleMerchData = useMerchStore((s) => s.seedSampleMerchData);
 
   const [selectedCategory, setSelectedCategory] = useState<MerchCategory | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"featured" | "newest" | "price_low" | "price_high" | "best_selling">("featured");
   const [showFilters, setShowFilters] = useState(false);
   const [countdown, setCountdown] = useState<Record<string, string>>({});
-
-  // Initialize data only if no products exist
-  useEffect(() => {
-    if (products.length === 0) {
-      seedSampleMerchData();
-    }
-  }, [products.length]);
 
   // Update countdown timers
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "../lib/supabase";
 import {
   syncProductsFromPrintful,
   createPrintfulOrder,
@@ -159,6 +160,7 @@ interface MerchStoreState {
   updatePrintifyConnection: (streamerId: string, data: Partial<StreamerPrintifyConnection>) => void;
   getPrintifyConnection: (streamerId: string) => StreamerPrintifyConnection | undefined;
   disconnectPrintify: (streamerId: string) => void;
+  loadPrintifyConnectionFromSupabase: (streamerId: string) => Promise<StreamerPrintifyConnection | null>;
   // Printful methods (legacy)
   validateAndConnectPrintful: (streamerId: string, apiToken: string, storeId?: string) => Promise<{ success: boolean; error?: string }>;
   syncPrintfulProducts: (streamerId: string, streamerName: string) => Promise<{ success: boolean; syncedCount: number; error?: string }>;
@@ -1036,34 +1038,139 @@ export const useMerchStore = create<MerchStoreState>()(
       // PRINTIFY CONNECTION
       // ==================
 
-      addPrintifyConnection: (connectionData) => {
+      addPrintifyConnection: async (connectionData) => {
         const connection: StreamerPrintifyConnection = {
           ...connectionData,
           createdAt: new Date().toISOString(),
         };
+        
+        // Save to local state
         set((state) => ({
           printifyConnections: [
             ...state.printifyConnections.filter((c) => c.streamerId !== connectionData.streamerId),
             connection,
           ],
         }));
+
+        // Sync to Supabase (upsert)
+        try {
+          const { error } = await supabase
+            .from("printify_connections")
+            .upsert({
+              streamer_id: connectionData.streamerId,
+              printify_api_key: connectionData.printifyApiToken || "",
+              shop_id: connectionData.printifyShopId || "",
+              shop_title: connectionData.printifyShopName || "",
+              is_connected: connectionData.isConnected || false,
+              last_sync_at: connectionData.lastSyncAt,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "streamer_id" });
+
+          if (error) {
+            console.error("[MerchStore] Failed to sync connection to Supabase:", error);
+          } else {
+            console.log("[MerchStore] POD connection synced to Supabase");
+          }
+        } catch (err) {
+          console.error("[MerchStore] Supabase sync error:", err);
+        }
       },
 
-      updatePrintifyConnection: (streamerId, data) => {
+      updatePrintifyConnection: async (streamerId, data) => {
+        // Update local state
         set((state) => ({
           printifyConnections: state.printifyConnections.map((c) =>
             c.streamerId === streamerId ? { ...c, ...data } : c
           ),
         }));
+
+        // Sync to Supabase
+        try {
+          const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+          if (data.printifyApiToken !== undefined) updateData.printify_api_key = data.printifyApiToken;
+          if (data.printifyShopId !== undefined) updateData.shop_id = data.printifyShopId;
+          if (data.printifyShopName !== undefined) updateData.shop_title = data.printifyShopName;
+          if (data.isConnected !== undefined) updateData.is_connected = data.isConnected;
+          if (data.lastSyncAt !== undefined) updateData.last_sync_at = data.lastSyncAt;
+
+          const { error } = await supabase
+            .from("printify_connections")
+            .update(updateData)
+            .eq("streamer_id", streamerId);
+
+          if (error) {
+            console.error("[MerchStore] Failed to update connection in Supabase:", error);
+          }
+        } catch (err) {
+          console.error("[MerchStore] Supabase update error:", err);
+        }
       },
 
       getPrintifyConnection: (streamerId) =>
         get().printifyConnections.find((c) => c.streamerId === streamerId),
 
-      disconnectPrintify: (streamerId) => {
+      disconnectPrintify: async (streamerId) => {
+        // Remove from local state
         set((state) => ({
           printifyConnections: state.printifyConnections.filter((c) => c.streamerId !== streamerId),
         }));
+
+        // Delete from Supabase
+        try {
+          const { error } = await supabase
+            .from("printify_connections")
+            .delete()
+            .eq("streamer_id", streamerId);
+
+          if (error) {
+            console.error("[MerchStore] Failed to delete connection from Supabase:", error);
+          } else {
+            console.log("[MerchStore] POD connection removed from Supabase");
+          }
+        } catch (err) {
+          console.error("[MerchStore] Supabase delete error:", err);
+        }
+      },
+
+      loadPrintifyConnectionFromSupabase: async (streamerId) => {
+        try {
+          const { data, error } = await supabase
+            .from("printify_connections")
+            .select("*")
+            .eq("streamer_id", streamerId)
+            .single();
+
+          if (error || !data) {
+            console.log("[MerchStore] No POD connection found in Supabase for streamer:", streamerId);
+            return null;
+          }
+
+          // Convert from Supabase format to local format
+          const connection: StreamerPrintifyConnection = {
+            streamerId: data.streamer_id,
+            provider: "printify",
+            printifyApiToken: data.printify_api_key,
+            printifyShopId: data.shop_id,
+            printifyShopName: data.shop_title,
+            isConnected: data.is_connected,
+            lastSyncAt: data.last_sync_at,
+            createdAt: data.created_at,
+          };
+
+          // Update local state
+          set((state) => ({
+            printifyConnections: [
+              ...state.printifyConnections.filter((c) => c.streamerId !== streamerId),
+              connection,
+            ],
+          }));
+
+          console.log("[MerchStore] POD connection loaded from Supabase");
+          return connection;
+        } catch (err) {
+          console.error("[MerchStore] Failed to load connection from Supabase:", err);
+          return null;
+        }
       },
 
       validateAndConnectPrintful: async (streamerId, apiToken, storeId) => {

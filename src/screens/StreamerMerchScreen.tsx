@@ -64,13 +64,13 @@ export const StreamerMerchScreen: React.FC = () => {
   const getStreamerCurrentFee = useMerchStore((s) => s.getStreamerCurrentFee);
   const getPrintifyConnection = useMerchStore((s) => s.getPrintifyConnection);
   const addPrintifyConnection = useMerchStore((s) => s.addPrintifyConnection);
+  const loadPrintifyConnectionFromSupabase = useMerchStore((s) => s.loadPrintifyConnectionFromSupabase);
   const validateAndConnectPrintful = useMerchStore((s) => s.validateAndConnectPrintful);
   const syncPrintfulProducts = useMerchStore((s) => s.syncPrintfulProducts);
   const validateAndConnectPrintify = useMerchStore((s) => s.validateAndConnectPrintify);
   const selectPrintifyShop = useMerchStore((s) => s.selectPrintifyShop);
   const syncPrintifyProducts = useMerchStore((s) => s.syncPrintifyProducts);
   const initializeStreamerFee = useMerchStore((s) => s.initializeStreamerFee);
-  const seedSampleMerchData = useMerchStore((s) => s.seedSampleMerchData);
   const addProduct = useMerchStore((s) => s.addProduct);
   const updateProduct = useMerchStore((s) => s.updateProduct);
   const deleteProduct = useMerchStore((s) => s.deleteProduct);
@@ -116,11 +116,13 @@ export const StreamerMerchScreen: React.FC = () => {
 
   // Initialize data on mount
   useEffect(() => {
-    seedSampleMerchData();
     initializeStreamerFee(streamerId);
-    // Connect sample products to the authenticated streamer
-    connectProductsToStreamer(streamerId, streamerName);
-  }, []);
+    // Load POD connection from Supabase if not in local state
+    const existingConnection = getPrintifyConnection(streamerId);
+    if (!existingConnection) {
+      loadPrintifyConnectionFromSupabase(streamerId);
+    }
+  }, [streamerId]);
 
   const streamerProducts = getStreamerProducts(streamerId);
   const visiblePromotions = getStreamerVisiblePromotions();

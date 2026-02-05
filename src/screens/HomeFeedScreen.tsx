@@ -15,7 +15,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { PostCard } from "../components/PostCard";
-import { mockPosts } from "../data/mockPosts";
+// Demo data removed - using real posts only
 import type { Post } from "../types/post";
 import type { Report, ReportReason } from "../types";
 import { useAppStore } from "../state/appStore";
@@ -94,8 +94,8 @@ export function HomeFeedScreen() {
       return post;
     });
 
-    // Combine store posts with mock posts
-    setPosts([...postsWithUpdatedAvatars, ...mockPosts]);
+    // Use only real posts from the store
+    setPosts(postsWithUpdatedAvatars);
   };
 
   const onRefresh = () => {
