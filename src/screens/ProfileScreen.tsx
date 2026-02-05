@@ -125,7 +125,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const shareProfile = async () => {
-    const profileUrl = `https://ddns.app/profile/${user.username}`;
+    const profileUrl = `https://vibe-14ja.vercel.app/profile/${user.username}`;
     await Clipboard.setStringAsync(profileUrl);
     Alert.alert("Profile Link Copied!", `Your profile link has been copied:\n${profileUrl}`);
   };
