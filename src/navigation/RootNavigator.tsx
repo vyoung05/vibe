@@ -29,6 +29,7 @@ import { AdminMerchantsScreen } from "../screens/AdminMerchantsScreen";
 import { AdminItemsScreen } from "../screens/AdminItemsScreen";
 import { AdminOrdersScreen } from "../screens/AdminOrdersScreen";
 import { AdminMerchStoreScreen } from "../screens/AdminMerchStoreScreen";
+import { AdminNewsScreen } from "../screens/AdminNewsScreen";
 import { StreamerMerchScreen } from "../screens/StreamerMerchScreen";
 import { MerchStoreScreen } from "../screens/MerchStoreScreen";
 import { MerchProductDetailScreen } from "../screens/MerchProductDetailScreen";
@@ -92,6 +93,7 @@ export type RootStackParamList = {
   CheckoutSuccess: undefined;
   CheckoutCancel: undefined;
   AdminMerchStore: undefined;
+  AdminNews: undefined;
   StreamerMerch: undefined;
 };
 
@@ -110,6 +112,7 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="AdminManagement" component={AdminManagementScreen} />
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
       <Stack.Screen name="AdminMerchStore" component={AdminMerchStoreScreen} />
+      <Stack.Screen name="AdminNews" component={AdminNewsScreen} />
       <Stack.Screen name="AdminMerchants" component={AdminMerchantsScreen} />
       <Stack.Screen name="AdminItems" component={AdminItemsScreen} />
       <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} />

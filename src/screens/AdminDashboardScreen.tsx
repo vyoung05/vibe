@@ -1687,6 +1687,14 @@ return (
             <Ionicons name="stats-chart" size={20} color="#06B6D4" />
             <Text className="text-white font-bold text-xs mt-1.5">Analytics</Text>
           </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("AdminNews")}
+            className="bg-pink-600/20 border border-pink-500/30 rounded-lg p-3 mr-2"
+            style={{ width: 100 }}
+          >
+            <Ionicons name="newspaper" size={20} color="#EC4899" />
+            <Text className="text-white font-bold text-xs mt-1.5">News</Text>
+          </Pressable>
         </ScrollView>
       </View>
 

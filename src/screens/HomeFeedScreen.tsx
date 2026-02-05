@@ -15,6 +15,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { PostCard } from "../components/PostCard";
+import { GamingNewsFeed } from "../components/GamingNewsFeed";
 // Demo data removed - using real posts only
 import type { Post } from "../types/post";
 import type { Report, ReportReason } from "../types";
@@ -203,16 +204,26 @@ export function HomeFeedScreen() {
   };
 
   const renderHeader = () => (
-    <View className="flex-row items-center justify-between px-4 py-3 bg-[#050509]">
-      <Text className="text-white text-2xl font-bold">Feed</Text>
-      <View className="flex-row items-center">
-        <Pressable onPress={() => navigation.navigate("CreatePost")} className="mr-4">
-          <Ionicons name="add-circle-outline" size={28} color="#FFFFFF" />
-        </Pressable>
-        <Pressable>
-          <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
-        </Pressable>
+    <View>
+      {/* Top Bar */}
+      <View className="flex-row items-center justify-between px-4 py-3 bg-[#050509]">
+        <Text className="text-white text-2xl font-bold">Feed</Text>
+        <View className="flex-row items-center">
+          <Pressable onPress={() => navigation.navigate("CreatePost")} className="mr-4">
+            <Ionicons name="add-circle-outline" size={28} color="#FFFFFF" />
+          </Pressable>
+          <Pressable>
+            <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
+          </Pressable>
+        </View>
       </View>
+      
+      {/* Gaming News & Events Feed */}
+      <GamingNewsFeed 
+        maxNews={5}
+        maxEvents={3}
+        showEvents={true}
+      />
     </View>
   );
 
