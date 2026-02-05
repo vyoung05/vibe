@@ -60,7 +60,6 @@ export const AdminMerchStoreScreen: React.FC = () => {
   const feeStructures = useMerchStore((s) => s.feeStructures);
   const getActiveFeeStructure = useMerchStore((s) => s.getActiveFeeStructure);
   const getMerchAnalytics = useMerchStore((s) => s.getMerchAnalytics);
-  const seedSampleMerchData = useMerchStore((s) => s.seedSampleMerchData);
   const initializeDefaultFeeStructure = useMerchStore((s) => s.initializeDefaultFeeStructure);
 
   // Promotion actions
@@ -90,13 +89,6 @@ export const AdminMerchStoreScreen: React.FC = () => {
   useEffect(() => {
     initializeDefaultFeeStructure();
   }, []);
-
-  // Seed sample data only if no products exist
-  useEffect(() => {
-    if (products.length === 0) {
-      seedSampleMerchData();
-    }
-  }, [products.length]);
 
   // Promotion form state
   const [promotionForm, setPromotionForm] = useState({

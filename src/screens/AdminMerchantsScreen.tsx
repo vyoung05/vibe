@@ -154,7 +154,6 @@ export const AdminMerchantsScreen: React.FC = () => {
   const addMerchant = useMerchantStore((s) => s.addMerchant);
   const updateMerchant = useMerchantStore((s) => s.updateMerchant);
   const deleteMerchant = useMerchantStore((s) => s.deleteMerchant);
-  const seedSampleData = useMerchantStore((s) => s.seedSampleData);
 
   const [showModal, setShowModal] = useState(false);
   const [editingMerchant, setEditingMerchant] = useState<Merchant | null>(null);
@@ -321,19 +320,6 @@ export const AdminMerchantsScreen: React.FC = () => {
             </Text>
           </View>
         </View>
-
-        {/* Seed Data Button */}
-        {merchants.length === 0 && (
-          <Pressable
-            onPress={seedSampleData}
-            className="bg-[#8B5CF6]/20 border border-[#8B5CF6] rounded-xl p-4 mb-4 flex-row items-center justify-center"
-          >
-            <Ionicons name="sparkles" size={20} color="#8B5CF6" />
-            <Text className="text-[#8B5CF6] font-medium ml-2">
-              Load Sample Merchants
-            </Text>
-          </Pressable>
-        )}
 
         {/* Merchant List */}
         {filteredMerchants.map((merchant) => (

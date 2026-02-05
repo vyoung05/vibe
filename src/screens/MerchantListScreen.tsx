@@ -134,19 +134,11 @@ export const MerchantListScreen: React.FC = () => {
 
   const merchants = useMerchantStore((s) => s.merchants);
   const getMerchants = useMerchantStore((s) => s.getMerchants);
-  const seedSampleData = useMerchantStore((s) => s.seedSampleData);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<MerchantCategory | "all">("all");
   const [showOpenOnly, setShowOpenOnly] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Seed sample data on mount if no merchants
-  useEffect(() => {
-    if (merchants.length === 0) {
-      seedSampleData();
-    }
-  }, [merchants.length, seedSampleData]);
 
   // Build filter
   const filter: MerchantFilter = {
