@@ -124,6 +124,12 @@ export const ProfileScreen: React.FC = () => {
     Alert.alert("Copied!", "Referral code copied to clipboard");
   };
 
+  const shareProfile = async () => {
+    const profileUrl = `https://ddns.app/profile/${user.username}`;
+    await Clipboard.setStringAsync(profileUrl);
+    Alert.alert("Profile Link Copied!", `Your profile link has been copied:\n${profileUrl}`);
+  };
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -379,7 +385,7 @@ export const ProfileScreen: React.FC = () => {
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  copyToClipboard();
+                  shareProfile();
                 }}
                 className="flex-1 bg-[#1C1C24] py-2.5 rounded-lg"
               >
