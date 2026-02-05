@@ -7,6 +7,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +20,8 @@ import { useMerchStore } from "../state/merchStore";
 import { LinearGradient } from "expo-linear-gradient";
 import { PageContainer } from "../components/PageContainer";
 import type { MerchShippingAddress } from "../types/printify";
+import { createCheckoutSession, openCheckoutUrl } from "../utils/stripeCheckout";
+import { isStripeConfigured } from "../lib/stripe";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -71,38 +74,84 @@ export const MerchCheckoutScreen: React.FC = () => {
     }
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!validateForm()) return;
 
     setIsProcessing(true);
 
-    const shippingAddress: MerchShippingAddress = {
-      firstName: shippingForm.firstName,
-      lastName: shippingForm.lastName,
-      address1: shippingForm.address1,
-      address2: shippingForm.address2 || undefined,
-      city: shippingForm.city,
-      state: shippingForm.state,
-      zipCode: shippingForm.zipCode,
-      country: shippingForm.country,
-      phone: shippingForm.phone || undefined,
-    };
+    try {
+      const shippingAddress: MerchShippingAddress = {
+        firstName: shippingForm.firstName,
+        lastName: shippingForm.lastName,
+        address1: shippingForm.address1,
+        address2: shippingForm.address2 || undefined,
+        city: shippingForm.city,
+        state: shippingForm.state,
+        zipCode: shippingForm.zipCode,
+        country: shippingForm.country,
+        phone: shippingForm.phone || undefined,
+      };
 
-    // Use multi-vendor order creation (handles single vendor too)
-    const orders = createMultiVendorOrders(
-      user?.id || "guest",
-      `${shippingForm.firstName} ${shippingForm.lastName}`,
-      user?.email || "",
-      shippingAddress,
-      shippingMethod,
-      appliedPromo?.discount ? promoCode : undefined
-    );
+      // Use multi-vendor order creation (handles single vendor too)
+      const orders = createMultiVendorOrders(
+        user?.id || "guest",
+        `${shippingForm.firstName} ${shippingForm.lastName}`,
+        user?.email || "",
+        shippingAddress,
+        shippingMethod,
+        appliedPromo?.discount ? promoCode : undefined
+      );
 
-    setIsProcessing(false);
+      if (orders.length === 0) {
+        Alert.alert("Error", "Failed to create order");
+        setIsProcessing(false);
+        return;
+      }
 
-    if (orders.length > 0) {
-      // Navigate to first order's tracking (can show all related orders there)
-      navigation.navigate("MerchOrderTracking", { orderId: orders[0].id });
+      // Check if Stripe is configured
+      if (!isStripeConfigured()) {
+        // Stripe not configured - go directly to order tracking (dev mode)
+        console.warn("[Checkout] Stripe not configured - skipping payment");
+        navigation.navigate("MerchOrderTracking", { orderId: orders[0].id });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Create Stripe checkout session for the first/primary order
+      // For multi-vendor, we combine all orders into one checkout
+      const primaryOrder = orders[0];
+      const allItems = orders.flatMap((o) => o.items);
+      const totalAmount = orders.reduce((sum, o) => sum + o.total, 0);
+
+      // Get base URL for redirects
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vibe-14ja.vercel.app";
+
+      const checkoutResult = await createCheckoutSession({
+        order: {
+          ...primaryOrder,
+          items: allItems,
+          total: totalAmount,
+          // Combine shipping/tax from all orders
+          shippingCost: orders.reduce((sum, o) => sum + o.shippingCost, 0),
+          tax: orders.reduce((sum, o) => sum + o.tax, 0),
+        },
+        successUrl: `${baseUrl}/checkout/success`,
+        cancelUrl: `${baseUrl}/checkout/cancel`,
+      });
+
+      if (!checkoutResult.success || !checkoutResult.url) {
+        Alert.alert("Payment Error", checkoutResult.error || "Failed to initialize payment");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      openCheckoutUrl(checkoutResult.url);
+
+    } catch (error) {
+      console.error("[Checkout] Error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+      setIsProcessing(false);
     }
   };
 

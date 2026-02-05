@@ -75,6 +75,9 @@ const linking = {
       SignUp: 'signup',
       ForgotPassword: 'forgot-password',
       ResetPassword: 'reset-password',
+      CheckoutSuccess: 'checkout/success',
+      CheckoutCancel: 'checkout/cancel',
+      MerchOrderTracking: 'order/:orderId',
     },
   },
 };

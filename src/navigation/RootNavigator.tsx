@@ -35,6 +35,8 @@ import { MerchProductDetailScreen } from "../screens/MerchProductDetailScreen";
 import { MerchCartScreen } from "../screens/MerchCartScreen";
 import { MerchCheckoutScreen } from "../screens/MerchCheckoutScreen";
 import { MerchOrderTrackingScreen } from "../screens/MerchOrderTrackingScreen";
+import { CheckoutSuccessScreen } from "../screens/CheckoutSuccessScreen";
+import { CheckoutCancelScreen } from "../screens/CheckoutCancelScreen";
 import { DiscoverPeopleScreen } from "../screens/DiscoverPeopleScreen";
 import { InviteFriendsScreen } from "../screens/InviteFriendsScreen";
 import { ArtistProfileScreen } from "../screens/ArtistProfileScreen";
@@ -87,6 +89,8 @@ export type RootStackParamList = {
   MerchCart: undefined;
   MerchCheckout: undefined;
   MerchOrderTracking: { orderId: string };
+  CheckoutSuccess: undefined;
+  CheckoutCancel: undefined;
   AdminMerchStore: undefined;
   StreamerMerch: undefined;
 };
@@ -137,6 +141,8 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="MerchCart" component={MerchCartScreen} />
       <Stack.Screen name="MerchCheckout" component={MerchCheckoutScreen} />
       <Stack.Screen name="MerchOrderTracking" component={MerchOrderTrackingScreen} />
+      <Stack.Screen name="CheckoutSuccess" component={CheckoutSuccessScreen} />
+      <Stack.Screen name="CheckoutCancel" component={CheckoutCancelScreen} />
       <Stack.Screen name="StreamerMerch" component={StreamerMerchScreen} />
       {/* Artist screens */}
       <Stack.Screen name="ArtistProfile" component={ArtistProfileScreen} />
