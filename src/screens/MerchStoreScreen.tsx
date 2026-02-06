@@ -20,6 +20,7 @@ import { PageContainer } from "../components/PageContainer";
 import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
 import type { MerchProduct, MerchCategory, Promotion } from "../types/printify";
+import { MusicStoreSection } from "../components/MusicStoreSection";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -244,6 +245,9 @@ export const MerchStoreScreen: React.FC = () => {
               </ScrollView>
             </View>
           )}
+
+          {/* Music Store Section */}
+          <MusicStoreSection />
 
           {/* Categories */}
           <View className="py-4">

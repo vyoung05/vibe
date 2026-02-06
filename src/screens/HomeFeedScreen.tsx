@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Share,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,107 +17,167 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { PostCard } from "../components/PostCard";
 import { GamingNewsFeed } from "../components/GamingNewsFeed";
-// Demo data removed - using real posts only
 import type { Post } from "../types/post";
 import type { Report, ReportReason } from "../types";
 import { useAppStore } from "../state/appStore";
 import { useAuthStore } from "../state/authStore";
+import {
+  fetchPosts as fetchSupabasePosts,
+  toggleLike,
+  toggleSave,
+  deletePost as deleteSupabasePost,
+} from "../services/postsService";
 
 type HomeFeedScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function HomeFeedScreen() {
   const navigation = useNavigation<HomeFeedScreenNavigationProp>();
   const user = useAuthStore((s) => s.user);
-  const getPosts = useAppStore((s) => s.getPosts);
-  const likePost = useAppStore((s) => s.likePost);
-  const savePost = useAppStore((s) => s.savePost);
-  const deletePost = useAppStore((s) => s.deletePost);
+  const getLocalPosts = useAppStore((s) => s.getPosts);
+  const likeLocalPost = useAppStore((s) => s.likePost);
+  const saveLocalPost = useAppStore((s) => s.savePost);
+  const deleteLocalPost = useAppStore((s) => s.deletePost);
   const submitReport = useAppStore((s) => s.submitReport);
   const voteHot = useAppStore((s) => s.voteHot);
   const voteNot = useAppStore((s) => s.voteNot);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Load posts when screen comes into focus or when user data changes
+  // Load posts when screen comes into focus
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       loadPosts();
-    }, [user?.id, user?.avatar, user?.username])
+    }, [user?.id])
   );
 
-  const loadPosts = () => {
-    const storePosts = getPosts(user?.id);
+  const loadPosts = async () => {
+    try {
+      // Try to fetch from Supabase first
+      console.log("[HomeFeed] Fetching posts from Supabase...");
+      const supabasePosts = await fetchSupabasePosts(user?.id);
+      
+      // Also get local posts that might not be synced yet
+      const localPosts = getLocalPosts(user?.id);
+      
+      // Merge: Supabase posts take priority, but include local posts that aren't in Supabase
+      const supabasePostIds = new Set(supabasePosts.map((p) => p.id));
+      const localOnlyPosts = localPosts.filter((p) => !supabasePostIds.has(p.id));
+      
+      // Combine and sort by date (newest first)
+      const allPosts = [...supabasePosts, ...localOnlyPosts].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      console.log(`[HomeFeed] Loaded ${supabasePosts.length} from Supabase, ${localOnlyPosts.length} local-only`);
+      
+      // Update posts with current user avatars from local accounts
+      const userAccounts = useAppStore.getState().userAccounts;
+      const streamerAccounts = useAppStore.getState().streamerAccounts;
+      
+      const postsWithUpdatedAvatars = allPosts.map((post) => {
+        // Check if this is the current logged-in user's post
+        if (user && post.user.id === user.id) {
+          return {
+            ...post,
+            user: {
+              ...post.user,
+              avatarUrl: user.avatar || post.user.avatarUrl,
+              username: user.username,
+            },
+          };
+        }
 
-    // Get all user accounts to sync avatars
-    const userAccounts = useAppStore.getState().userAccounts;
-    const streamerAccounts = useAppStore.getState().streamerAccounts;
+        // Find the user account for this post
+        const userAccount = userAccounts.find((acc) => acc.user.id === post.user.id);
+        const streamerAccount = streamerAccounts.find((acc) => acc.streamer.id === post.user.id);
 
-    // Update posts with current user avatars
-    const postsWithUpdatedAvatars = storePosts.map((post) => {
-      // First check if this is the current logged-in user's post
-      if (user && post.user.id === user.id) {
-        return {
-          ...post,
-          user: {
-            ...post.user,
-            avatarUrl: user.avatar || post.user.avatarUrl,
-            username: user.username,
-          },
-        };
-      }
+        if (userAccount) {
+          return {
+            ...post,
+            user: {
+              ...post.user,
+              avatarUrl: userAccount.user.avatar || post.user.avatarUrl,
+              username: userAccount.user.username,
+            },
+          };
+        } else if (streamerAccount) {
+          return {
+            ...post,
+            user: {
+              ...post.user,
+              avatarUrl: streamerAccount.streamer.avatar || post.user.avatarUrl,
+              username: streamerAccount.streamer.name,
+            },
+          };
+        }
 
-      // Find the user account for this post
-      const userAccount = userAccounts.find((acc) => acc.user.id === post.user.id);
-      const streamerAccount = streamerAccounts.find((acc) => acc.streamer.id === post.user.id);
+        return post;
+      });
 
-      // Update avatar if we found the user or streamer account
-      if (userAccount) {
-        return {
-          ...post,
-          user: {
-            ...post.user,
-            avatarUrl: userAccount.user.avatar || post.user.avatarUrl,
-            username: userAccount.user.username,
-          },
-        };
-      } else if (streamerAccount) {
-        // Use the streamer data from streamerAccounts (this includes dynamically created streamers)
-        return {
-          ...post,
-          user: {
-            ...post.user,
-            avatarUrl: streamerAccount.streamer.avatar || post.user.avatarUrl,
-            username: streamerAccount.streamer.name,
-          },
-        };
-      }
-
-      return post;
-    });
-
-    // Use only real posts from the store
-    setPosts(postsWithUpdatedAvatars);
+      setPosts(postsWithUpdatedAvatars);
+    } catch (error) {
+      console.error("[HomeFeed] Error loading posts:", error);
+      // Fallback to local posts only
+      const localPosts = getLocalPosts(user?.id);
+      setPosts(localPosts);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadPosts();
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await loadPosts();
+    setRefreshing(false);
   };
 
-  const handleLike = (postId: string) => {
+  const handleLike = async (postId: string) => {
     if (!user) return;
-    likePost(postId, user.id);
-    loadPosts();
+    
+    // Optimistic update
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => {
+        if (p.id === postId) {
+          const newIsLiked = !p.isLiked;
+          return {
+            ...p,
+            isLiked: newIsLiked,
+            likeCount: newIsLiked ? p.likeCount + 1 : Math.max(0, p.likeCount - 1),
+          };
+        }
+        return p;
+      })
+    );
+
+    // Try Supabase first, fallback to local
+    try {
+      await toggleLike(postId, user.id);
+    } catch (error) {
+      likeLocalPost(postId, user.id);
+    }
   };
 
-  const handleSave = (postId: string) => {
+  const handleSave = async (postId: string) => {
     if (!user) return;
-    savePost(postId, user.id);
-    loadPosts();
+    
+    // Optimistic update
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => {
+        if (p.id === postId) {
+          return { ...p, isSaved: !p.isSaved };
+        }
+        return p;
+      })
+    );
+
+    // Try Supabase first, fallback to local
+    try {
+      await toggleSave(postId, user.id);
+    } catch (error) {
+      saveLocalPost(postId, user.id);
+    }
   };
 
   const handleShare = async (postId: string) => {
@@ -163,7 +224,7 @@ export function HomeFeedScreen() {
     );
   };
 
-  const handleDelete = (postId: string) => {
+  const handleDelete = async (postId: string) => {
     if (!user) return;
 
     Alert.alert(
@@ -174,10 +235,18 @@ export function HomeFeedScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            const success = deletePost(postId, user.id);
-            if (success) {
-              loadPosts();
+          onPress: async () => {
+            // Optimistic update
+            setPosts((prevPosts) => prevPosts.filter((p) => p.id !== postId));
+
+            // Try Supabase first, fallback to local
+            try {
+              const success = await deleteSupabasePost(postId, user.id);
+              if (!success) {
+                deleteLocalPost(postId, user.id);
+              }
+            } catch (error) {
+              deleteLocalPost(postId, user.id);
             }
           },
         },
@@ -243,6 +312,26 @@ export function HomeFeedScreen() {
     />
   );
 
+  const renderEmpty = () => (
+    <View className="items-center justify-center py-20">
+      {loading ? (
+        <ActivityIndicator size="large" color="#8B5CF6" />
+      ) : (
+        <>
+          <Ionicons name="images-outline" size={64} color="#6B7280" />
+          <Text className="text-gray-400 text-lg mt-4">No posts yet</Text>
+          <Text className="text-gray-500 text-sm mt-2">Be the first to share something!</Text>
+          <Pressable
+            onPress={() => navigation.navigate("CreatePost")}
+            className="mt-6 bg-purple-600 px-6 py-3 rounded-full"
+          >
+            <Text className="text-white font-semibold">Create Post</Text>
+          </Pressable>
+        </>
+      )}
+    </View>
+  );
+
   return (
     <SafeAreaView className="flex-1 bg-[#050509]" edges={["top"]}>
       <FlatList
@@ -250,6 +339,7 @@ export function HomeFeedScreen() {
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={Platform.OS === 'web' ? { maxWidth: 600, width: '100%', alignSelf: 'center' } : {}}
         refreshControl={

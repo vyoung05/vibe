@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Pressable, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
@@ -14,11 +14,13 @@ import { Button } from "../components/Button";
 import { ProfileGallery } from "../components/ProfileGallery";
 import { GuestPrompt } from "../components/GuestPrompt";
 import { PageContainer } from "../components/PageContainer";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { achievements } from "../data/achievements";
 import type { VerificationRequest } from "../types";
+import type { Post } from "../types/post";
+import { fetchUserPosts } from "../services/postsService";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -59,21 +61,69 @@ export const ProfileScreen: React.FC = () => {
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
 
   // Check if user is a streamer or admin (admins have all streamer capabilities)
-  const isStreamer = streamers.some((s) => s.id === user?.id) || user?.role === "admin";
+  // Check both s.id (legacy) and s.userId (linked accounts) to find streamer profile
+  const isStreamer = streamers.some((s) => s.id === user?.id || s.userId === user?.id) || user?.role === "admin";
+  
+  // Get the user's streamer profile if they have one (for linked accounts)
+  const userStreamerProfile = streamers.find((s) => s.userId === user?.id || s.id === user?.id);
 
-  // Get user's posts - filter posts where the user is the author
-  const userPosts = user
-    ? posts
-      .filter((post) => post.user.id === user.id)
-      .map((post) => ({
-        ...post,
-        isLiked: (post.likedBy || []).includes(user.id),
-        isSaved: (post.savedBy || []).includes(user.id),
-      }))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    : [];
+  // Load user's posts from Supabase + local store
+  const loadUserPosts = useCallback(async () => {
+    if (!user) {
+      setUserPosts([]);
+      setLoadingPosts(false);
+      return;
+    }
+
+    try {
+      // Fetch from Supabase
+      const supabasePosts = await fetchUserPosts(user.id, user.id);
+      
+      // Also get local posts that might not be synced
+      const localPosts = posts
+        .filter((post) => post.user.id === user.id)
+        .map((post) => ({
+          ...post,
+          isLiked: (post.likedBy || []).includes(user.id),
+          isSaved: (post.savedBy || []).includes(user.id),
+        }));
+      
+      // Merge: Supabase posts take priority
+      const supabasePostIds = new Set(supabasePosts.map((p) => p.id));
+      const localOnlyPosts = localPosts.filter((p) => !supabasePostIds.has(p.id));
+      
+      const allPosts = [...supabasePosts, ...localOnlyPosts].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      setUserPosts(allPosts);
+    } catch (error) {
+      console.error("[Profile] Error loading posts:", error);
+      // Fallback to local posts
+      const localPosts = posts
+        .filter((post) => post.user.id === user.id)
+        .map((post) => ({
+          ...post,
+          isLiked: (post.likedBy || []).includes(user.id),
+          isSaved: (post.savedBy || []).includes(user.id),
+        }))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setUserPosts(localPosts);
+    } finally {
+      setLoadingPosts(false);
+    }
+  }, [user?.id, posts]);
+
+  // Load posts when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadUserPosts();
+    }, [loadUserPosts])
+  );
 
   // Sync local state with user data ONLY when modal opens (not on every user change)
   // This prevents losing edits when user data updates mid-edit

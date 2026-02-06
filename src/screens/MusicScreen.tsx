@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,20 +7,23 @@ import {
   FlatList,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
 import { useMusicStore } from "../state/musicStore";
 import { useAppStore } from "../state/appStore";
 import { PageContainer } from "../components/PageContainer";
+import { fetchArtists, incrementPlayCount } from "../services/musicService";
 import type { Track, Artist } from "../types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export const MusicScreen: React.FC = () => {
-  const artists = useAppStore((s) => s.artists);
+  const localArtists = useAppStore((s) => s.artists);
   const currentTrack = useMusicStore((s) => s.currentTrack);
   const isPlaying = useMusicStore((s) => s.isPlaying);
   const position = useMusicStore((s) => s.position);
@@ -30,11 +33,42 @@ export const MusicScreen: React.FC = () => {
   const resumeTrack = useMusicStore((s) => s.resumeTrack);
   const setQueue = useMusicStore((s) => s.setQueue);
 
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
+
+  // Load artists from Supabase + local
+  const loadArtists = useCallback(async () => {
+    try {
+      console.log("[MusicScreen] Loading artists...");
+      const supabaseArtists = await fetchArtists();
+      
+      // Merge with local artists (local takes priority for same IDs)
+      const supabaseIds = new Set(supabaseArtists.map((a) => a.id));
+      const localOnly = localArtists.filter((a) => !supabaseIds.has(a.id));
+      
+      const allArtists = [...supabaseArtists, ...localOnly];
+      console.log(`[MusicScreen] Loaded ${supabaseArtists.length} from Supabase, ${localOnly.length} local-only`);
+      
+      setArtists(allArtists);
+    } catch (error) {
+      console.error("[MusicScreen] Error loading artists:", error);
+      setArtists(localArtists);
+    } finally {
+      setLoading(false);
+    }
+  }, [localArtists]);
+
+  // Load on focus
+  useFocusEffect(
+    useCallback(() => {
+      loadArtists();
+    }, [loadArtists])
+  );
 
   // Get all tracks from all artists
   const allTracks = artists.flatMap((artist) =>
-    artist.tracks.map((track) => ({ ...track, artist }))
+    (artist.tracks || []).map((track) => ({ ...track, artist }))
   );
 
   const filteredTracks = selectedArtist
@@ -48,10 +82,17 @@ export const MusicScreen: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handlePlayTrack = (track: Track, index: number) => {
+  const handlePlayTrack = async (track: Track, index: number) => {
     // Set the entire filtered list as queue
     setQueue(filteredTracks, index);
     playTrack(track);
+    
+    // Increment play count in Supabase
+    try {
+      await incrementPlayCount(track.id);
+    } catch (e) {
+      // Ignore errors, not critical
+    }
   };
 
   const togglePlayPause = () => {
@@ -88,6 +129,7 @@ export const MusicScreen: React.FC = () => {
               source={{ uri: item.coverArt }}
               style={{ width: 56, height: 56, borderRadius: 16 }}
               contentFit="cover"
+              placeholder={{ uri: "https://via.placeholder.com/56" }}
             />
             {isCurrentTrack && isPlaying && (
               <View className="absolute inset-0 bg-purple-500/20 rounded-2xl items-center justify-center">
@@ -114,7 +156,7 @@ export const MusicScreen: React.FC = () => {
               <View className="bg-white/5 px-2 py-0.5 rounded-md flex-row items-center border border-white/5">
                 <Ionicons name="play" size={8} color="#9CA3AF" />
                 <Text className="text-gray-500 text-[9px] font-bold ml-1">
-                  {item.playCount.toLocaleString()}
+                  {(item.playCount || 0).toLocaleString()}
                 </Text>
               </View>
               {item.isHot && (
@@ -129,7 +171,7 @@ export const MusicScreen: React.FC = () => {
           {/* Duration */}
           <View className="items-end">
             <Text className="text-gray-500 text-[10px] font-black">
-              {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, "0")}
+              {Math.floor((item.duration || 0) / 60)}:{((item.duration || 0) % 60).toString().padStart(2, "0")}
             </Text>
             {isCurrentTrack && (
               <Ionicons name="stats-chart" size={14} color="#A78BFA" className="mt-2" />
@@ -158,6 +200,18 @@ export const MusicScreen: React.FC = () => {
     );
   };
 
+  const renderEmptyState = () => (
+    <View className="items-center justify-center py-32">
+      <View className="w-20 h-20 bg-white/5 rounded-full items-center justify-center mb-6">
+        <Ionicons name="musical-notes-outline" size={32} color="#374151" />
+      </View>
+      <Text className="text-white text-xl font-black italic tracking-tight mb-2">NO MUSIC YET</Text>
+      <Text className="text-gray-500 text-center font-bold text-xs uppercase tracking-widest px-8">
+        Artists can upload tracks from their profile. Check back soon for new releases!
+      </Text>
+    </View>
+  );
+
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-[#0A0A0F]">
       {/* Header */}
@@ -171,7 +225,7 @@ export const MusicScreen: React.FC = () => {
             <View>
               <Text className="text-white text-4xl font-black italic tracking-tighter uppercase">Music</Text>
               <Text className="text-purple-500 text-[10px] font-black uppercase tracking-[4px] mt-1.5 px-0.5">
-                {filteredTracks.length} DISCOGRAPHY
+                {filteredTracks.length} {filteredTracks.length === 1 ? "TRACK" : "TRACKS"}
               </Text>
             </View>
             <View className="w-12 h-12 bg-white/5 rounded-full items-center justify-center border border-white/10 shadow-2xl">
@@ -181,80 +235,82 @@ export const MusicScreen: React.FC = () => {
         </View>
       </PageContainer>
 
-      {/* Artist Filter */}
-      <PageContainer>
-        <View className="border-white/5">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
-          >
-            <Pressable
-              onPress={() => setSelectedArtist(null)}
-              className="mr-3"
-            >
-              <LinearGradient
-                colors={selectedArtist === null ? ["#8B5CF6", "#D946EF"] : ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.05)"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className={`px-6 py-2.5 rounded-2xl border ${selectedArtist === null ? "border-transparent" : "border-white/10"}`}
-              >
-                <Text
-                  className={`text-[10px] font-black uppercase tracking-widest ${selectedArtist === null ? "text-white" : "text-gray-500"}`}
-                >
-                  All Artists
-                </Text>
-              </LinearGradient>
-            </Pressable>
-
-            {artists.map((artist) => (
-              <Pressable
-                key={artist.id}
-                onPress={() => setSelectedArtist(artist.id)}
-                className="mr-3"
-              >
-                <LinearGradient
-                  colors={selectedArtist === artist.id ? ["#8B5CF6", "#D946EF"] : ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.05)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  className={`px-6 py-2.5 rounded-2xl border ${selectedArtist === artist.id ? "border-transparent" : "border-white/10"}`}
-                >
-                  <Text
-                    className={`text-[10px] font-black uppercase tracking-widest ${selectedArtist === artist.id ? "text-white" : "text-gray-500"}`}
-                  >
-                    {artist.name}
-                  </Text>
-                </LinearGradient>
-              </Pressable>
-            ))}
-          </ScrollView>
+      {/* Loading State */}
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#8B5CF6" />
+          <Text className="text-gray-500 mt-4 text-sm">Loading music...</Text>
         </View>
-      </PageContainer>
+      ) : (
+        <>
+          {/* Artist Filter */}
+          {artists.length > 0 && (
+            <PageContainer>
+              <View className="border-white/5">
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
+                >
+                  <Pressable
+                    onPress={() => setSelectedArtist(null)}
+                    className="mr-3"
+                  >
+                    <LinearGradient
+                      colors={selectedArtist === null ? ["#8B5CF6", "#D946EF"] : ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.05)"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      className={`px-6 py-2.5 rounded-2xl border ${selectedArtist === null ? "border-transparent" : "border-white/10"}`}
+                    >
+                      <Text
+                        className={`text-[10px] font-black uppercase tracking-widest ${selectedArtist === null ? "text-white" : "text-gray-500"}`}
+                      >
+                        All Artists
+                      </Text>
+                    </LinearGradient>
+                  </Pressable>
 
-      {/* Track List */}
-      <PageContainer>
-        <FlatList
-          data={filteredTracks}
-          renderItem={renderTrackItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            { paddingHorizontal: 24, paddingBottom: currentTrack ? 180 : 120 },
-            Platform.OS === 'web' ? { width: '100%', alignSelf: 'center' } : {}
-          ]}
-          ListEmptyComponent={
-            <View className="items-center justify-center py-32">
-              <View className="w-20 h-20 bg-white/5 rounded-full items-center justify-center mb-6">
-                <Ionicons name="musical-notes-outline" size={32} color="#374151" />
+                  {artists.map((artist) => (
+                    <Pressable
+                      key={artist.id}
+                      onPress={() => setSelectedArtist(artist.id)}
+                      className="mr-3"
+                    >
+                      <LinearGradient
+                        colors={selectedArtist === artist.id ? ["#8B5CF6", "#D946EF"] : ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.05)"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        className={`px-6 py-2.5 rounded-2xl border ${selectedArtist === artist.id ? "border-transparent" : "border-white/10"}`}
+                      >
+                        <Text
+                          className={`text-[10px] font-black uppercase tracking-widest ${selectedArtist === artist.id ? "text-white" : "text-gray-500"}`}
+                        >
+                          {artist.name}
+                        </Text>
+                      </LinearGradient>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
-              <Text className="text-white text-xl font-black italic tracking-tight mb-2">SILENCE IN THE STUDIO</Text>
-              <Text className="text-gray-500 text-center font-bold text-xs uppercase tracking-widest">
-                No tracks discovery yet
-              </Text>
-            </View>
-          }
-        />
-      </PageContainer>
+            </PageContainer>
+          )}
+
+          {/* Track List */}
+          <PageContainer>
+            <FlatList
+              data={filteredTracks}
+              renderItem={renderTrackItem}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                { paddingHorizontal: 24, paddingBottom: currentTrack ? 180 : 120 },
+                Platform.OS === 'web' ? { width: '100%', alignSelf: 'center' } : {}
+              ]}
+              ListEmptyComponent={renderEmptyState}
+            />
+          </PageContainer>
+        </>
+      )}
 
       {/* Now Playing Bar (if track is playing) */}
       {currentTrack && (

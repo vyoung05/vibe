@@ -11,7 +11,7 @@ interface AuthState {
   error: string | null;
   successMessage: string | null;
   signIn: (email: string, password: string) => Promise<boolean>;
-  signUp: (email: string, password: string, username: string, tier: "free" | "superfan") => Promise<boolean>;
+  signUp: (email: string, password: string, username: string, tier: "free" | "superfan", accountType?: "user" | "streamer" | "artist", stageName?: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
@@ -263,7 +263,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signUp: async (email: string, password: string, username: string, tier: "free" | "superfan"): Promise<boolean> => {
+      signUp: async (email: string, password: string, username: string, tier: "free" | "superfan", accountType: "user" | "streamer" | "artist" = "user", stageName?: string): Promise<boolean> => {
         try {
           set({ isLoading: true, error: null });
           console.log("[Auth] Attempting sign up for:", email);
@@ -305,6 +305,7 @@ export const useAuthStore = create<AuthState>()(
               tier: isAdmin ? "superfan" : tier,
               role: userRole,
               referral_code: isAdmin ? "ADMIN2024" : referralCode,
+              account_type: accountType,
             })
             .select()
             .single();
@@ -315,6 +316,41 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
 
+          // Create streamer profile if account type is streamer
+          if (accountType === "streamer") {
+            console.log("[Auth] Creating streamer profile for:", stageName || username);
+            const streamerReferralCode = "STR" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            await supabase.from("streamers").insert({
+              user_id: authData.user.id,
+              name: stageName || username,
+              gamertag: username,
+              avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+              bio: "New streamer on DDNS!",
+              follower_count: 0,
+              referral_code: streamerReferralCode,
+            });
+          }
+
+          // Create artist profile if account type is artist
+          if (accountType === "artist") {
+            console.log("[Auth] Creating artist profile for:", stageName || username);
+            const artistReferralCode = "ART" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            await supabase.from("artists").insert({
+              user_id: authData.user.id,
+              name: username,
+              stage_name: stageName || username,
+              email: email,
+              avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+              bio: "New artist on DDNS!",
+              follower_count: 0,
+              referral_code: artistReferralCode,
+              total_plays: 0,
+              total_sales: 0,
+            });
+          }
+
           const user: User = {
             id: userData.id,
             email: userData.email,
@@ -323,6 +359,7 @@ export const useAuthStore = create<AuthState>()(
             bio: userData.bio,
             tier: userData.tier || "free",
             role: userData.role || "user",
+            accountType: userData.account_type || accountType,
             permissions: userData.permissions,
             referralCode: userData.referral_code,
             followedStreamers: [],

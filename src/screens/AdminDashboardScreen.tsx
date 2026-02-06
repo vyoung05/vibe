@@ -1678,6 +1678,122 @@ export const AdminDashboardScreen: React.FC = () => {
     Alert.alert("Success", `${targetUser.username} has been verified!`);
   };
 
+  // Upgrade user to Artist
+  const handleUpgradeToArtist = async (targetUser: User) => {
+    try {
+      setIsLoadingUsers(true);
+      console.log('[AdminDashboard] Upgrading user to artist:', targetUser.username);
+
+      // Check if user already has an artist profile
+      const { data: existingArtist } = await supabase
+        .from('artists')
+        .select('id')
+        .eq('user_id', targetUser.id)
+        .single();
+
+      if (existingArtist) {
+        Alert.alert('Already an Artist', `${targetUser.username} already has an artist profile.`);
+        setIsLoadingUsers(false);
+        return;
+      }
+
+      // Create artist profile
+      const artistReferralCode = "ART" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      const { error: artistError } = await supabase
+        .from('artists')
+        .insert({
+          user_id: targetUser.id,
+          name: targetUser.username,
+          stage_name: targetUser.username,
+          email: targetUser.email,
+          avatar: targetUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUser.username}`,
+          bio: targetUser.bio || `${targetUser.username} is now an artist on DDNS!`,
+          follower_count: 0,
+          referral_code: artistReferralCode,
+          total_plays: 0,
+          total_sales: 0,
+        });
+
+      if (artistError) {
+        console.error('[AdminDashboard] Error creating artist:', artistError);
+        Alert.alert('Error', artistError.message);
+        return;
+      }
+
+      // Update user account type
+      await supabase
+        .from('users')
+        .update({ account_type: 'artist' })
+        .eq('id', targetUser.id);
+
+      Alert.alert('Success', `${targetUser.username} has been upgraded to Artist! They can now upload and sell music.`);
+      fetchUsers();
+    } catch (err) {
+      console.error('[AdminDashboard] Exception upgrading to artist:', err);
+      Alert.alert('Error', String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Upgrade user to Streamer
+  const handleUpgradeToStreamer = async (targetUser: User) => {
+    try {
+      setIsLoadingUsers(true);
+      console.log('[AdminDashboard] Upgrading user to streamer:', targetUser.username);
+
+      // Check if user already has a streamer profile
+      const { data: existingStreamer } = await supabase
+        .from('streamers')
+        .select('id')
+        .eq('user_id', targetUser.id)
+        .single();
+
+      if (existingStreamer) {
+        Alert.alert('Already a Streamer', `${targetUser.username} already has a streamer profile.`);
+        setIsLoadingUsers(false);
+        return;
+      }
+
+      // Create streamer profile
+      const streamerReferralCode = "STR" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      const { error: streamerError } = await supabase
+        .from('streamers')
+        .insert({
+          user_id: targetUser.id,
+          name: targetUser.username,
+          gamertag: targetUser.username,
+          avatar: targetUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUser.username}`,
+          bio: targetUser.bio || `${targetUser.username} is now streaming on DDNS!`,
+          follower_count: 0,
+          referral_code: streamerReferralCode,
+        });
+
+      if (streamerError) {
+        console.error('[AdminDashboard] Error creating streamer:', streamerError);
+        Alert.alert('Error', streamerError.message);
+        return;
+      }
+
+      // Update user account type
+      await supabase
+        .from('users')
+        .update({ account_type: 'streamer' })
+        .eq('id', targetUser.id);
+
+      Alert.alert('Success', `${targetUser.username} has been upgraded to Streamer! They can now go live.`);
+      fetchUsers();
+      fetchStreamers();
+    } catch (err) {
+      console.error('[AdminDashboard] Exception upgrading to streamer:', err);
+      Alert.alert('Error', String(err));
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
 return (
   <SafeAreaView className="flex-1 bg-[#0A0A0F]" edges={["top"]}>
     {/* Sticky Header with Title and Tabs */}
@@ -2289,6 +2405,23 @@ return (
                         <Text className="text-purple-300 text-xs font-bold ml-1">Verify</Text>
                       </Pressable>
                     )}
+
+                    {/* Upgrade Options */}
+                    <Pressable
+                      onPress={() => handleUpgradeToArtist(dbUser)}
+                      className="flex-1 bg-pink-600/20 py-2.5 rounded-xl flex-row items-center justify-center border border-pink-500/30"
+                    >
+                      <Ionicons name="musical-notes" size={16} color="#F472B6" />
+                      <Text className="text-pink-300 text-xs font-bold ml-1">Artist</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => handleUpgradeToStreamer(dbUser)}
+                      className="flex-1 bg-cyan-600/20 py-2.5 rounded-xl flex-row items-center justify-center border border-cyan-500/30"
+                    >
+                      <Ionicons name="videocam" size={16} color="#22D3D1" />
+                      <Text className="text-cyan-300 text-xs font-bold ml-1">Streamer</Text>
+                    </Pressable>
 
                     {!isCurrentUser && (
                       <Pressable

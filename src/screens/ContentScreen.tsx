@@ -46,7 +46,8 @@ export const ContentScreen: React.FC = () => {
 
   // Check if user is admin or streamer
   const isAdmin = user?.role === "admin";
-  const userStreamer = streamers.find((s) => s.id === user?.id);
+  // Check both s.id (legacy) and s.userId (linked accounts)
+  const userStreamer = streamers.find((s) => s.id === user?.id || s.userId === user?.id);
   const canUpload = isAdmin || !!userStreamer;
 
   const handleUploadVideo = () => {

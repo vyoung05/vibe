@@ -236,8 +236,9 @@ export const FeedScreen: React.FC = () => {
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   // Check if user is streamer or admin
-  const isStreamer = streamers.some((s) => s.id === user?.id) || user?.role === "admin";
-  const userStreamer = streamers.find((s) => s.id === user?.id);
+  // Check both s.id (legacy) and s.userId (linked accounts)
+  const isStreamer = streamers.some((s) => s.id === user?.id || s.userId === user?.id) || user?.role === "admin";
+  const userStreamer = streamers.find((s) => s.id === user?.id || s.userId === user?.id);
 
   // All authenticated users can create posts
   const canCreatePost = !!user;

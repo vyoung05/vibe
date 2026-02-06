@@ -34,7 +34,8 @@ export const StreamerControls: React.FC = () => {
   const activeStreamId = useRef<string | null>(null);
 
   // Check if current user is a streamer
-  const userStreamer = streamers.find((s) => s.id === user?.id);
+  // Check both s.id (legacy) and s.userId (linked accounts)
+  const userStreamer = streamers.find((s) => s.id === user?.id || s.userId === user?.id);
 
   if (!userStreamer) return null;
 

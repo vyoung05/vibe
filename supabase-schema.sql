@@ -1256,6 +1256,16 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Function to increment track purchase count
+CREATE OR REPLACE FUNCTION increment_track_purchase_count(track_uuid UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE tracks SET purchase_count = purchase_count + 1 WHERE id = track_uuid;
+  UPDATE artists SET total_sales = total_sales + 1
+  WHERE id = (SELECT artist_id FROM tracks WHERE id = track_uuid);
+END;
+$$ language 'plpgsql';
+
 -- Function to handle track votes
 CREATE OR REPLACE FUNCTION handle_track_vote()
 RETURNS TRIGGER AS $$

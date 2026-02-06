@@ -33,7 +33,8 @@ export const StreamingScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<StreamPlatformType | null>(null);
   const [liveStreamUrl, setLiveStreamUrl] = useState("");
 
-  const foundStreamer = streamers.find((s) => s.id === user?.id);
+  // Check both s.id (legacy) and s.userId (linked accounts)
+  const foundStreamer = streamers.find((s) => s.id === user?.id || s.userId === user?.id);
   const isAdmin = user?.role === "admin";
 
   const streamer = foundStreamer || (isAdmin && user ? {

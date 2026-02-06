@@ -20,6 +20,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useAuthStore } from "../state/authStore";
 import { useAppStore } from "../state/appStore";
+import { uploadPostMedia, createPost } from "../services/postsService";
 
 type CreatePostScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -138,15 +139,47 @@ export function CreatePostScreen() {
     setIsUploading(true);
 
     try {
-      // Create new post with proper structure
-      const newPost = {
+      // Try to upload to Supabase Storage first
+      console.log("[CreatePost] Uploading media to Supabase Storage...");
+      const uploadedUrl = await uploadPostMedia(mediaUri, user.id, mediaType!);
+
+      if (uploadedUrl) {
+        // Successfully uploaded to Supabase - create post in database
+        console.log("[CreatePost] Media uploaded, creating post in database...");
+        const newPost = await createPost(
+          user.id,
+          user.username,
+          user.avatar || null,
+          uploadedUrl,
+          caption.trim(),
+          mediaType === "video" ? uploadedUrl : undefined,
+          mediaType!
+        );
+
+        if (newPost) {
+          console.log("[CreatePost] Post created successfully in Supabase:", newPost.id);
+          // Also add to local store for immediate display
+          addPost(newPost);
+          Alert.alert("Success", "Your post has been published!", [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(),
+            },
+          ]);
+          return;
+        }
+      }
+
+      // Fallback to local storage if Supabase fails
+      console.log("[CreatePost] Supabase upload failed, falling back to local storage");
+      const fallbackPost = {
         id: "post-" + Date.now(),
         user: {
           id: user.id,
           username: user.username,
           avatarUrl: user.avatar || `https://i.pravatar.cc/150?u=${user.id}`,
         },
-        imageUrl: mediaUri, // Always set imageUrl to the media URI
+        imageUrl: mediaUri,
         videoUrl: mediaType === "video" ? mediaUri : undefined,
         mediaType: mediaType!,
         caption: caption.trim(),
@@ -160,18 +193,17 @@ export function CreatePostScreen() {
         savedBy: [],
       };
 
-      addPost(newPost);
-      console.log("Post added successfully:", newPost);
+      addPost(fallbackPost);
+      console.log("[CreatePost] Post added to local store:", fallbackPost.id);
 
       Alert.alert("Success", "Your post has been published!", [
         {
           text: "OK",
-          onPress: () => {
-            navigation.goBack();
-          },
+          onPress: () => navigation.goBack(),
         },
       ]);
     } catch (error) {
+      console.error("[CreatePost] Error:", error);
       Alert.alert("Error", "Failed to create post. Please try again.");
     } finally {
       setIsUploading(false);

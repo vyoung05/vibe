@@ -42,6 +42,8 @@ import { DiscoverPeopleScreen } from "../screens/DiscoverPeopleScreen";
 import { InviteFriendsScreen } from "../screens/InviteFriendsScreen";
 import { ArtistProfileScreen } from "../screens/ArtistProfileScreen";
 import { CreateMusicSheetScreen } from "../screens/CreateMusicSheetScreen";
+import { MusicStoreScreen } from "../screens/MusicStoreScreen";
+import { TrackPurchaseScreen } from "../screens/TrackPurchaseScreen";
 import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
 import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { MainTabs } from "./MainTabs";
@@ -95,6 +97,9 @@ export type RootStackParamList = {
   AdminMerchStore: undefined;
   AdminNews: undefined;
   StreamerMerch: undefined;
+  // Music Store screens
+  MusicStore: undefined;
+  TrackPurchase: { trackId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -150,6 +155,9 @@ export const RootNavigator: React.FC = () => {
       {/* Artist screens */}
       <Stack.Screen name="ArtistProfile" component={ArtistProfileScreen} />
       <Stack.Screen name="CreateMusicSheet" component={CreateMusicSheetScreen} />
+      {/* Music Store screens */}
+      <Stack.Screen name="MusicStore" component={MusicStoreScreen} />
+      <Stack.Screen name="TrackPurchase" component={TrackPurchaseScreen} />
     </Stack.Navigator>
   );
 };
