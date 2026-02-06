@@ -21,6 +21,7 @@ import { useAuthStore } from "../state/authStore";
 import { useMerchStore } from "../state/merchStore";
 import type { MerchProduct, MerchCategory, Promotion } from "../types/printify";
 import { MusicStoreSection } from "../components/MusicStoreSection";
+import { PromoCarousel } from "../components/PromoCarousel";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -192,57 +193,14 @@ export const MerchStoreScreen: React.FC = () => {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <PageContainer>
-          {/* Active Promotions Banner */}
+          {/* Active Promotions Carousel */}
           {activePromotions.length > 0 && (
-            <View className="px-6 pt-4">
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {activePromotions.map((promo) => (
-                  <Pressable
-                    key={promo.id}
-                    className="mr-3"
-                    style={{ width: Platform.OS === 'web' ? 400 : SCREEN_WIDTH - 80 }}
-                  >
-                    <LinearGradient
-                      colors={["#4C1D95", "#831843"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      className="p-5 rounded-2xl border border-white/10"
-                    >
-                      <View className="flex-row items-center justify-between">
-                        <View className="flex-1">
-                          <View className="flex-row items-center mb-1">
-                            <Ionicons name="flash" size={14} color="#F59E0B" />
-                            <Text className="text-yellow-400 text-[10px] font-black ml-1 tracking-widest uppercase">
-                              LIMITED TIME
-                            </Text>
-                          </View>
-                          <Text className="text-white font-black text-xl mb-1">{promo.name}</Text>
-                          <Text className="text-purple-200 font-bold text-lg">
-                            {promo.type === "percentage_off"
-                              ? `${promo.value}% OFF`
-                              : promo.type === "fixed_amount_off"
-                                ? `$${promo.value} OFF`
-                                : "FREE SHIPPING"}
-                          </Text>
-                          {promo.code && (
-                            <View className="flex-row items-center mt-3">
-                              <View className="bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">
-                                <Text className="text-white font-mono font-black text-sm">{promo.code}</Text>
-                              </View>
-                            </View>
-                          )}
-                        </View>
-                        <View className="items-end bg-black/20 p-3 rounded-xl">
-                          <Text className="text-purple-300 text-[10px] font-bold mb-1 uppercase">Ends in</Text>
-                          <Text className="text-white font-black text-lg">
-                            {countdown[promo.id] || getTimeRemaining(promo.endDate)}
-                          </Text>
-                        </View>
-                      </View>
-                    </LinearGradient>
-                  </Pressable>
-                ))}
-              </ScrollView>
+            <View className="pt-4">
+              <PromoCarousel
+                promotions={activePromotions}
+                countdown={countdown}
+                getTimeRemaining={getTimeRemaining}
+              />
             </View>
           )}
 

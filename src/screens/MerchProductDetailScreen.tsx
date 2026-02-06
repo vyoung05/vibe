@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   Pressable,
   Dimensions,
+  Platform,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,12 +23,12 @@ import type { MerchVariant } from "../types/printify";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type MerchProductDetailRouteProp = RouteProp<RootStackParamList, "MerchProductDetail">;
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 export const MerchProductDetailScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<MerchProductDetailRouteProp>();
   const productId = route.params?.productId;
+  const { width: windowWidth } = useWindowDimensions();
+  const imageScrollRef = useRef<ScrollView>(null);
 
   const getProduct = useMerchStore((s) => s.getProduct);
   const addToCart = useMerchStore((s) => s.addToCart);
@@ -41,6 +43,12 @@ export const MerchProductDetailScreen: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
+  
+  // Responsive: desktop shows side-by-side layout
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 768;
+  const imageGalleryWidth = isDesktop 
+    ? Math.min(500, windowWidth * 0.45) 
+    : Math.min(windowWidth, 600);
 
   // Group variants by attribute
   const sizes = product ? [...new Set(product.variants.filter((v) => v.size).map((v) => v.size))] : [];
@@ -131,45 +139,116 @@ export const MerchProductDetailScreen: React.FC = () => {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <PageContainer>
-          {/* Image Gallery */}
-          <View className="bg-[#151520] border-b border-white/5">
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={(e) => {
-                const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-                setCurrentImageIndex(index);
-              }}
-              scrollEventThrottle={16}
-            >
-              {product.images.map((image, index) => (
-                <View key={index} style={{ width: SCREEN_WIDTH, height: 400 }}>
-                  <Image
-                    source={{ uri: image }}
-                    style={{ width: "100%", height: "100%" }}
-                    contentFit="contain"
-                  />
-                  <LinearGradient
-                    colors={["transparent", "rgba(10,10,15,0.2)"]}
-                    className="absolute inset-0"
-                  />
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* Image Indicators */}
-            {product.images.length > 1 && (
-              <View className="flex-row justify-center absolute bottom-4 left-0 right-0">
-                {product.images.map((_, index) => (
-                  <View
-                    key={index}
-                    className={`h-1 rounded-full mx-1 ${index === currentImageIndex ? "w-6 bg-purple-500" : "w-2 bg-white/20"
+          {/* Image Gallery - Responsive */}
+          <View className={`bg-[#151520] border-b border-white/5 ${isDesktop ? 'flex-row' : ''}`}>
+            {/* Thumbnails for desktop - left side */}
+            {isDesktop && product.images.length > 1 && (
+              <View className="w-20 p-2 bg-black/20">
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {product.images.map((image, index) => (
+                    <Pressable 
+                      key={index}
+                      onPress={() => {
+                        setCurrentImageIndex(index);
+                        imageScrollRef.current?.scrollTo({ x: index * imageGalleryWidth, animated: true });
+                      }}
+                      className={`mb-2 rounded-lg overflow-hidden border-2 ${
+                        index === currentImageIndex ? 'border-purple-500' : 'border-transparent'
                       }`}
-                  />
-                ))}
+                    >
+                      <Image
+                        source={{ uri: image }}
+                        style={{ width: 64, height: 64 }}
+                        contentFit="cover"
+                      />
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
             )}
+            
+            {/* Main Image Area */}
+            <View className="relative flex-1">
+              <ScrollView
+                ref={imageScrollRef}
+                horizontal
+                pagingEnabled={!isDesktop}
+                showsHorizontalScrollIndicator={false}
+                onScroll={(e) => {
+                  const index = Math.round(e.nativeEvent.contentOffset.x / imageGalleryWidth);
+                  if (index !== currentImageIndex) setCurrentImageIndex(index);
+                }}
+                scrollEventThrottle={16}
+                snapToInterval={isDesktop ? imageGalleryWidth : undefined}
+                decelerationRate="fast"
+              >
+                {product.images.map((image, index) => (
+                  <View key={index} style={{ width: imageGalleryWidth, height: isDesktop ? 500 : 400 }}>
+                    <Image
+                      source={{ uri: image }}
+                      style={{ width: "100%", height: "100%" }}
+                      contentFit="contain"
+                    />
+                    <LinearGradient
+                      colors={["transparent", "rgba(10,10,15,0.2)"]}
+                      className="absolute inset-0"
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+
+              {/* Desktop Navigation Arrows */}
+              {isDesktop && product.images.length > 1 && (
+                <>
+                  <Pressable
+                    onPress={() => {
+                      const newIndex = currentImageIndex === 0 ? product.images.length - 1 : currentImageIndex - 1;
+                      setCurrentImageIndex(newIndex);
+                      imageScrollRef.current?.scrollTo({ x: newIndex * imageGalleryWidth, animated: true });
+                    }}
+                    className="absolute left-2 top-1/2 -translate-y-5 bg-black/60 hover:bg-black/80 w-10 h-10 rounded-full items-center justify-center border border-white/20"
+                    style={{ transform: [{ translateY: -20 }] }}
+                  >
+                    <Ionicons name="chevron-back" size={24} color="white" />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      const newIndex = (currentImageIndex + 1) % product.images.length;
+                      setCurrentImageIndex(newIndex);
+                      imageScrollRef.current?.scrollTo({ x: newIndex * imageGalleryWidth, animated: true });
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-5 bg-black/60 hover:bg-black/80 w-10 h-10 rounded-full items-center justify-center border border-white/20"
+                    style={{ transform: [{ translateY: -20 }] }}
+                  >
+                    <Ionicons name="chevron-forward" size={24} color="white" />
+                  </Pressable>
+                </>
+              )}
+
+              {/* Image Indicators (mobile) */}
+              {!isDesktop && product.images.length > 1 && (
+                <View className="flex-row justify-center absolute bottom-4 left-0 right-0">
+                  {product.images.map((_, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => {
+                        setCurrentImageIndex(index);
+                        imageScrollRef.current?.scrollTo({ x: index * imageGalleryWidth, animated: true });
+                      }}
+                    >
+                      <View
+                        className={`h-1 rounded-full mx-1 ${index === currentImageIndex ? "w-6 bg-purple-500" : "w-2 bg-white/20"}`}
+                        style={{
+                          width: index === currentImageIndex ? 24 : 8,
+                          height: 4,
+                          backgroundColor: index === currentImageIndex ? "#A855F7" : "rgba(255,255,255,0.2)",
+                        }}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Product Info */}
