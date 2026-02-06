@@ -130,6 +130,7 @@ export const AdminDashboardScreen: React.FC = () => {
     referralCode: "",
     isVerified: false,
     isInfluencer: false,
+    isStreamer: false,
   });
 
   // Artist form state
@@ -466,6 +467,7 @@ export const AdminDashboardScreen: React.FC = () => {
         referralCode: "",
         isVerified: false,
         isInfluencer: false,
+        isStreamer: false,
       });
 
       // Refresh users list
@@ -505,6 +507,50 @@ export const AdminDashboardScreen: React.FC = () => {
         return;
       }
 
+      // Handle streamer access toggle
+      const { data: existingStreamer } = await supabase
+        .from('streamers')
+        .select('id')
+        .eq('user_id', selectedUser.id)
+        .single();
+
+      if (userForm.isStreamer && !existingStreamer) {
+        // Create streamer profile for this user
+        const referralCode = "STREAM" + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const { error: streamerError } = await supabase
+          .from('streamers')
+          .insert({
+            user_id: selectedUser.id,
+            name: userForm.username,
+            gamertag: userForm.username,
+            email: selectedUser.email,
+            avatar: userForm.avatar || selectedUser.avatar,
+            bio: userForm.bio || 'New streamer on DDNS!',
+            is_live: false,
+            follower_count: 0,
+            referral_code: referralCode,
+            is_verified: userForm.isVerified,
+          });
+        
+        if (streamerError) {
+          console.error('[AdminDashboard] Error creating streamer profile:', streamerError);
+        } else {
+          console.log('[AdminDashboard] Created streamer profile for user:', selectedUser.id);
+        }
+      } else if (!userForm.isStreamer && existingStreamer) {
+        // Remove streamer profile
+        const { error: deleteError } = await supabase
+          .from('streamers')
+          .delete()
+          .eq('user_id', selectedUser.id);
+        
+        if (deleteError) {
+          console.error('[AdminDashboard] Error removing streamer profile:', deleteError);
+        } else {
+          console.log('[AdminDashboard] Removed streamer profile for user:', selectedUser.id);
+        }
+      }
+
       Alert.alert('Success', `User ${userForm.username} updated successfully!`);
       setShowEditUser(false);
       setSelectedUser(null);
@@ -519,10 +565,12 @@ export const AdminDashboardScreen: React.FC = () => {
         referralCode: "",
         isVerified: false,
         isInfluencer: false,
+        isStreamer: false,
       });
 
-      // Refresh users list
+      // Refresh users list and streamers list
       fetchUsers();
+      fetchStreamers();
     } catch (err) {
       console.error('[AdminDashboard] Exception updating user:', err);
       Alert.alert('Error', String(err));
@@ -640,8 +688,18 @@ export const AdminDashboardScreen: React.FC = () => {
   };
 
   // Open edit user modal
-  const openEditUserModal = (targetUser: User) => {
+  const openEditUserModal = async (targetUser: User) => {
     setSelectedUser(targetUser);
+    
+    // Check if user has a linked streamer profile
+    const { data: streamerData } = await supabase
+      .from('streamers')
+      .select('id')
+      .eq('user_id', targetUser.id)
+      .single();
+    
+    const hasStreamerProfile = !!streamerData;
+    
     setUserForm({
       email: targetUser.email,
       username: targetUser.username,
@@ -653,6 +711,7 @@ export const AdminDashboardScreen: React.FC = () => {
       referralCode: targetUser.referralCode || "",
       isVerified: targetUser.isVerified || false,
       isInfluencer: targetUser.isInfluencer || false,
+      isStreamer: hasStreamerProfile,
     });
     setShowEditUser(true);
   };
@@ -4758,7 +4817,7 @@ return (
                   </Pressable>
                 </View>
 
-                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-4">
+                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-3">
                   <View className="flex-row items-center">
                     <Ionicons name="star" size={20} color="#EC4899" />
                     <Text className="text-white ml-2">Influencer Badge</Text>
@@ -4768,6 +4827,22 @@ return (
                     className={`w-12 h-6 rounded-full ${userForm.isInfluencer ? "bg-pink-600" : "bg-gray-600"} justify-center`}
                   >
                     <View className={`w-5 h-5 rounded-full bg-white ${userForm.isInfluencer ? "ml-6" : "ml-0.5"}`} />
+                  </Pressable>
+                </View>
+
+                <View className="flex-row items-center justify-between bg-[#0A0A0F] px-4 py-3 rounded-xl mb-4">
+                  <View className="flex-row items-center">
+                    <Ionicons name="videocam" size={20} color="#EF4444" />
+                    <View className="ml-2">
+                      <Text className="text-white">Streamer Access</Text>
+                      <Text className="text-gray-500 text-xs">Can go live & manage streams</Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => setUserForm({ ...userForm, isStreamer: !userForm.isStreamer })}
+                    className={`w-12 h-6 rounded-full ${userForm.isStreamer ? "bg-red-600" : "bg-gray-600"} justify-center`}
+                  >
+                    <View className={`w-5 h-5 rounded-full bg-white ${userForm.isStreamer ? "ml-6" : "ml-0.5"}`} />
                   </Pressable>
                 </View>
 
