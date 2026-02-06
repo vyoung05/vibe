@@ -88,6 +88,9 @@ export const AdminDashboardScreen: React.FC = () => {
   const [showEditUser, setShowEditUser] = useState(false);
   const [showSetStreamerPassword, setShowSetStreamerPassword] = useState(false);
   const [showCreateAnnouncement, setShowCreateAnnouncement] = useState(false);
+  const [useExistingUser, setUseExistingUser] = useState(false);
+  const [selectedExistingUser, setSelectedExistingUser] = useState<User | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [showCreateArtist, setShowCreateArtist] = useState(false);
   const [showEditArtist, setShowEditArtist] = useState(false);
   const [showSetArtistPassword, setShowSetArtistPassword] = useState(false);
@@ -939,6 +942,103 @@ export const AdminDashboardScreen: React.FC = () => {
   };
 
   const handleCreateStreamer = async () => {
+    // If linking to existing user
+    if (useExistingUser) {
+      if (!selectedExistingUser) {
+        Alert.alert('Error', 'Please select an existing user');
+        return;
+      }
+
+      // Check if user already has a streamer profile
+      const { data: existingStreamer } = await supabase
+        .from('streamers')
+        .select('id')
+        .eq('user_id', selectedExistingUser.id)
+        .single();
+
+      if (existingStreamer) {
+        Alert.alert('Error', 'This user already has a streamer profile');
+        return;
+      }
+
+      try {
+        setIsLoadingStreamers(true);
+        console.log('[AdminDashboard] Creating streamer from existing user:', selectedExistingUser.username);
+
+        const referralCode = streamerForm.referralCode || "STREAM" + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        // Create streamer profile linked to existing user
+        const { data: newStreamer, error: streamerError } = await supabase
+          .from('streamers')
+          .insert({
+            user_id: selectedExistingUser.id,
+            name: streamerForm.name || selectedExistingUser.username,
+            gamertag: streamerForm.gamertag || selectedExistingUser.username,
+            email: selectedExistingUser.email,
+            avatar: streamerForm.avatar || selectedExistingUser.avatar,
+            bio: streamerForm.bio || selectedExistingUser.bio || 'New streamer on DDNS!',
+            is_live: false,
+            follower_count: 0,
+            referral_code: referralCode,
+            is_verified: selectedExistingUser.isVerified || false,
+          })
+          .select()
+          .single();
+
+        if (streamerError) {
+          console.error('[AdminDashboard] Error creating streamer from user:', streamerError);
+          Alert.alert('Error', streamerError.message);
+          return;
+        }
+
+        // Insert social links if provided
+        if (newStreamer && (streamerForm.twitchUrl || streamerForm.youtubeUrl || streamerForm.tiktokUrl || streamerForm.instagramUrl)) {
+          const { error: linksError } = await supabase
+            .from('streamer_social_links')
+            .insert({
+              streamer_id: newStreamer.id,
+              twitch: streamerForm.twitchUrl || null,
+              youtube: streamerForm.youtubeUrl || null,
+              tiktok: streamerForm.tiktokUrl || null,
+              instagram: streamerForm.instagramUrl || null,
+            });
+
+          if (linksError) {
+            console.error('[AdminDashboard] Error creating social links:', linksError);
+          }
+        }
+
+        Alert.alert('Success', `Streamer profile created for ${selectedExistingUser.username}!`);
+        setShowCreateStreamer(false);
+        setUseExistingUser(false);
+        setSelectedExistingUser(null);
+        setUserSearchQuery("");
+        setStreamerForm({
+          name: "",
+          gamertag: "",
+          email: "",
+          password: "",
+          avatar: "",
+          bio: "",
+          referralCode: "",
+          twitchUrl: "",
+          youtubeUrl: "",
+          tiktokUrl: "",
+          instagramUrl: "",
+        });
+
+        // Refresh streamers list
+        fetchStreamers();
+      } catch (err) {
+        console.error('[AdminDashboard] Exception creating streamer from user:', err);
+        Alert.alert('Error', String(err));
+      } finally {
+        setIsLoadingStreamers(false);
+      }
+      return;
+    }
+
+    // Original flow: Create new standalone streamer
     if (!streamerForm.name || !streamerForm.gamertag) {
       Alert.alert('Error', 'Please provide name and gamertag');
       return;
@@ -2911,8 +3011,37 @@ return (
             <View className="bg-[#151520] rounded-t-3xl p-6 max-h-[85%]">
               <View className="flex-row items-center justify-between mb-6">
                 <Text className="text-white text-xl font-bold">Create Streamer</Text>
-                <Pressable onPress={() => setShowCreateStreamer(false)}>
+                <Pressable onPress={() => {
+                  setShowCreateStreamer(false);
+                  setUseExistingUser(false);
+                  setSelectedExistingUser(null);
+                  setUserSearchQuery("");
+                }}>
                   <Ionicons name="close" size={28} color="white" />
+                </Pressable>
+              </View>
+
+              {/* Toggle: Create New vs Link Existing */}
+              <View className="flex-row mb-4 bg-[#0A0A0F] rounded-xl p-1">
+                <Pressable
+                  onPress={() => {
+                    setUseExistingUser(false);
+                    setSelectedExistingUser(null);
+                    setUserSearchQuery("");
+                  }}
+                  className={`flex-1 py-3 rounded-lg ${!useExistingUser ? 'bg-purple-600' : ''}`}
+                >
+                  <Text className={`text-center font-semibold ${!useExistingUser ? 'text-white' : 'text-gray-400'}`}>
+                    Create New
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setUseExistingUser(true)}
+                  className={`flex-1 py-3 rounded-lg ${useExistingUser ? 'bg-purple-600' : ''}`}
+                >
+                  <Text className={`text-center font-semibold ${useExistingUser ? 'text-white' : 'text-gray-400'}`}>
+                    Link Existing User
+                  </Text>
                 </Pressable>
               </View>
 
@@ -2921,37 +3050,134 @@ return (
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 20 }}
               >
+                {/* Existing User Selection */}
+                {useExistingUser && (
+                  <View className="mb-4">
+                    <Text className="text-white font-bold mb-2">Select User</Text>
+                    <TextInput
+                      placeholder="Search users by name or email..."
+                      placeholderTextColor="#6B7280"
+                      value={userSearchQuery}
+                      onChangeText={setUserSearchQuery}
+                      className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-3"
+                    />
+                    
+                    {/* Selected User Display */}
+                    {selectedExistingUser && (
+                      <View className="bg-purple-600/20 border border-purple-500 rounded-xl p-3 mb-3 flex-row items-center">
+                        <Image
+                          source={{ uri: selectedExistingUser.avatar || "https://i.pravatar.cc/150?img=50" }}
+                          style={{ width: 40, height: 40, borderRadius: 20 }}
+                          contentFit="cover"
+                        />
+                        <View className="flex-1 ml-3">
+                          <Text className="text-white font-bold">{selectedExistingUser.username}</Text>
+                          <Text className="text-gray-400 text-xs">{selectedExistingUser.email}</Text>
+                        </View>
+                        <Pressable onPress={() => setSelectedExistingUser(null)}>
+                          <Ionicons name="close-circle" size={24} color="#A855F7" />
+                        </Pressable>
+                      </View>
+                    )}
+
+                    {/* User List (filtered, excluding users who already have streamer profiles) */}
+                    {!selectedExistingUser && (
+                      <View className="bg-[#0A0A0F] rounded-xl max-h-48">
+                        <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                          {dbUsers
+                            .filter(u => {
+                              // Filter by search query
+                              const matchesSearch = !userSearchQuery || 
+                                u.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                                u.email.toLowerCase().includes(userSearchQuery.toLowerCase());
+                              // Exclude users who already have streamer profiles
+                              const hasStreamerProfile = dbStreamers.some(s => s.userId === u.id);
+                              return matchesSearch && !hasStreamerProfile;
+                            })
+                            .slice(0, 10)
+                            .map((u) => (
+                              <Pressable
+                                key={u.id}
+                                onPress={() => {
+                                  setSelectedExistingUser(u);
+                                  setStreamerForm(prev => ({
+                                    ...prev,
+                                    name: u.username,
+                                    gamertag: u.username,
+                                    avatar: u.avatar || "",
+                                    bio: u.bio || "",
+                                  }));
+                                }}
+                                className="flex-row items-center p-3 border-b border-gray-800"
+                              >
+                                <Image
+                                  source={{ uri: u.avatar || "https://i.pravatar.cc/150?img=50" }}
+                                  style={{ width: 36, height: 36, borderRadius: 18 }}
+                                  contentFit="cover"
+                                />
+                                <View className="flex-1 ml-3">
+                                  <Text className="text-white font-semibold">{u.username}</Text>
+                                  <Text className="text-gray-500 text-xs">{u.email}</Text>
+                                </View>
+                                <Ionicons name="add-circle-outline" size={20} color="#A855F7" />
+                              </Pressable>
+                            ))}
+                          {dbUsers.filter(u => {
+                            const matchesSearch = !userSearchQuery || 
+                              u.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                              u.email.toLowerCase().includes(userSearchQuery.toLowerCase());
+                            const hasStreamerProfile = dbStreamers.some(s => s.userId === u.id);
+                            return matchesSearch && !hasStreamerProfile;
+                          }).length === 0 && (
+                            <View className="p-4 items-center">
+                              <Text className="text-gray-500 text-sm">No eligible users found</Text>
+                            </View>
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Name & Gamertag - always shown but pre-filled when linking */}
                 <TextInput
-                  placeholder="Name *"
+                  placeholder={useExistingUser ? "Display Name (optional override)" : "Name *"}
                   placeholderTextColor="#6B7280"
                   value={streamerForm.name}
                   onChangeText={(text) => setStreamerForm({ ...streamerForm, name: text })}
                   className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
                 />
                 <TextInput
-                  placeholder="Gamertag *"
+                  placeholder={useExistingUser ? "Gamertag (optional override)" : "Gamertag *"}
                   placeholderTextColor="#6B7280"
                   value={streamerForm.gamertag}
                   onChangeText={(text) => setStreamerForm({ ...streamerForm, gamertag: text })}
                   className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
                 />
-                <TextInput
-                  placeholder="Email (for login access)"
-                  placeholderTextColor="#6B7280"
-                  value={streamerForm.email}
-                  onChangeText={(text) => setStreamerForm({ ...streamerForm, email: text })}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
-                />
-                <TextInput
-                  placeholder="Password (for login access)"
-                  placeholderTextColor="#6B7280"
-                  value={streamerForm.password}
-                  onChangeText={(text) => setStreamerForm({ ...streamerForm, password: text })}
-                  secureTextEntry
-                  className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
-                />
+
+                {/* Only show email/password fields for new streamers (not linking existing) */}
+                {!useExistingUser && (
+                  <>
+                    <TextInput
+                      placeholder="Email (for login access)"
+                      placeholderTextColor="#6B7280"
+                      value={streamerForm.email}
+                      onChangeText={(text) => setStreamerForm({ ...streamerForm, email: text })}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                    />
+                    <TextInput
+                      placeholder="Password (for login access)"
+                      placeholderTextColor="#6B7280"
+                      value={streamerForm.password}
+                      onChangeText={(text) => setStreamerForm({ ...streamerForm, password: text })}
+                      secureTextEntry
+                      className="bg-[#0A0A0F] text-white px-4 py-3 rounded-xl mb-4"
+                    />
+                  </>
+                )}
+
                 <TextInput
                   placeholder="Avatar URL (optional)"
                   placeholderTextColor="#6B7280"
@@ -3010,9 +3236,12 @@ return (
 
                 <Pressable
                   onPress={handleCreateStreamer}
-                  className="bg-purple-600 py-4 rounded-xl mt-4 mb-4"
+                  disabled={useExistingUser && !selectedExistingUser}
+                  className={`py-4 rounded-xl mt-4 mb-4 ${useExistingUser && !selectedExistingUser ? 'bg-gray-600' : 'bg-purple-600'}`}
                 >
-                  <Text className="text-white text-center font-bold">Create Streamer</Text>
+                  <Text className="text-white text-center font-bold">
+                    {useExistingUser ? 'Add Streamer Profile' : 'Create Streamer'}
+                  </Text>
                 </Pressable>
               </ScrollView>
             </View>

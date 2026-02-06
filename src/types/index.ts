@@ -242,6 +242,7 @@ export interface StreamSchedule {
 
 export interface Streamer {
   id: string;
+  userId?: string; // Links to user account if streamer was created from existing user
   name: string;
   gamertag: string;
   email?: string; // For admin-created streamers
